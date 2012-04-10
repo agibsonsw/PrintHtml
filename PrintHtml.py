@@ -1,10 +1,19 @@
 import sublime
 import sublime_plugin
-from plistlib import readPlist
 from os import path
 import tempfile
 import desktop
 import re
+import sys
+
+PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
+
+if sublime.platform() == "linux":
+    # Try and load Linux Python2.6 lib.  Default path is for Ubuntu.
+    linux_lib = sublime.load_settings(PACKAGE_SETTINGS).get("linux_python2.6_lib", "/usr/lib/python2.6/lib-dynload")
+    if not linux_lib in sys.path and path.exists(linux_lib):
+        sys.path.append(linux_lib)
+from plistlib import readPlist
 
 
 class PrintHtmlCommand(sublime_plugin.TextCommand):
@@ -24,7 +33,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         self.numbers = numbers
 
         # Get color scheme
-        alt_scheme = sublime.load_settings("PrintHtml.sublime-settings").get("alternate_scheme", False)
+        alt_scheme = sublime.load_settings(PACKAGE_SETTINGS).get("alternate_scheme", False)
         scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
         colour_scheme = path.normpath(scheme_file)
         plist_file = readPlist(path_packages + colour_scheme.replace('Packages', ''))
