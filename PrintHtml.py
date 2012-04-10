@@ -1,6 +1,5 @@
 import sublime, sublime_plugin
 from xml.dom import minidom
-import re
 from os import path
 
 class PrintHtmlCommand(sublime_plugin.TextCommand):
@@ -9,13 +8,13 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		path_packages = sublime.packages_path()
 		settings = sublime.load_settings('Preferences.sublime-settings')
 		colour_scheme = settings.get('color_scheme')
-		# colour_scheme = colour_scheme.replace('/', '\\\\')
 		colour_scheme = path.normpath(colour_scheme)
 		colour_scheme = colour_scheme.replace('Packages', '')
 		font_size = settings.get('font_size') or 10
 		font_face = settings.get('font_face') or 'Consolas'
 		tab_size = settings.get('tab_size') or 4
-		# padd_bottom = settings.get('line_padding_bottom') or 0
+		padd_top = settings.get('line_padding_top') or 0
+		padd_bottom = settings.get('line_padding_bottom') or 0
 		doc = minidom.parse(path_packages + colour_scheme)
 		the_dict = doc.getElementsByTagName('dict')[0]
 		the_array = the_dict.getElementsByTagName('array')[0]
@@ -31,6 +30,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 					gfground = key_tag.nextSibling.nextSibling.firstChild.data.strip()
 			except:
 				pass
+		if gfground == '': gfground = fground
 		dict_items = the_array.getElementsByTagName('dict')[1:]
 		for item in dict_items:
 			scope = ''; colour = ''
@@ -72,20 +72,21 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		the_html.write('<html>\n<head>\n<title>' + fname + '</title>\n')
 		the_html.write('<style type=\"text/css\">\n')
 		the_html.write('\tspan { display: inline; border: 0; margin: 0; padding: 0; }\n')
-		if numbers and gfground != '':
-			the_html.write('\tli { color: ' + gfground  + '; }\n')
+		if not numbers:
+			the_html.write('\tol { list-style-type: none; }\n')
+		the_html.write('\tli { color: ' + gfground  + '; margin-top: ' + 
+			`padd_top` + 'pt; margin-bottom: ' + `padd_bottom` + 'pt; }\n')
 		the_html.write('\tbody { ')
 		if fground != '': the_html.write('color: ' + fground + ';')
 		if bground != '': the_html.write(' background-color: ' + bground + ';')
 		the_html.write(' font: ' + `font_size` + 'pt \"' + font_face + '\", Consolas, Monospace;')
 		the_html.write('\n}\n')
 		the_html.write('</style>\n</head>\n<body>\n')
-		if numbers:
-			if partial:
-				# use code's line numbering
-				the_html.write('<ol>\n<li value="%d">' % curr_row)
-			else:
-				the_html.write('<ol>\n<li>')
+		if numbers and partial:
+			the_html.write('<ol>\n<li value="%d">' % curr_row)		# use code's line numbering
+		else:
+			the_html.write('<ol>\n<li>')
+		default_scope = curr_view.scope_name(end).split(' ')[0]
 		while end <= size:
 			scope_name = curr_view.scope_name(pt)
 			while curr_view.scope_name(end) == scope_name and end <= size:
@@ -95,34 +96,31 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 			if self.colours.has_key(the_key):
 				the_colour = self.colours[the_key]
 			else:
-				if re.match('source\.[a-zA-Z_]*$', the_key) is not None:
+				if the_key == default_scope:
 					self.colours[the_key] = fground
 					the_colour = fground
 				else:
-					best_match = -1
+					best_match = 0
 					for key in self.colours:
 						if curr_view.score_selector(pt, key) > best_match:
 							best_match = curr_view.score_selector(pt, key)
 							the_colour = self.colours[key]
+					if curr_view.score_selector(pt, default_scope) > best_match:
+						the_colour = fground
 					self.colours[the_key] = the_colour
 			tidied_text = curr_view.substr(region)
 			tidied_text = tidied_text.replace('&', '&amp;')
 			tidied_text = tidied_text.replace('<', '&lt;')
 			tidied_text = tidied_text.replace('>', '&gt;')
 			tidied_text = tidied_text.replace('\t', '&nbsp;' * tab_size)
-			tidied_text = tidied_text.replace(' ' * tab_size, '&nbsp;' * tab_size)
-			if numbers:
-				new_li = '</span></li>\n<li><span style=\"color:' + the_colour + '\">'
-				tidied_text = tidied_text.replace('\n', new_li)
-			else:
-				tidied_text = tidied_text.replace('\n', '<br>')
-			# for x, y in zip(('&', '<', '>', '\t', ' ' * tab_size, '\n'),
-			# 		('&amp;', '&lt;', '&gt;', '&nbsp;' * tab_size, '&nbsp;' * tab_size, '<br>')):
-			# 	tidied_text = tidied_text.replace(x, y)
+			tidied_text = tidied_text.replace(' ', '&nbsp;')
+			new_li = '</span></li>\n<li><span style=\"color:' + the_colour + '\">'
+			if len(tidied_text) == 2: print ',' + tidied_text + ','
+			tidied_text = tidied_text.replace('\n', new_li)
 			the_html.write('<span style=\"color:' + the_colour + '\">')
 			the_html.write(tidied_text + '</span>')
 			pt = end
 			end = pt + 1
-		if numbers: the_html.write('</li>\n</ol>')
+		the_html.write('</li>\n</ol>')
 		the_html.write('\n</body>\n</html>')
 		the_html.close()
