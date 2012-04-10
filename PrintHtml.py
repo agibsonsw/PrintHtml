@@ -97,7 +97,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('\tspan { display: inline; border: 0; margin: 0; padding: 0; }\n')
         if not self.numbers:
             the_html.write('\tol { list-style-type: none; }\n')
-        the_html.write('\tli { color: ' + self.gfground  + '; margin-top: ' +
+        the_html.write('\tli { color: ' + self.gfground + '; margin-top: ' +
             str(self.padd_top) + 'pt; margin-bottom: ' + str(self.padd_bottom) + 'pt; }\n')
         the_html.write('\tbody { ')
         if self.fground != '':
@@ -137,6 +137,13 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
     def write_body(self, the_html):
         the_html.write('<body>\n')
+
+        # Write file name
+        fname = self.view.file_name()
+        if fname == None or not path.exists(fname):
+            fname = "Untitled"
+        the_html.write('<span style=\"color:' + self.fground + '\">' + fname + '</span>\n')
+
         if self.numbers and self.partial:
             the_html.write('<ol>\n<li value="%d">' % self.curr_row)  # use code's line numbering
         else:
@@ -146,7 +153,9 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         self.convert_view_to_html(the_html)
 
         the_html.write('</li>\n</ol>')
-        the_html.write('\n</body>\n</html>')
+
+        # Write empty line to allow copying of last line and line number without issue
+        the_html.write('\n<br/>\n</body>\n</html>')
 
     def run(self, edit, numbers):
         self.setup(numbers)
