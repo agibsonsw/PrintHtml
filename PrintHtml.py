@@ -61,8 +61,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             self.partial = True
 
         # Create scope colors mapping from color scheme file
-        self.colours = {}
-        self.default_scope = self.view.scope_name(self.end).split(' ')[0]
+        self.colours = {self.view.scope_name(self.end).split(' ')[0]: self.fground}
         dict_items = the_array.getElementsByTagName('dict')[1:]
         for item in dict_items:
             scope = None
@@ -83,18 +82,12 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         if the_key in self.colours:
             the_colour = self.colours[the_key]
         else:
-            if the_key == self.default_scope:
-                self.colours[the_key] = self.fground
-                the_colour = self.fground
-            else:
-                best_match = 0
-                for key in self.colours:
-                    if self.view.score_selector(self.pt, key) > best_match:
-                        best_match = self.view.score_selector(self.pt, key)
-                        the_colour = self.colours[key]
-                if self.view.score_selector(self.pt, self.default_scope) > best_match:
-                    the_colour = self.fground
-                self.colours[the_key] = the_colour
+            best_match = 0
+            for key in self.colours:
+                if self.view.score_selector(self.pt, key) > best_match:
+                    best_match = self.view.score_selector(self.pt, key)
+                    the_colour = self.colours[key]
+            self.colours[the_key] = the_colour
         return the_colour
 
     def write_header(self, the_html):
