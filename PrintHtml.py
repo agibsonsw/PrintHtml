@@ -1,6 +1,6 @@
 import sublime
 import sublime_plugin
-from xml.dom import minidom
+from plistlib import readPlist
 from os import path
 import tempfile
 import desktop
@@ -27,21 +27,16 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         alt_scheme = sublime.load_settings("PrintHtml.sublime-settings").get("alternate_scheme", False)
         scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
         colour_scheme = path.normpath(scheme_file)
-        doc = minidom.parse(path_packages + colour_scheme.replace('Packages', ''))
-        the_array = doc.getElementsByTagName('dict')[0].getElementsByTagName('array')[0]
-        colour_settings = the_array.getElementsByTagName('dict')[0]
+        plist_file = readPlist(path_packages + colour_scheme.replace('Packages', ''))
+        colour_settings = plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
-        for key_tag in colour_settings.getElementsByTagName('key'):
-            try:
-                if key_tag.firstChild.data.strip() == 'background':
-                    self.bground = key_tag.nextSibling.nextSibling.firstChild.data.strip()
-                elif key_tag.firstChild.data.strip() == 'foreground':
-                    self.fground = key_tag.nextSibling.nextSibling.firstChild.data.strip()
-                elif key_tag.firstChild.data.strip() == 'gutterForeground':
-                    self.gfground = key_tag.nextSibling.nextSibling.firstChild.data.strip()
-            except:
-                pass
+        if "background" in colour_settings:
+            self.bground = colour_settings["background"].strip()
+        elif 'foreground' in colour_settings:
+            self.bground = colour_settings["foreground"].strip()
+        elif 'gutterForeground' in colour_settings:
+            self.bground = colour_settings["gutterForeground"].strip()
 
         if self.gfground == '':
             self.gfground = self.fground
@@ -62,18 +57,14 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
         # Create scope colors mapping from color scheme file
         self.colours = {self.view.scope_name(self.end).split(' ')[0]: self.fground}
-        dict_items = the_array.getElementsByTagName('dict')[1:]
-        for item in dict_items:
+        for item in plist_file["settings"]:
             scope = None
             colour = None
-            for key_tag in item.getElementsByTagName('key'):
-                try:
-                    if key_tag.firstChild.data.strip() == 'scope':
-                        scope = key_tag.nextSibling.nextSibling.firstChild.data.strip()
-                    elif key_tag.firstChild.data.strip() == 'foreground':
-                        colour = key_tag.nextSibling.nextSibling.firstChild.data.strip()
-                except:
-                    pass
+            if 'scope' in item:
+                scope = item['scope']
+            if 'settings' in item and 'foreground' in item['settings']:
+                colour = item['settings']['foreground']
+
             if scope != None and colour != None:
                 self.colours[scope] = colour
 
