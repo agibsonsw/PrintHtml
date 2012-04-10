@@ -42,10 +42,10 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         # Get general theme colors from color scheme file
         if "background" in colour_settings:
             self.bground = colour_settings["background"].strip()
-        elif 'foreground' in colour_settings:
-            self.bground = colour_settings["foreground"].strip()
-        elif 'gutterForeground' in colour_settings:
-            self.bground = colour_settings["gutterForeground"].strip()
+        if 'foreground' in colour_settings:
+            self.fground = colour_settings["foreground"].strip()
+        if 'gutterForeground' in colour_settings:
+            self.gfground = colour_settings["gutterForeground"].strip()
 
         if self.gfground == '':
             self.gfground = self.fground
