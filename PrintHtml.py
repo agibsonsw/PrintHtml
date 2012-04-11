@@ -99,9 +99,15 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             if scope != None and colour != None:
                 self.colours[scope] = colour
 
-    def print_gutter_numbers(self, num):
-        return '<span style=\"color: ' + self.gfground + ';\">%s&nbsp;</span>' % \
-            str(num).rjust(self.gutter_pad).replace(' ', '&nbsp;')
+    def print_line(self, line, num=None):
+        if num != None:
+            return (
+                '<tr><td><span style=\"color: ' +
+                self.gfground + ';\">' + str(num).rjust(self.gutter_pad).replace(' ', '&nbsp;') +
+                '&nbsp;</span></td><td>' + line + '</td></tr>'
+            )
+        else:
+            return '<tr><td><td>' + line + '</td></tr>'
 
     def guess_colour(self, the_key):
         the_colour = None
@@ -120,7 +126,11 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('<!DOCTYPE html>\n')
         the_html.write('<html>\n<head>\n<title>' + path.basename(the_html.name) + '</title>\n')
         the_html.write('<style type=\"text/css\">\n')
-        the_html.write('\tpre { background-color: ' + self.bground + '; color: border: 0; margin: 0; padding: 0; }\n')
+        the_html.write('\tpre { border: 0; margin: 0; padding: 0;  }\n')
+        the_html.write('\ttable { background-color: ' + self.bground + '; border: 0; margin: 0; padding: 0; }\n')
+        the_html.write('\ttd { ')
+        the_html.write(' font: ' + str(self.font_size) + 'pt \"' + self.font_face + '\", Consolas, Monospace;')
+        the_html.write(' }\n')
         the_html.write('\tspan { border: 0; margin: 0; padding: 0; }\n')
         the_html.write('\tbody { ')
         if self.fground != '':
@@ -132,18 +142,18 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('</style>\n</head>\n')
 
     def convert_view_to_html(self, the_html):
-        self.curr_row += 1
         for line in self.view.split_by_newlines(sublime.Region(self.end, self.size)):
             self.end = line.begin()
             self.size = line.end()
-            self.convert_line_to_html(the_html)
+            line = self.convert_line_to_html(the_html)
             if self.numbers:
-                the_html.write('\n</span>'+ self.print_gutter_numbers(self.curr_row))
+                the_html.write(self.print_line(line, self.curr_row))
             else:
-                the_html.write('\n</span>')
+                the_html.write(self.print_line(line))
             self.curr_row += 1
 
     def convert_line_to_html(self, the_html):
+        line = []
         while self.end <= self.size:
             # Get text of like scope up to a highlight
             scope_name = self.view.scope_name(self.pt)
@@ -160,10 +170,12 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             tidied_text = tidied_text.replace(' ', '&nbsp;')
             tidied_text = tidied_text.replace("\n", '')
 
-            the_html.write('<span style=\"color:' + the_colour + '\">')
-            the_html.write(tidied_text + '</span>')
+            line.append('<span style=\"color:' + the_colour + '\">')
+            line.append(tidied_text + '</span>')
             self.pt = self.end
             self.end = self.pt + 1
+        line.append('\n</span>')
+        return ''.join(line)
 
     def write_body(self, the_html):
         the_html.write('<body>\n<pre>')
@@ -175,11 +187,12 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         date_time = datetime.datetime.now().strftime("%m/%d/%y %I:%M:%S ")
         the_html.write('<span style=\"color:' + self.fground + '\">' + date_time + fname + '\n\n</span>')
 
-        if self.numbers:
-            the_html.write(self.print_gutter_numbers(self.curr_row))  # use code's line numbering
+        the_html.write('<table cellspacing="0" cellpadding="0">')
 
         # Convert view to HTML
         self.convert_view_to_html(the_html)
+
+        the_html.write('</table>')
 
         # Write empty line to allow copying of last line and line number without issue
         the_html.write('<pre/>\n</body>\n</html>')
