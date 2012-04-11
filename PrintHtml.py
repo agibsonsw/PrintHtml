@@ -15,6 +15,53 @@ if sublime.platform() == "linux":
         sys.path.append(linux_lib)
 from plistlib import readPlist
 
+CSS = \
+"""
+<!DOCTYPE html>
+<html>
+<head>
+<title>%s</title>
+<style type="text/css">
+    pre { border: 0; margin: 0; padding: 0;  }
+    table { border: 0; margin: 0; padding: 0; }
+    .code_text { font: %spt "%s", Consolas, Monospace; }
+    .code_page { background-color: %s; }
+    .code_gutter { background-color: %s;}
+    span { border: 0; margin: 0; padding: 0; }
+    body { color: %s; }
+</style>
+</head>
+"""
+
+BODY_START = """<body class="code_page code_text">\n<pre>"""
+
+BODY_END = """<pre/>\n</body>\n</html>"""
+
+TABLE_START = """<table cellspacing="0" cellpadding="0">"""
+
+TABLE_END = """</table>"""
+
+GUTTER_LINE = \
+"""
+<tr>
+<td valign="top" class="code_text code_gutter"><span style="color: %s;">%s&nbsp;</span></td>
+<td>&nbsp;%s</td>
+</tr>
+"""
+
+LINE = \
+"""
+<tr>
+<td class="code_text">%s</td>
+</tr>
+"""
+
+CODE = """<span style="color:%s">%s</span>"""
+
+HIGHLIGHTED_CODE = """<span style="background-color: %s; color: %s;">%s</span>"""
+
+FILE_INFO = """<span style="color: %s">%s%s\n\n</span>"""
+
 
 class PrintHtmlCommand(sublime_plugin.TextCommand):
     def setup(self, numbers, highlight_selections):
@@ -34,7 +81,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         self.sbground = ''
         self.sfground = ''
         self.numbers = numbers
-        self.highlight_selections = True
+        self.highlight_selections = highlight_selections
         self.hl_continue = None
         self.curr_hl = None
 
@@ -115,14 +162,10 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
     def print_line(self, line, num=None):
         if num == None:
-            html_line = '<tr><td>%s</td></tr>' % line
+            html_line = LINE % line
         else:
-            gutter = (
-                '<span style=\"color: ' +
-                self.gfground + ';\">' + str(num).rjust(self.gutter_pad).replace(" ", '&nbsp;') +
-                '&nbsp;</span></td><td>'
-            )
-            html_line = '<tr><td style=\"background-color: ' + self.gbground + ';\">%s&nbsp;%s</td></tr>' % (gutter, line)
+            html_line = GUTTER_LINE % (self.gfground, str(num).rjust(self.gutter_pad).replace(" ", '&nbsp;'), line)
+
         return html_line
 
     def guess_colour(self, the_key):
@@ -139,23 +182,15 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         return the_colour
 
     def write_header(self, the_html):
-        the_html.write('<!DOCTYPE html>\n')
-        the_html.write('<html>\n<head>\n<title>' + path.basename(the_html.name) + '</title>\n')
-        the_html.write('<style type=\"text/css\">\n')
-        the_html.write('\tpre { border: 0; margin: 0; padding: 0;  }\n')
-        the_html.write('\ttable { ')
-        the_html.write('background-color: ' + self.bground + '; ')
-        the_html.write('border: 0; margin: 0; padding: 0; }\n')
-        the_html.write('\ttd { ')
-        the_html.write(' font: ' + str(self.font_size) + 'pt \"' + self.font_face + '\", Consolas, Monospace; ')
-        the_html.write('}\n')
-        the_html.write('\tspan { border: 0; margin: 0; padding: 0; }\n')
-        the_html.write('\tbody { ')
-        the_html.write('color: ' + self.fground + '; ')
-        the_html.write('background-color: ' + self.bground + '; ')
-        the_html.write(' font: ' + str(self.font_size) + 'pt \"' + self.font_face + '\", Consolas, Monospace;')
-        the_html.write('}\n')
-        the_html.write('</style>\n</head>\n')
+        header = CSS % (
+            path.basename(the_html.name),  # Title
+            str(self.font_size),           # Code font size
+            self.font_face,                # Code font face
+            self.bground,                  # Page background color
+            self.gbground,                 # Gutter background color
+            self.fground                   # Default text color
+        )
+        the_html.write(header)
 
     def convert_view_to_html(self, the_html):
         for line in self.view.split_by_newlines(sublime.Region(self.end, self.size)):
@@ -201,47 +236,47 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
                 the_colour = self.guess_colour(scope_name)
 
             # Format text to HTML
-            tidied_text = self.view.substr(sublime.Region(self.pt, self.end))
-            tidied_text = tidied_text.replace('&', '&amp;')
-            tidied_text = tidied_text.replace('<', '&lt;')
-            tidied_text = tidied_text.replace('>', '&gt;')
-            tidied_text = tidied_text.replace('\t', ' ' * self.tab_size)
-            tidied_text = tidied_text.replace("\n", '')
-            tidied_text = tidied_text.replace(" ", '&nbsp;')
+            html_encode_table = {
+                '&':  '&amp;',
+                '>':  '&gt;',
+                '<':  '&lt;',
+                '\t': '&nbsp;' * self.tab_size,
+                ' ':  '&nbsp;',
+                '\n': ''
+            }
+            tidied_text = ''.join(html_encode_table.get(c, c) for c in self.view.substr(sublime.Region(self.pt, self.end)))
 
             # Highlight span if needed
             if hl_found:
-                line.append('<span style=\"background-color:' + self.sbground + '; color:' + self.sfground + '\">')
+                line.append(HIGHLIGHTED_CODE % (self.sbground, self.sfground, tidied_text))
                 hl_found = False
                 self.curr_hl = None
             else:
-                line.append('<span style=\"color:' + the_colour + '\">')
+                line.append(CODE % (the_colour, tidied_text))
 
-            line.append(tidied_text + '</span>')
             self.pt = self.end
             self.end = self.pt + 1
-        line.append('\n</span>')
         return ''.join(line)
 
     def write_body(self, the_html):
-        the_html.write('<body>\n<pre>')
+        the_html.write(BODY_START)
 
         # Write file name
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
             fname = "Untitled"
         date_time = datetime.datetime.now().strftime("%m/%d/%y %I:%M:%S ")
-        the_html.write('<span style=\"color:' + self.fground + '\">' + date_time + fname + '\n\n</span>')
+        the_html.write(FILE_INFO % (self.fground, date_time, fname))
 
-        the_html.write('<table cellspacing="0" cellpadding="0">')
+        the_html.write(TABLE_START)
 
         # Convert view to HTML
         self.convert_view_to_html(the_html)
 
-        the_html.write('</table>')
+        the_html.write(TABLE_END)
 
         # Write empty line to allow copying of last line and line number without issue
-        the_html.write('<pre/>\n</body>\n</html>')
+        the_html.write(BODY_END)
 
     def run(self, edit, numbers=False, highlight_selections=False, clipboard=False):
         self.setup(numbers, highlight_selections)
