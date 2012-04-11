@@ -94,6 +94,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('<!DOCTYPE html>\n')
         the_html.write('<html>\n<head>\n<title>' + path.basename(the_html.name) + '</title>\n')
         the_html.write('<style type=\"text/css\">\n')
+        the_html.write('\tpre { background-color: ' + self.bground + '; color: border: 0; margin: 0; padding: 0; }\n')
         the_html.write('\tspan { display: inline; border: 0; margin: 0; padding: 0; }\n')
         if not self.numbers:
             the_html.write('\tol { list-style-type: none; }\n')
@@ -123,39 +124,38 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             tidied_text = tidied_text.replace('>', '&gt;')
             tidied_text = tidied_text.replace('\t', '&nbsp;' * self.tab_size)
             tidied_text = tidied_text.replace(' ', '&nbsp;')
-            m = re.match("^(.*)\r?\n((\r?\n)+)$", tidied_text) if not self.numbers else None
-            new_li = '</span></li>\n<li><span style=\"color:' + the_colour + '\">'
-            if m != None:
-                new_lines = ''.join(["<li><br/></li>" for c in str(m.group(2)) if c == "\n"])
-                tidied_text = m.group(1) + "</span></li>\n" + new_lines + '<li><span>' + new_li
-            else:
-                tidied_text = tidied_text.replace('\n', new_li)
+
+            new_li = '</span></li><li><span style=\"color:' + the_colour + '\">'
+            if self.numbers:
+                tidied_text = tidied_text.replace('\n', '\n' + new_li)
+
             the_html.write('<span style=\"color:' + the_colour + '\">')
             the_html.write(tidied_text + '</span>')
             self.pt = self.end
             self.end = self.pt + 1
 
     def write_body(self, the_html):
-        the_html.write('<body>\n')
+        the_html.write('<body>\n<pre>')
 
         # Write file name
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
             fname = "Untitled"
-        the_html.write('<span style=\"color:' + self.fground + '\">' + fname + '</span>\n')
+        the_html.write('<span style=\"color:' + self.fground + '\">' + fname + '\n\n</span>')
 
         if self.numbers and self.partial:
-            the_html.write('<ol>\n<li value="%d">' % self.curr_row)  # use code's line numbering
-        else:
-            the_html.write('<ol>\n<li>')
+            the_html.write('<ol><li value="%d">' % self.curr_row)  # use code's line numbering
+        elif self.numbers:
+            the_html.write('<ol><li>')
 
         # Convert view to HTML
         self.convert_view_to_html(the_html)
 
-        the_html.write('</li>\n</ol>')
+        if self.numbers:
+            the_html.write('</li></ol>')
 
         # Write empty line to allow copying of last line and line number without issue
-        the_html.write('\n<br/>\n</body>\n</html>')
+        the_html.write('<pre/>\n</body>\n</html>')
 
     def run(self, edit, numbers):
         self.setup(numbers)
