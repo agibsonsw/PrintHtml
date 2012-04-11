@@ -29,11 +29,14 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         self.padd_bottom = settings.get('line_padding_bottom') or 0
         self.bground = ''
         self.fground = ''
+        self.gbground = ''
         self.gfground = ''
         self.sbground = ''
         self.sfground = ''
         self.numbers = numbers
-        self.highlight_selections = highlight_selections
+        self.highlight_selections = True
+        self.hl_continue = None
+        self.curr_hl = None
 
         # Get color scheme
         alt_scheme = sublime.load_settings(PACKAGE_SETTINGS).get("alternate_scheme", False)
@@ -44,18 +47,29 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
         # Get general theme colors from color scheme file
         if "background" in colour_settings:
-            self.bground = colour_settings["background"].strip()
+            self.bground = colour_settings["background"]
         if 'foreground' in colour_settings:
-            self.fground = colour_settings["foreground"].strip()
+            self.fground = colour_settings["foreground"]
+        if 'gutter' in colour_settings:
+            self.gbground = colour_settings["gutter"]
         if 'gutterForeground' in colour_settings:
-            self.gfground = colour_settings["gutterForeground"].strip()
+            self.gfground = colour_settings["gutterForeground"]
         if 'selectionForeground' in colour_settings:
-            self.sfground = colour_settings["selectionForeground"].strip()
+            self.sfground = colour_settings["selectionForeground"]
         if 'selection' in colour_settings:
-            self.sbground = colour_settings["selection"].strip()
+            self.sbground = colour_settings["selection"]
+
+        if self.bground == '':
+            self.bground == '#FFFFFF'
+
+        if self.fground == '':
+            self.fground == '#000000'
 
         if self.gfground == '':
             self.gfground = self.fground
+
+        if self.gbground == '':
+            self.gbground = self.bground
 
         if self.sfground == '':
             self.gfground = self.bground
@@ -85,6 +99,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             for sel in self.view.sel():
                 if not sel.empty():
                     self.highlights.append(sel)
+        print self.highlights
 
         # Create scope colors mapping from color scheme file
         self.colours = {self.view.scope_name(self.end).split(' ')[0]: self.fground}
@@ -100,14 +115,15 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
                 self.colours[scope] = colour
 
     def print_line(self, line, num=None):
-        if num != None:
-            return (
-                '<tr><td><span style=\"color: ' +
-                self.gfground + ';\">' + str(num).rjust(self.gutter_pad).replace(' ', '&nbsp;') +
-                '&nbsp;</span></td><td>' + line + '</td></tr>'
-            )
+        html_line = '<tr><td>%s%s</td></tr>'
+        if num == None:
+            gutter = ''
         else:
-            return '<tr><td><td>' + line + '</td></tr>'
+            gutter = (
+                '<span style=\"background-color: ' + self.gbground + '; color: ' +
+                self.gfground + ';\">' + str(num).rjust(self.gutter_pad) + ' </span></td><td>'
+            )
+        return html_line % (gutter, line)
 
     def guess_colour(self, the_key):
         the_colour = None
@@ -127,23 +143,22 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('<html>\n<head>\n<title>' + path.basename(the_html.name) + '</title>\n')
         the_html.write('<style type=\"text/css\">\n')
         the_html.write('\tpre { border: 0; margin: 0; padding: 0;  }\n')
-        the_html.write('\ttable { background-color: ' + self.bground + '; border: 0; margin: 0; padding: 0; }\n')
+        the_html.write('\ttable { ')
+        the_html.write('background-color: ' + self.bground + '; ')
+        the_html.write('border: 0; margin: 0; padding: 0; }\n')
         the_html.write('\ttd { ')
-        the_html.write(' font: ' + str(self.font_size) + 'pt \"' + self.font_face + '\", Consolas, Monospace;')
-        the_html.write(' }\n')
+        the_html.write(' font: ' + str(self.font_size) + 'pt \"' + self.font_face + '\", Consolas, Monospace; ')
+        the_html.write('}\n')
         the_html.write('\tspan { border: 0; margin: 0; padding: 0; }\n')
         the_html.write('\tbody { ')
-        if self.fground != '':
-            the_html.write('color: ' + self.fground + ';')
-        if self.bground != '':
-            the_html.write(' background-color: ' + self.bground + ';')
+        the_html.write('color: ' + self.fground + '; ')
+        the_html.write('background-color: ' + self.bground + '; ')
         the_html.write(' font: ' + str(self.font_size) + 'pt \"' + self.font_face + '\", Consolas, Monospace;')
-        the_html.write('\n}\n')
+        the_html.write('}\n')
         the_html.write('</style>\n</head>\n')
 
     def convert_view_to_html(self, the_html):
         for line in self.view.split_by_newlines(sublime.Region(self.end, self.size)):
-            self.end = line.begin()
             self.size = line.end()
             line = self.convert_line_to_html(the_html)
             if self.numbers:
@@ -154,23 +169,53 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
     def convert_line_to_html(self, the_html):
         line = []
-        while self.end <= self.size:
-            # Get text of like scope up to a highlight
-            scope_name = self.view.scope_name(self.pt)
-            while self.view.scope_name(self.end) == scope_name and self.end <= self.size:
-                self.end += 1
-            region = sublime.Region(self.pt, self.end)
-            the_colour = self.guess_colour(scope_name.strip())
+        hl_found = False
 
-            tidied_text = self.view.substr(region)
+        # Continue highlight form last line
+        if self.hl_continue != None:
+            self.curr_hl = self.hl_continue
+            self.hl_continue = None
+
+        while self.end <= self.size:
+            # Get next highlight region
+            if self.highlight_selections and self.curr_hl == None and len(self.highlights) > 0:
+                self.curr_hl = self.highlights.pop(0)
+
+            # See if we are starting a highlight region
+            if self.curr_hl != None and self.pt == self.curr_hl.begin():
+                hl_found = True
+                if self.curr_hl.end() <= self.size:
+                    self.end = self.curr_hl.end()
+                else:
+                    # Highlight is bigger than line, mark for continuation
+                    self.end = self.size
+                    self.hl_continue = sublime.Region(self.size + 1, self.curr_hl.end())
+            else:
+                # Get text of like scope up to a highlight
+                scope_name = self.view.scope_name(self.pt)
+                while self.view.scope_name(self.end) == scope_name and self.end <= self.size:
+                    # Kick out if we hit a highlight region
+                    if self.curr_hl != None and self.end == self.curr_hl.begin():
+                        break
+                    self.end += 1
+                the_colour = self.guess_colour(scope_name)
+
+            # Format text to HTML
+            tidied_text = self.view.substr(sublime.Region(self.pt, self.end))
             tidied_text = tidied_text.replace('&', '&amp;')
             tidied_text = tidied_text.replace('<', '&lt;')
             tidied_text = tidied_text.replace('>', '&gt;')
-            tidied_text = tidied_text.replace('\t', '&nbsp;' * self.tab_size)
-            tidied_text = tidied_text.replace(' ', '&nbsp;')
+            tidied_text = tidied_text.replace('\t', ' ' * self.tab_size)
             tidied_text = tidied_text.replace("\n", '')
 
-            line.append('<span style=\"color:' + the_colour + '\">')
+            # Highlight span if needed
+            if hl_found:
+                line.append('<span style=\"background-color:' + self.sbground + '; color:' + self.sfground + '\">')
+                hl_found = False
+                self.curr_hl = None
+            else:
+                line.append('<span style=\"color:' + the_colour + '\">')
+
             line.append(tidied_text + '</span>')
             self.pt = self.end
             self.end = self.pt + 1
