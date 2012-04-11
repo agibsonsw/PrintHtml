@@ -3,7 +3,6 @@ import sublime_plugin
 from os import path
 import tempfile
 import desktop
-import re
 import sys
 
 PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
@@ -17,7 +16,7 @@ from plistlib import readPlist
 
 
 class PrintHtmlCommand(sublime_plugin.TextCommand):
-    def setup(self, numbers):
+    def setup(self, numbers, highlight_selections):
         path_packages = sublime.packages_path()
 
         # Get get general document preferences from sublime preferences
@@ -30,7 +29,10 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         self.bground = ''
         self.fground = ''
         self.gfground = ''
+        self.sbground = ''
+        self.sfground = ''
         self.numbers = numbers
+        self.highlight_selections = highlight_selections
 
         # Get color scheme
         alt_scheme = sublime.load_settings(PACKAGE_SETTINGS).get("alternate_scheme", False)
@@ -46,13 +48,23 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             self.fground = colour_settings["foreground"].strip()
         if 'gutterForeground' in colour_settings:
             self.gfground = colour_settings["gutterForeground"].strip()
+        if 'selectionForeground' in colour_settings:
+            self.sfground = colour_settings["selectionForeground"].strip()
+        if 'selection' in colour_settings:
+            self.sbground = colour_settings["selection"].strip()
 
         if self.gfground == '':
             self.gfground = self.fground
 
+        if self.sfground == '':
+            self.gfground = self.bground
+
+        if self.sbground == '':
+            self.sbground = self.fground
+
         # Determine start and end points and whether to parse whole file or selection
         curr_sel = self.view.sel()[0]
-        if curr_sel.empty() or abs(curr_sel.end() - curr_sel.begin()) < 4:
+        if curr_sel.empty() or self.highlight_selections or abs(curr_sel.end() - curr_sel.begin()) < 4:
             self.size = self.view.size()
             self.pt = 0
             self.end = 1
@@ -63,6 +75,12 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             self.end = self.pt + 1
             self.curr_row = self.view.rowcol(self.pt)[0] + 1
             self.partial = True
+
+        self.highlights = []
+        if self.highlight_selections:
+            for sel in self.view.sel():
+                if not sel.empty():
+                    self.highlights.append(sel)
 
         # Create scope colors mapping from color scheme file
         self.colours = {self.view.scope_name(self.end).split(' ')[0]: self.fground}
@@ -110,13 +128,28 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('</style>\n</head>\n')
 
     def convert_view_to_html(self, the_html):
+        highlight = None
+        hl_found = False
         while self.end <= self.size:
-            scope_name = self.view.scope_name(self.pt)
-            while self.view.scope_name(self.end) == scope_name and self.end <= self.size:
-                self.end += 1
-            region = sublime.Region(self.pt, self.end)
+            # Grab next highlight region
+            if self.highlight_selections and highlight == None and len(self.highlights):
+                highlight = self.highlights.pop(0)
 
-            the_colour = self.guess_colour(scope_name.strip())
+            # If in highlight region, set highlight
+            if highlight != None and self.pt == highlight.begin():
+                the_colour = self.sfground
+                self.end = highlight.end()
+                hl_found = True
+                region = sublime.Region(self.pt, self.end)
+            else:
+                # Get text of like scope up to a highlight
+                scope_name = self.view.scope_name(self.pt)
+                while self.view.scope_name(self.end) == scope_name and self.end <= self.size:
+                    if highlight != None and self.end == highlight.begin():
+                        break
+                    self.end += 1
+                region = sublime.Region(self.pt, self.end)
+                the_colour = self.guess_colour(scope_name.strip())
 
             tidied_text = self.view.substr(region)
             tidied_text = tidied_text.replace('&', '&amp;')
@@ -125,12 +158,20 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             tidied_text = tidied_text.replace('\t', '&nbsp;' * self.tab_size)
             tidied_text = tidied_text.replace(' ', '&nbsp;')
 
-            new_li = '</span></li><li><span style=\"color:' + the_colour + '\">'
+            if hl_found:
+                new_li = '</span></li><li><span style=\"background-color: ' + self.sbground + '; color:' + the_colour + '\">'
+            else:
+                new_li = '</span></li><li><span style=\"color:' + the_colour + '\">'
             if self.numbers:
                 tidied_text = tidied_text.replace('\n', '\n' + new_li)
 
             the_html.write('<span style=\"color:' + the_colour + '\">')
-            the_html.write(tidied_text + '</span>')
+            if hl_found:
+                the_html.write('<span style=\"background-color: ' + self.sbground + ';\">' + tidied_text + '</span></span>')
+                hl_found = False
+                highlight = None
+            else:
+                the_html.write(tidied_text + '</span>')
             self.pt = self.end
             self.end = self.pt + 1
 
@@ -157,8 +198,8 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         # Write empty line to allow copying of last line and line number without issue
         the_html.write('<pre/>\n</body>\n</html>')
 
-    def run(self, edit, numbers):
-        self.setup(numbers)
+    def run(self, edit, numbers=False, highlight_selections=False):
+        self.setup(numbers, highlight_selections)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
             self.write_header(the_html)
