@@ -68,6 +68,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             self.size = self.view.size()
             self.pt = 0
             self.end = 1
+            self.curr_row = 1
             self.partial = False
         else:
             self.size = curr_sel.end()
@@ -113,12 +114,12 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('<html>\n<head>\n<title>' + path.basename(the_html.name) + '</title>\n')
         the_html.write('<style type=\"text/css\">\n')
         the_html.write('\tpre { background-color: ' + self.bground + '; color: border: 0; margin: 0; padding: 0; }\n')
-        the_html.write('\tspan { display: inline; border: 0; margin: 0; padding: 0; }\n')
+        the_html.write('\tspan { border: 0; margin: 0; padding: 0; }\n')
         if not self.numbers:
             the_html.write('\tol { list-style-type: none; }\n')
         the_html.write('\tli { color: ' + self.gfground + '; margin-top: ' +
             str(self.padd_top) + 'pt; margin-bottom: ' + str(self.padd_bottom) + 'pt; }\n')
-        the_html.write('\tbody { ')
+        the_html.write('\tbody { padding-left: 10pt;')
         if self.fground != '':
             the_html.write('color: ' + self.fground + ';')
         if self.bground != '':
@@ -128,28 +129,23 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('</style>\n</head>\n')
 
     def convert_view_to_html(self, the_html):
-        highlight = None
-        hl_found = False
-        while self.end <= self.size:
-            # Grab next highlight region
-            if self.highlight_selections and highlight == None and len(self.highlights):
-                highlight = self.highlights.pop(0)
+        self.curr_row += 1
+        for line in self.view.split_by_newlines(sublime.Region(self.end, self.size)):
+            self.end = line.begin()
+            self.size = line.end()
+            self.convert_line_to_html(the_html)
+            if self.numbers:
+                the_html.write('</span><span>\n</span></li><li value=\"' + str(self.curr_row) + '\">')
+            self.curr_row += 1
 
-            # If in highlight region, set highlight
-            if highlight != None and self.pt == highlight.begin():
-                the_colour = self.sfground
-                self.end = highlight.end()
-                hl_found = True
-                region = sublime.Region(self.pt, self.end)
-            else:
-                # Get text of like scope up to a highlight
-                scope_name = self.view.scope_name(self.pt)
-                while self.view.scope_name(self.end) == scope_name and self.end <= self.size:
-                    if highlight != None and self.end == highlight.begin():
-                        break
-                    self.end += 1
-                region = sublime.Region(self.pt, self.end)
-                the_colour = self.guess_colour(scope_name.strip())
+    def convert_line_to_html(self, the_html):
+        while self.end <= self.size:
+            # Get text of like scope up to a highlight
+            scope_name = self.view.scope_name(self.pt)
+            while self.view.scope_name(self.end) == scope_name and self.end <= self.size:
+                self.end += 1
+            region = sublime.Region(self.pt, self.end)
+            the_colour = self.guess_colour(scope_name.strip())
 
             tidied_text = self.view.substr(region)
             tidied_text = tidied_text.replace('&', '&amp;')
@@ -158,20 +154,11 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             tidied_text = tidied_text.replace('\t', '&nbsp;' * self.tab_size)
             tidied_text = tidied_text.replace(' ', '&nbsp;')
 
-            if hl_found:
-                new_li = '</span></li><li><span style=\"background-color: ' + self.sbground + '; color:' + the_colour + '\">'
-            else:
-                new_li = '</span></li><li><span style=\"color:' + the_colour + '\">'
             if self.numbers:
-                tidied_text = tidied_text.replace('\n', '\n' + new_li)
+                tidied_text = tidied_text.replace("\n", '')
 
             the_html.write('<span style=\"color:' + the_colour + '\">')
-            if hl_found:
-                the_html.write('<span style=\"background-color: ' + self.sbground + ';\">' + tidied_text + '</span></span>')
-                hl_found = False
-                highlight = None
-            else:
-                the_html.write(tidied_text + '</span>')
+            the_html.write(tidied_text + '</span>')
             self.pt = self.end
             self.end = self.pt + 1
 
@@ -184,10 +171,8 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             fname = "Untitled"
         the_html.write('<span style=\"color:' + self.fground + '\">' + fname + '\n\n</span>')
 
-        if self.numbers and self.partial:
+        if self.numbers:
             the_html.write('<ol><li value="%d">' % self.curr_row)  # use code's line numbering
-        elif self.numbers:
-            the_html.write('<ol><li>')
 
         # Convert view to HTML
         self.convert_view_to_html(the_html)
