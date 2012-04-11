@@ -77,6 +77,8 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             self.curr_row = self.view.rowcol(self.pt)[0] + 1
             self.partial = True
 
+        self.gutter_pad = len(str(self.view.rowcol(self.size)[0]))
+
         self.highlights = []
         if self.highlight_selections:
             for sel in self.view.sel():
@@ -95,6 +97,10 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
             if scope != None and colour != None:
                 self.colours[scope] = colour
+
+    def print_gutter_numbers(self, num):
+        return '<span style=\"color: ' + self.gfground + ';\">%s&nbsp;</span>' % \
+            str(num).rjust(self.gutter_pad).replace(' ', '&nbsp;')
 
     def guess_colour(self, the_key):
         the_colour = None
@@ -115,11 +121,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('<style type=\"text/css\">\n')
         the_html.write('\tpre { background-color: ' + self.bground + '; color: border: 0; margin: 0; padding: 0; }\n')
         the_html.write('\tspan { border: 0; margin: 0; padding: 0; }\n')
-        if not self.numbers:
-            the_html.write('\tol { list-style-type: none; }\n')
-        the_html.write('\tli { color: ' + self.gfground + '; margin-top: ' +
-            str(self.padd_top) + 'pt; margin-bottom: ' + str(self.padd_bottom) + 'pt; }\n')
-        the_html.write('\tbody { padding-left: 10pt;')
+        the_html.write('\tbody { ')
         if self.fground != '':
             the_html.write('color: ' + self.fground + ';')
         if self.bground != '':
@@ -135,7 +137,9 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             self.size = line.end()
             self.convert_line_to_html(the_html)
             if self.numbers:
-                the_html.write('</span><span>\n</span></li><li value=\"' + str(self.curr_row) + '\">')
+                the_html.write('\n</span>'+ self.print_gutter_numbers(self.curr_row))
+            else:
+                the_html.write('\n</span>')
             self.curr_row += 1
 
     def convert_line_to_html(self, the_html):
@@ -153,9 +157,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             tidied_text = tidied_text.replace('>', '&gt;')
             tidied_text = tidied_text.replace('\t', '&nbsp;' * self.tab_size)
             tidied_text = tidied_text.replace(' ', '&nbsp;')
-
-            if self.numbers:
-                tidied_text = tidied_text.replace("\n", '')
+            tidied_text = tidied_text.replace("\n", '')
 
             the_html.write('<span style=\"color:' + the_colour + '\">')
             the_html.write(tidied_text + '</span>')
@@ -172,13 +174,10 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('<span style=\"color:' + self.fground + '\">' + fname + '\n\n</span>')
 
         if self.numbers:
-            the_html.write('<ol><li value="%d">' % self.curr_row)  # use code's line numbering
+            the_html.write(self.print_gutter_numbers(self.curr_row))  # use code's line numbering
 
         # Convert view to HTML
         self.convert_view_to_html(the_html)
-
-        if self.numbers:
-            the_html.write('</li></ol>')
 
         # Write empty line to allow copying of last line and line number without issue
         the_html.write('<pre/>\n</body>\n</html>')
