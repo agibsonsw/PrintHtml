@@ -92,14 +92,13 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             self.curr_row = self.view.rowcol(self.pt)[0] + 1
             self.partial = True
 
-        self.gutter_pad = len(str(self.view.rowcol(self.size)[0]))
+        self.gutter_pad = len(str(self.view.rowcol(self.size)[0])) + 1
 
         self.highlights = []
         if self.highlight_selections:
             for sel in self.view.sel():
                 if not sel.empty():
                     self.highlights.append(sel)
-        print self.highlights
 
         # Create scope colors mapping from color scheme file
         self.colours = {self.view.scope_name(self.end).split(' ')[0]: self.fground}
@@ -115,15 +114,16 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
                 self.colours[scope] = colour
 
     def print_line(self, line, num=None):
-        html_line = '<tr><td>%s%s</td></tr>'
         if num == None:
-            gutter = ''
+            html_line = '<tr><td>%s</td></tr>' % line
         else:
             gutter = (
-                '<span style=\"background-color: ' + self.gbground + '; color: ' +
-                self.gfground + ';\">' + str(num).rjust(self.gutter_pad) + ' </span></td><td>'
+                '<span style=\"color: ' +
+                self.gfground + ';\">' + str(num).rjust(self.gutter_pad).replace(" ", '&nbsp;') +
+                '&nbsp;</span></td><td>'
             )
-        return html_line % (gutter, line)
+            html_line = '<tr><td style=\"background-color: ' + self.gbground + ';\">%s&nbsp;%s</td></tr>' % (gutter, line)
+        return html_line
 
     def guess_colour(self, the_key):
         the_colour = None
@@ -207,6 +207,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             tidied_text = tidied_text.replace('>', '&gt;')
             tidied_text = tidied_text.replace('\t', ' ' * self.tab_size)
             tidied_text = tidied_text.replace("\n", '')
+            tidied_text = tidied_text.replace(" ", '&nbsp;')
 
             # Highlight span if needed
             if hl_found:
@@ -242,12 +243,15 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         # Write empty line to allow copying of last line and line number without issue
         the_html.write('<pre/>\n</body>\n</html>')
 
-    def run(self, edit, numbers=False, highlight_selections=False):
+    def run(self, edit, numbers=False, highlight_selections=False, clipboard=False):
         self.setup(numbers, highlight_selections)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
             self.write_header(the_html)
             self.write_body(the_html)
+            if clipboard:
+                the_html.seek(0)
+                sublime.set_clipboard(the_html.read())
 
         # Open in web browser
         desktop.open(the_html.name)
