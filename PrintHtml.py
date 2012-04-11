@@ -4,6 +4,7 @@ from os import path
 import tempfile
 import desktop
 import sys
+import datetime
 
 PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
 
@@ -171,7 +172,8 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
             fname = "Untitled"
-        the_html.write('<span style=\"color:' + self.fground + '\">' + fname + '\n\n</span>')
+        date_time = datetime.datetime.now().strftime("%m/%d/%y %I:%M:%S ")
+        the_html.write('<span style=\"color:' + self.fground + '\">' + date_time + fname + '\n\n</span>')
 
         if self.numbers:
             the_html.write(self.print_gutter_numbers(self.curr_row))  # use code's line numbering
