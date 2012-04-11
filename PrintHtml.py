@@ -69,11 +69,11 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
         # Get get general document preferences from sublime preferences
         settings = sublime.load_settings('Preferences.sublime-settings')
-        self.font_size = settings.get('font_size') or 10
-        self.font_face = settings.get('font_face') or 'Consolas'
-        self.tab_size = settings.get('tab_size') or 4
-        self.padd_top = settings.get('line_padding_top') or 0
-        self.padd_bottom = settings.get('line_padding_bottom') or 0
+        self.font_size = settings.get('font_size', 10)
+        self.font_face = settings.get('font_face', 'Consolas')
+        self.tab_size = settings.get('tab_size', 4)
+        self.padd_top = settings.get('line_padding_top', 0)
+        self.padd_bottom = settings.get('line_padding_bottom', 0)
         self.bground = ''
         self.fground = ''
         self.gbground = ''
