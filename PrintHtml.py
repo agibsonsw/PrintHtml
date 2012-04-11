@@ -45,7 +45,7 @@ GUTTER_LINE = \
 """
 <tr>
 <td valign="top" class="code_text code_gutter"><span style="color: %s;">%s&nbsp;</span></td>
-<td>&nbsp;%s\n</td>
+<td class="code_text">&nbsp;%s\n</td>
 </tr>
 """
 
