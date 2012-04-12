@@ -132,7 +132,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             self.gbground = self.bground
 
         if self.sfground == '':
-            self.gfground = self.bground
+            self.sfground = self.bground
 
         if self.sbground == '':
             self.sbground = self.fground
