@@ -95,7 +95,8 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('<style type=\"text/css\">\n')
         the_html.write('\tspan { display: inline; border: 0; margin: 0; padding: 0; }\n')
         if not self.numbers:
-            the_html.write('\tol { list-style-type: none; }\n')
+            the_html.write('\tol { list-style-type: none; list-style-position: inside; ' 
+                + 'margin: 0px; padding: 0px; }\n')
         the_html.write('\tli { color: ' + self.gfground + '; margin-top: ' +
             str(self.padd_top) + 'pt; margin-bottom: ' + str(self.padd_bottom) + 'pt; }\n')
         the_html.write('\tbody { ')
@@ -114,6 +115,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
                 the_html.write('<br/></li>\n<li>')
                 continue
             self.line_end = line.end()
+            temp_line = ''
             while self.end <= self.line_end:
                 scope_name = self.view.scope_name(self.pt)
                 while (self.end <= self.line_end and (self.view.scope_name(self.end) == scope_name 
@@ -127,12 +129,19 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
                 tidied_text = tidied_text.replace('<', '&lt;')
                 tidied_text = tidied_text.replace('>', '&gt;')
                 tidied_text = tidied_text.replace('\t', '&nbsp;' * self.tab_size)
-                tidied_text = tidied_text.replace(' ', '&nbsp;')
-
-                the_html.write('<span style=\"color:' + the_colour + '\">')
-                the_html.write(tidied_text + '</span>')
+                tidied_text = tidied_text.strip('\r\n')
+                if len(tidied_text):
+                    without_init_sp = tidied_text.lstrip(' ')
+                    init_spaces = len(tidied_text) - len(without_init_sp)
+                    if init_spaces:
+                        without_init_sp = ('&nbsp;' * init_spaces) + without_init_sp
+                        tidied_text = without_init_sp
+                    temp_line += '<span style=\"color:' + the_colour + '\">'
+                    temp_line += tidied_text + '</span>'
                 self.pt = self.end
                 self.end = self.pt + 1
+            if temp_line != '':
+                the_html.write(temp_line)
             the_html.write('</li>\n<li>')
 
     def write_body(self, the_html):
@@ -153,7 +162,6 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         self.convert_view_to_html(the_html)
 
         the_html.write('</li>\n</ol>')
-
         # Write empty line to allow copying of last line and line number without issue
         the_html.write('\n<br/>\n</body>\n</html>')
 
