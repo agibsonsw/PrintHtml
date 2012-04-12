@@ -35,7 +35,16 @@ CSS = \
 
 BODY_START = """<body class="code_page code_text">\n<pre class="code_page">"""
 
-BODY_END = """<pre/>\n</body>\n</html>"""
+PRINT = \
+"""
+<SCRIPT LANGUAGE="JavaScript">
+if (window.print) {
+    window.print();
+}
+</script>
+"""
+
+BODY_END = """<pre/>%s\n</body>\n</html>"""
 
 TABLE_START = """<table cellspacing="0" cellpadding="0" class="code_page">"""
 
@@ -64,7 +73,7 @@ FILE_INFO = """<span style="color: %s">%s%s\n\n</span>"""
 
 
 class PrintHtmlCommand(sublime_plugin.TextCommand):
-    def setup(self, numbers, highlight_selections):
+    def setup(self, numbers, highlight_selections, browser_print):
         path_packages = sublime.packages_path()
 
         # Get get general document preferences from sublime preferences
@@ -82,6 +91,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         self.sfground = ''
         self.numbers = numbers
         self.highlight_selections = highlight_selections
+        self.browser_print = True
         self.hl_continue = None
         self.curr_hl = None
 
@@ -273,18 +283,25 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         # Convert view to HTML
         self.convert_view_to_html(the_html)
 
+        js_options = []
+        if self.browser_print:
+            js_options.append(PRINT)
+
         the_html.write(TABLE_END)
 
         # Write empty line to allow copying of last line and line number without issue
-        the_html.write(BODY_END)
+        the_html.write(BODY_END % ''.join(js_options))
 
-    def run(self, edit, numbers=False, highlight_selections=False, clipboard=False):
-        self.setup(numbers, highlight_selections)
+    def run(
+            self, edit, numbers=False, highlight_selections=False,
+            clipboard_copy=False, browser_print=False
+        ):
+        self.setup(numbers, highlight_selections, browser_print)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
             self.write_header(the_html)
             self.write_body(the_html)
-            if clipboard:
+            if clipboard_copy:
                 the_html.seek(0)
                 sublime.set_clipboard(the_html.read())
 
