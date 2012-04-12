@@ -121,10 +121,9 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 				tidied_text = tidied_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 				tidied_text = tidied_text.replace('\t', '&nbsp;' * self.tab_size).strip('\r\n')
 				if len(tidied_text):
-					without_init_sp = tidied_text.lstrip(' ')
-					init_spaces = len(tidied_text) - len(without_init_sp)
+					init_spaces = len(tidied_text) - len(tidied_text.lstrip(' '))
 					if init_spaces:
-						tidied_text = ('&nbsp;' * init_spaces) + without_init_sp
+						tidied_text = (init_spaces * '&nbsp;') + tidied_text.lstrip(' ')
 					temp_line += '<span style=\"color:' + the_colour + '\">'
 					temp_line += tidied_text + '</span>'
 				self.pt = self.end
