@@ -51,7 +51,7 @@ var start = %d;
 var end = %d;
 var wrap_size = %d;
 var numbered = %s;
-document.getElementById("file_info").offsetWidth = wrap_size + "px"
+document.getElementById("file_info").style.width = wrap_size + "px"
 if (numbered) {
     for(i = start; i < end; i++) {
         var width = document.getElementById("L" + i).offsetWidth;
