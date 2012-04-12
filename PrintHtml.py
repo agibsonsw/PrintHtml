@@ -33,11 +33,11 @@ CSS = \
 </head>
 """
 
-BODY_START = """<body class="code_page code_text">\n<pre>"""
+BODY_START = """<body class="code_page code_text">\n<pre class="code_page">"""
 
 BODY_END = """<pre/>\n</body>\n</html>"""
 
-TABLE_START = """<table cellspacing="0" cellpadding="0">"""
+TABLE_START = """<table cellspacing="0" cellpadding="0" class="code_page">"""
 
 TABLE_END = """</table>"""
 
