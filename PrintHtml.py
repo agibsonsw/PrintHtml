@@ -37,7 +37,7 @@ BODY_START = """<body class="code_page code_text">\n<pre class="code_page">"""
 
 PRINT = \
 """
-<SCRIPT LANGUAGE="JavaScript">
+<script type="text/javascript">
 if (window.print) {
     window.print();
 }
@@ -46,7 +46,7 @@ if (window.print) {
 
 WRAP = \
 """
-<SCRIPT LANGUAGE="JavaScript">
+<script type="text/javascript">
 var start = %d;
 var end = %d;
 var wrap_size = %d;
