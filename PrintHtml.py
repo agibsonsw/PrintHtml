@@ -73,7 +73,7 @@ FILE_INFO = """<span style="color: %s">%s%s\n\n</span>"""
 
 
 class PrintHtmlCommand(sublime_plugin.TextCommand):
-    def setup(self, numbers, highlight_selections, browser_print):
+    def setup(self, numbers, highlight_selections, browser_print, color_scheme):
         path_packages = sublime.packages_path()
 
         # Get get general document preferences from sublime preferences
@@ -91,12 +91,15 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         self.sfground = ''
         self.numbers = numbers
         self.highlight_selections = highlight_selections
-        self.browser_print = True
+        self.browser_print = browser_print
         self.hl_continue = None
         self.curr_hl = None
 
         # Get color scheme
-        alt_scheme = sublime.load_settings(PACKAGE_SETTINGS).get("alternate_scheme", False)
+        if color_scheme != None:
+            alt_scheme = color_scheme
+        else:
+            alt_scheme = sublime.load_settings(PACKAGE_SETTINGS).get("alternate_scheme", False)
         scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
         colour_scheme = path.normpath(scheme_file)
         plist_file = readPlist(path_packages + colour_scheme.replace('Packages', ''))
@@ -293,10 +296,10 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write(BODY_END % ''.join(js_options))
 
     def run(
-            self, edit, numbers=False, highlight_selections=False,
-            clipboard_copy=False, browser_print=False
-        ):
-        self.setup(numbers, highlight_selections, browser_print)
+        self, edit, numbers=False, highlight_selections=False,
+        clipboard_copy=False, browser_print=False, color_scheme=None
+    ):
+        self.setup(numbers, highlight_selections, browser_print, color_scheme)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
             self.write_header(the_html)
