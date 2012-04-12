@@ -22,7 +22,7 @@ CSS = \
 <head>
 <title>%s</title>
 <style type="text/css">
-    pre { border: 0; margin: 0; padding: 0;  }
+    pre { border: 0; margin: 0; padding: 0; }
     table { border: 0; margin: 0; padding: 0; }
     .code_text { font: %spt "%s", Consolas, Monospace; }
     .code_page { background-color: %s; }
@@ -44,6 +44,27 @@ if (window.print) {
 </script>
 """
 
+WRAP = \
+"""
+<SCRIPT LANGUAGE="JavaScript">
+var start = %d;
+var end = %d;
+var wrap_size = %d;
+var numbered = %s;
+document.getElementById("file_info").offsetWidth = wrap_size + "px"
+if (numbered) {
+    for(i = start; i < end; i++) {
+        var width = document.getElementById("L" + i).offsetWidth;
+        document.getElementById("C" + i).style.width = (wrap_size - width) + "px";
+    }
+} else {
+    for(i = start; i < end; i++) {
+        document.getElementById("C" + i).style.width = wrap_size + "px";
+    }
+}
+</script>
+"""
+
 BODY_END = """<pre/>%s\n</body>\n</html>"""
 
 TABLE_START = """<table cellspacing="0" cellpadding="0" class="code_page">"""
@@ -53,15 +74,15 @@ TABLE_END = """</table>"""
 GUTTER_LINE = \
 """
 <tr>
-<td valign="top" class="code_text code_gutter"><span style="color: %s;">%s&nbsp;</span></td>
-<td class="code_text">&nbsp;%s\n</td>
+<td valign="top" id="L%s" class="code_text code_gutter"><span style="color: %s;">%s&nbsp;</span></td>
+<td class="code_text"><div id="C%s" style="float:left;width:100%%;word-wrap: break-word;">&nbsp;%s\n</div></td>
 </tr>
 """
 
 LINE = \
 """
 <tr>
-<td class="code_text">%s\n</td>
+<td class="code_text"><div id="C%s" style="float:left;width:100%%;word-wrap: break-word;">%s\n</td>
 </tr>
 """
 
@@ -69,11 +90,11 @@ CODE = """<span style="color:%s">%s</span>"""
 
 HIGHLIGHTED_CODE = """<span style="background-color: %s; color: %s;">%s</span>"""
 
-FILE_INFO = """<span style="color: %s">%s%s\n\n</span>"""
+FILE_INFO = """<div id="file_info" style="float:left;width:100%%;word-wrap: break-word;"><span style="color: %s">%s %s\n\n</span></div>"""
 
 
 class PrintHtmlCommand(sublime_plugin.TextCommand):
-    def setup(self, numbers, highlight_selections, browser_print, color_scheme):
+    def setup(self, numbers, highlight_selections, browser_print, color_scheme, wrap):
         path_packages = sublime.packages_path()
 
         # Get get general document preferences from sublime preferences
@@ -92,6 +113,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         self.numbers = numbers
         self.highlight_selections = highlight_selections
         self.browser_print = browser_print
+        self.wrap = int(wrap) if wrap != None and int(wrap) > 0 else False
         self.hl_continue = None
         self.curr_hl = None
 
@@ -151,6 +173,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             self.end = self.pt + 1
             self.curr_row = self.view.rowcol(self.pt)[0] + 1
             self.partial = True
+        self.start_line = self.curr_row
 
         self.gutter_pad = len(str(self.view.rowcol(self.size)[0])) + 1
 
@@ -173,11 +196,11 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             if scope != None and colour != None:
                 self.colours[scope] = colour
 
-    def print_line(self, line, num=None):
-        if num == None:
-            html_line = LINE % line
+    def print_line(self, line, num):
+        if not self.numbers:
+            html_line = LINE % (str(num), line)
         else:
-            html_line = GUTTER_LINE % (self.gfground, str(num).rjust(self.gutter_pad).replace(" ", '&nbsp;'), line)
+            html_line = GUTTER_LINE % (str(num), self.gfground, str(num).rjust(self.gutter_pad).replace(" ", '&nbsp;'), str(num), line)
 
         return html_line
 
@@ -209,10 +232,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         for line in self.view.split_by_newlines(sublime.Region(self.end, self.size)):
             self.size = line.end()
             line = self.convert_line_to_html(the_html)
-            if self.numbers:
-                the_html.write(self.print_line(line, self.curr_row))
-            else:
-                the_html.write(self.print_line(line))
+            the_html.write(self.print_line(line, self.curr_row))
             self.curr_row += 1
 
     def convert_line_to_html(self, the_html):
@@ -278,7 +298,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
             fname = "Untitled"
-        date_time = datetime.datetime.now().strftime("%m/%d/%y %I:%M:%S ")
+        date_time = datetime.datetime.now().strftime("%m/%d/%y %I:%M:%S")
         the_html.write(FILE_INFO % (self.fground, date_time, fname))
 
         the_html.write(TABLE_START)
@@ -287,6 +307,16 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         self.convert_view_to_html(the_html)
 
         js_options = []
+        if self.wrap:
+            js_options.append(
+                WRAP % (
+                    self.start_line,
+                    self.curr_row,
+                    self.wrap,
+                    ("true" if self.numbers else "false")
+                )
+            )
+
         if self.browser_print:
             js_options.append(PRINT)
 
@@ -297,9 +327,10 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
     def run(
         self, edit, numbers=False, highlight_selections=False,
-        clipboard_copy=False, browser_print=False, color_scheme=None
+        clipboard_copy=False, browser_print=False, color_scheme=None,
+        wrap=None
     ):
-        self.setup(numbers, highlight_selections, browser_print, color_scheme)
+        self.setup(numbers, highlight_selections, browser_print, color_scheme, wrap)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
             self.write_header(the_html)
