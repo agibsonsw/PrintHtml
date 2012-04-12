@@ -14,6 +14,10 @@ if sublime.platform() == "linux":
     if not linux_lib in sys.path and path.exists(linux_lib):
         sys.path.append(linux_lib)
 from plistlib import readPlist
+<<<<<<< HEAD
+=======
+
+>>>>>>> e1ec88f044e2ef6bc61552215c2e77e3f61b9ec2
 
 class PrintHtmlCommand(sublime_plugin.TextCommand):
     def setup(self, numbers):
@@ -95,8 +99,12 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('<style type=\"text/css\">\n')
         the_html.write('\tspan { display: inline; border: 0; margin: 0; padding: 0; }\n')
         if not self.numbers:
+<<<<<<< HEAD
             the_html.write('\tol { list-style-type: none; list-style-position: inside; ' 
                 + 'margin: 0px; padding: 0px; }\n')
+=======
+            the_html.write('\tol { list-style-type: none; }\n')
+>>>>>>> e1ec88f044e2ef6bc61552215c2e77e3f61b9ec2
         the_html.write('\tli { color: ' + self.gfground + '; margin-top: ' +
             str(self.padd_top) + 'pt; margin-bottom: ' + str(self.padd_bottom) + 'pt; }\n')
         the_html.write('\tbody { ')
@@ -109,6 +117,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         the_html.write('</style>\n</head>\n')
 
     def convert_view_to_html(self, the_html):
+<<<<<<< HEAD
         for line in self.view.split_by_newlines(sublime.Region(self.pt, self.size)):
             self.pt = line.begin(); self.end = self.pt + 1
             if line.empty():
@@ -143,6 +152,33 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
             if temp_line != '':
                 the_html.write(temp_line)
             the_html.write('</li>\n<li>')
+=======
+        while self.end <= self.size:
+            scope_name = self.view.scope_name(self.pt)
+            while self.view.scope_name(self.end) == scope_name and self.end <= self.size:
+                self.end += 1
+            region = sublime.Region(self.pt, self.end)
+
+            the_colour = self.guess_colour(scope_name.strip())
+
+            tidied_text = self.view.substr(region)
+            tidied_text = tidied_text.replace('&', '&amp;')
+            tidied_text = tidied_text.replace('<', '&lt;')
+            tidied_text = tidied_text.replace('>', '&gt;')
+            tidied_text = tidied_text.replace('\t', '&nbsp;' * self.tab_size)
+            tidied_text = tidied_text.replace(' ', '&nbsp;')
+            m = re.match("^(.*)\r?\n((\r?\n)+)$", tidied_text) if not self.numbers else None
+            new_li = '</span></li>\n<li><span style=\"color:' + the_colour + '\">'
+            if m != None:
+                new_lines = ''.join(["<li><br/></li>" for c in str(m.group(2)) if c == "\n"])
+                tidied_text = m.group(1) + "</span></li>\n" + new_lines + '<li><span>' + new_li
+            else:
+                tidied_text = tidied_text.replace('\n', new_li)
+            the_html.write('<span style=\"color:' + the_colour + '\">')
+            the_html.write(tidied_text + '</span>')
+            self.pt = self.end
+            self.end = self.pt + 1
+>>>>>>> e1ec88f044e2ef6bc61552215c2e77e3f61b9ec2
 
     def write_body(self, the_html):
         the_html.write('<body>\n')
@@ -162,6 +198,10 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         self.convert_view_to_html(the_html)
 
         the_html.write('</li>\n</ol>')
+<<<<<<< HEAD
+=======
+
+>>>>>>> e1ec88f044e2ef6bc61552215c2e77e3f61b9ec2
         # Write empty line to allow copying of last line and line number without issue
         the_html.write('\n<br/>\n</body>\n</html>')
 
