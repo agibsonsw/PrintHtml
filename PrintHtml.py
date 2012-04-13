@@ -375,8 +375,8 @@ class PrintHtml(object):
                     the_html.write(DIVIDER % {"color": self.fground})
                     the_html.write(TABLE_START)
         else:
-            processed_rows += "[" + str(self.curr_row) + ","
             self.setup_print_block(self.view.sel()[0])
+            processed_rows += "[" + str(self.curr_row) + ","
             self.convert_view_to_html(the_html)
             processed_rows += str(self.curr_row) + "],"
             self.tables += 1
