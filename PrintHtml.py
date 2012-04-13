@@ -209,13 +209,7 @@ class PrintHtml(object):
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
-        if multi:
-            self.size = curr_sel.end()
-            self.pt = curr_sel.begin()
-            self.end = self.pt + 1
-            self.curr_row = self.view.rowcol(self.pt)[0] + 1
-            self.partial = True
-        if curr_sel.empty() or self.highlight_selections or abs(curr_sel.end() - curr_sel.begin()) < 4:
+        if not multi and (curr_sel.empty() or self.highlight_selections or abs(curr_sel.end() - curr_sel.begin()) < 4):
             self.size = self.view.size()
             self.pt = 0
             self.end = 1
