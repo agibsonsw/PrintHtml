@@ -1,0 +1,7 @@
+[
+    // Print to HTML
+    {
+        "caption": "Print to HTML: Show Print Menu",
+        "command": "print_html_panel"
+    }
+]
