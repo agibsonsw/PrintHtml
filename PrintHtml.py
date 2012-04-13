@@ -149,6 +149,7 @@ class PrintHtml(object):
         self.tab_size = settings.get('tab_size', 4)
         self.padd_top = settings.get('line_padding_top', 0)
         self.padd_bottom = settings.get('line_padding_bottom', 0)
+        self.char_limit = int(sublime.load_settings(PACKAGE_SETTINGS).get("valid_selection_size", 4))
         self.bground = ''
         self.fground = ''
         self.gbground = ''
@@ -209,7 +210,7 @@ class PrintHtml(object):
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
-        if not multi and (curr_sel.empty() or self.highlight_selections or abs(curr_sel.end() - curr_sel.begin()) < 4):
+        if not multi and (curr_sel.empty() or self.highlight_selections or curr_sel.size() <= self.char_limit):
             self.size = self.view.size()
             self.pt = 0
             self.end = 1
@@ -228,7 +229,7 @@ class PrintHtml(object):
     def check_sel(self):
         multi = False
         for sel in self.view.sel():
-            if not sel.empty():
+            if not sel.empty() and sel.size() >= self.char_limit:
                 multi = True
                 self.sels.append(sel)
         return multi
@@ -283,6 +284,19 @@ class PrintHtml(object):
             the_html.write(self.print_line(line, self.curr_row))
             self.curr_row += 1
 
+    def html_encode(self, text):
+        # Format text to HTML
+        encode_table = {
+            '&':  '&amp;',
+            '>':  '&gt;',
+            '<':  '&lt;',
+            '\t': '&nbsp;' * self.tab_size,
+            ' ':  '&nbsp;',
+            '\n': ''
+        }
+
+        return ''.join(encode_table.get(c, c) for c in text).encode('ascii', 'xmlcharrefreplace')
+
     def convert_line_to_html(self, the_html):
         line = []
         hl_found = False
@@ -309,23 +323,14 @@ class PrintHtml(object):
             else:
                 # Get text of like scope up to a highlight
                 scope_name = self.view.scope_name(self.pt)
-                while self.view.scope_name(self.end) == scope_name and self.end <= self.size:
+                while self.view.scope_name(self.end) == scope_name and self.end < self.size:
                     # Kick out if we hit a highlight region
                     if self.curr_hl != None and self.end == self.curr_hl.begin():
                         break
                     self.end += 1
                 the_colour = self.guess_colour(scope_name)
 
-            # Format text to HTML
-            html_encode_table = {
-                '&':  '&amp;',
-                '>':  '&gt;',
-                '<':  '&lt;',
-                '\t': '&nbsp;' * self.tab_size,
-                ' ':  '&nbsp;',
-                '\n': ''
-            }
-            tidied_text = ''.join(html_encode_table.get(c, c) for c in self.view.substr(sublime.Region(self.pt, self.end)))
+            tidied_text = self.html_encode(self.view.substr(sublime.Region(self.pt, self.end)))
 
             # Highlight span if needed
             if hl_found:

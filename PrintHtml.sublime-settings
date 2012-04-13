@@ -9,6 +9,10 @@
     //Path to linux Python 2.6 lib
     "linux_python2.6_lib": "/usr/lib/python2.6/lib-dynload",
 
+    // Minimum allowable size for a selection to be accepted for only the selection to be printed
+    // Multi-select will also ignore selections whose size is less than this.
+    "valid_selection_size": 4,
+
     // Define configurations for the drop down print menu
     "print_panel": [
         // Browser print color (selections and multi-selections allowed)
