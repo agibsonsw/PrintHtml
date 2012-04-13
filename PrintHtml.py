@@ -139,7 +139,7 @@ class PrintHtml(object):
     def __init__(self, view):
         self.view = view
 
-    def setup(self, numbers, highlight_selections, browser_print, color_scheme, wrap, multi_select):
+    def setup(self, numbers, highlight_selections, browser_print, color_scheme, wrap, multi_select, style_gutter):
         path_packages = sublime.packages_path()
 
         # Get get general document preferences from sublime preferences
@@ -181,36 +181,12 @@ class PrintHtml(object):
         colour_settings = plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
-        if "background" in colour_settings:
-            self.bground = colour_settings["background"]
-        if 'foreground' in colour_settings:
-            self.fground = colour_settings["foreground"]
-        if 'gutter' in colour_settings:
-            self.gbground = colour_settings["gutter"]
-        if 'gutterForeground' in colour_settings:
-            self.gfground = colour_settings["gutterForeground"]
-        if 'selectionForeground' in colour_settings:
-            self.sfground = colour_settings["selectionForeground"]
-        if 'selection' in colour_settings:
-            self.sbground = colour_settings["selection"]
-
-        if self.bground == '':
-            self.bground == '#FFFFFF'
-
-        if self.fground == '':
-            self.fground == '#000000'
-
-        if self.gfground == '':
-            self.gfground = self.fground
-
-        if self.gbground == '':
-            self.gbground = self.bground
-
-        if self.sfground == '':
-            self.sfground = self.bground
-
-        if self.sbground == '':
-            self.sbground = self.fground
+        self.bground = colour_settings.get("background", '#FFFFFF')
+        self.fground = colour_settings.get("foreground", '#000000')
+        self.sbground = colour_settings.get("selection", self.fground)
+        self.sfground = colour_settings.get("selectionForeground", self.bground)
+        self.gbground = colour_settings.get("gutter", self.bground) if style_gutter else self.bground
+        self.gfground = colour_settings.get("gutterForeground", self.fground) if style_gutter else self.fground
 
         self.highlights = []
         if self.highlight_selections:
@@ -427,9 +403,9 @@ class PrintHtml(object):
     def run(
         self, numbers=False, highlight_selections=False,
         clipboard_copy=False, browser_print=False, color_scheme=None,
-        wrap=None, view_open=False, multi_select=False
+        wrap=None, view_open=False, multi_select=False, style_gutter=True
     ):
-        self.setup(numbers, highlight_selections, browser_print, color_scheme, wrap, multi_select)
+        self.setup(numbers, highlight_selections, browser_print, color_scheme, wrap, multi_select, style_gutter)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
             self.write_header(the_html)
