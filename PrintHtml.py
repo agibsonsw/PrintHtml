@@ -24,6 +24,7 @@ CSS = \
 <title>%(title)s</title>
 <style type="text/css">
     pre { border: 0; margin: 0; padding: 0; }
+    td { display: %(display_mode)s; }
     table { border: 0; margin: 0; padding: 0; }
     div { float:left; width:100%%; word-wrap: break-word; }
     .code_text { font: %(font_size)dpt "%(font_face)s", Consolas, Monospace; }
@@ -41,20 +42,12 @@ FILE_INFO = """<div id="file_info"><span style="color: %(color)s">%(date_time)s 
 
 TABLE_START = """<table cellspacing="0" cellpadding="0" class="code_page">"""
 
-GUTTER_LINE = \
-"""
-<tr>
-<td valign="top" id="L_%(table)d_%(line_id)d" class="code_text code_gutter"><span style="color: %(color)s;">%(line)s&nbsp;</span></td>
-<td class="code_text"><div id="C_%(table)d_%(code_id)d">&nbsp;%(code)s\n</div></td>
-</tr>
-"""
-
-LINE = \
-"""
-<tr>
-<td class="code_text"><div id="C_%(table)d_%(code_id)d">%(code)s\n</td>
-</tr>
-"""
+LINE = (
+    '<tr>' +
+    '<td valign="top" id="L_%(table)d_%(line_id)d" class="code_text"><span class="code_gutter" style="color: %(color)s;">%(line)s&nbsp;</span>&nbsp;</td>' +
+    '<td class="code_text"><div id="C_%(table)d_%(code_id)d">%(code)s\n</div></td>' +
+    '</tr>'
+)
 
 CODE = """<span style="color:%(color)s">%(content)s</span>"""
 
@@ -66,41 +59,86 @@ DIVIDER = """<span style="color: %(color)s">\n...\n\n</span>"""
 
 BODY_END = """<pre/>\n%(js)s\n</body>\n</html>"""
 
+TOGGLE_GUTTER = \
+"""
+<script type="text/javascript">
+function show_hide_column(e, tables) {
+    var i;
+    var j;
+    var evt = e ? e:window.event;
+    var mode;
+
+    if (evt.shiftKey) {
+        var tbls  = document.getElementsByTagName('table');
+        var t = tables;
+        for (i = 0; i < t; i++) {
+            var rows = tbls[i].getElementsByTagName('tr');
+            var r = rows.length;
+            for (j = 0; j < r; j++) {
+                cels = rows[j].getElementsByTagName('td');
+                if (mode == null) {
+                    if (cels[0].style.display == 'none') {
+                        mode = 'table-cell';
+                    } else {
+                        mode = 'none';
+                    }
+                }
+                cels[0].style.display = mode;
+            }
+        }
+        if (typeof wrap_code !== "undefined" && mode != null) {
+            if (mode == 'table-cell') {
+                setTimeout("wrap_code(true)", 500)
+            } else {
+                setTimeout("wrap_code(false)", 500)
+            }
+        }
+    }
+}
+document.getElementsByTagName('body')[0].ondblclick = function (e) { show_hide_column(e, %(tables)d); }
+</script>
+"""
+
 PRINT = \
 """
 <script type="text/javascript">
-if (window.print) {
-    window.print();
+function page_print() {
+    if (window.print) {
+        window.print();
+    }
 }
+document.getElementsByTagName('body')[0].onload = function (e) { page_print(); self.onload = null; }
 </script>
 """
 
 WRAP = \
 """
 <script type="text/javascript">
-var ranges = [%(ranges)s];
-var start;
-var end;
-var wrap_size = %(wrap_size)d;
-var numbered = %(numbered)s;
-var tables = %(tables)s;
-var i;
-var j;
-document.getElementById("file_info").style.width = wrap_size + "px";
-for (i = 0; i < tables; i++) {
-    start = ranges[i][0]
-    end = ranges[i][1]
-    if (numbered) {
-        for(j = start; j < end; j++) {
-            var width = document.getElementById("L_" + i + "_" + j).offsetWidth;
-            document.getElementById("C_" + i + "_" + j).style.width = (wrap_size - width) + "px";
-        }
-    } else {
-        for(j = start; j < end; j++) {
-            document.getElementById("C_" + i + "_" + j).style.width = wrap_size + "px";
+function wrap_code(numbered) {
+    var ranges = [%(ranges)s];
+    var start;
+    var end;
+    var wrap_size = %(wrap_size)d;
+    var tables = %(tables)s;
+    var i;
+    var j;
+    document.getElementById("file_info").style.width = wrap_size + "px";
+    for (i = 0; i < tables; i++) {
+        start = ranges[i][0]
+        end = ranges[i][1]
+        if (numbered) {
+            for(j = start; j < end; j++) {
+                var width = document.getElementById("L_" + i + "_" + j).offsetWidth;
+                document.getElementById("C_" + i + "_" + j).style.width = (wrap_size - width) + "px";
+            }
+        } else {
+            for(j = start; j < end; j++) {
+                document.getElementById("C_" + i + "_" + j).style.width = wrap_size + "px";
+            }
         }
     }
 }
+wrap_code(%(numbered)s)
 </script>
 """
 
@@ -235,21 +273,14 @@ class PrintHtml(object):
         return multi
 
     def print_line(self, line, num):
-        if not self.numbers:
-            html_line = LINE % {
-                "code_id": num,
-                "code": line,
-                "table": self.tables
-            }
-        else:
-            html_line = GUTTER_LINE % {
-                "line_id": num,
-                "color": self.gfground,
-                "line": str(num).rjust(self.gutter_pad).replace(" ", '&nbsp;'),
-                "code_id": num,
-                "code": line,
-                "table": self.tables
-            }
+        html_line = LINE % {
+            "line_id": num,
+            "color": self.gfground,
+            "line": str(num).rjust(self.gutter_pad).replace(" ", '&nbsp;'),
+            "code_id": num,
+            "code": line,
+            "table": self.tables
+        }
 
         return html_line
 
@@ -273,7 +304,8 @@ class PrintHtml(object):
             "font_face": self.font_face,
             "page_bg":   self.bground,
             "gutter_bg": self.gbground,
-            "body_fg":   self.fground
+            "body_fg":   self.fground,
+            "display_mode": 'table-cell' if self.numbers else 'none'
         }
         the_html.write(header)
 
@@ -380,21 +412,24 @@ class PrintHtml(object):
             processed_rows += str(self.curr_row) + "],"
             self.tables += 1
 
+        the_html.write(TABLE_END)
+
+        # Write javascript snippets
         js_options = []
         if self.wrap:
             js_options.append(
                 WRAP % {
                     "ranges":     processed_rows,
                     "wrap_size": self.wrap,
-                    "numbered":  ("true" if self.numbers else "false"),
-                    "tables":    self.tables
+                    "tables":    self.tables,
+                    "numbered": ("true" if self.numbers else "false")
                 }
             )
 
         if self.browser_print:
             js_options.append(PRINT)
 
-        the_html.write(TABLE_END)
+        js_options.append(TOGGLE_GUTTER % {"tables": self.tables})
 
         # Write empty line to allow copying of last line and line number without issue
         the_html.write(BODY_END % {"js": ''.join(js_options)})
