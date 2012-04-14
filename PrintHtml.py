@@ -48,13 +48,13 @@ class PrintHtmlCommand(sublime_plugin.WindowCommand):
 			self.pt = 0
 			self.end = 1
 			self.curr_row = 1
-			self.partial = False
+			self.partial = False			# print entire view
 		else:
 			self.size = curr_sel.end()
 			self.pt = curr_sel.begin()
 			self.end = self.pt + 1
 			self.curr_row = self.view.rowcol(self.pt)[0] + 1
-			self.partial = True
+			self.partial = True				# printing selection
 
 		# Create scope colours mapping from colour scheme file
 		self.colours = { self.view.scope_name(self.end).split(' ')[0]: self.fground }
@@ -126,13 +126,15 @@ class PrintHtmlCommand(sublime_plugin.WindowCommand):
 					init_spaces = len(tidied_text) - len(tidied_text.lstrip(' '))
 					if init_spaces:
 						tidied_text = (init_spaces * '&nbsp;') + tidied_text.lstrip(' ')
-					temp_line.append((the_colour, tidied_text.encode('ascii', 'xmlcharrefreplace')))
+					temp_line.append((the_colour, tidied_text))
 				self.pt = self.end
 				self.end = self.pt + 1
 
 			if len(temp_line):
+				html_line = ''
 				for (the_colour, tidied_text) in temp_line:
-					the_html.write('<span style=\"color:' + the_colour + '\">' + tidied_text + '</span>')
+					html_line += '<span style=\"color:' + the_colour + '\">' + tidied_text + '</span>'
+				the_html.write(html_line.encode('utf-8', 'xmlcharrefreplace'))
 				temp_line[:] = []
 			the_html.write('</li>\n<li>')
 
