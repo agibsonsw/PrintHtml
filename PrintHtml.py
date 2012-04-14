@@ -2,9 +2,9 @@ import sublime
 import sublime_plugin
 from os import path
 import tempfile
-import desktop
 import sys
 import datetime
+import webbrowser
 
 PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
 
@@ -14,6 +14,12 @@ if sublime.platform() == "linux":
     if not linux_lib in sys.path and path.exists(linux_lib):
         sys.path.append(linux_lib)
 from plistlib import readPlist
+
+lib_path = path.join(sublime.packages_path(), "PrintHtml")
+if path.exists(lib_path) and not lib_path in sys.path:
+    sys.path.append(lib_path)
+
+import print_html_lib.desktop as desktop
 
 # HTML Code
 CSS = \
@@ -58,7 +64,7 @@ TABLE_END = """</table>"""
 
 DIVIDER = """<span style="color: %(color)s">\n...\n\n</span>"""
 
-BODY_END = """<pre/>\n%(js)s\n</body>\n</html>\n"""
+BODY_END = """</pre>\n%(js)s\n</body>\n</html>\n"""
 
 TOGGLE_GUTTER = \
 """
@@ -178,6 +184,11 @@ class PrintHtmlCommand(sublime_plugin.WindowCommand):
 class PrintHtml(object):
     def __init__(self, view):
         self.view = view
+
+    def webopen(self, name):
+        # Try desktop module first, if it fails, try webbrowser
+        if desktop.open(name)[1]:
+            webbrowser.open(name)
 
     def setup(self, numbers, highlight_selections, browser_print, color_scheme, wrap, multi_select, style_gutter):
         path_packages = sublime.packages_path()
@@ -453,5 +464,5 @@ class PrintHtml(object):
         if view_open:
             self.view.window().open_file(the_html.name)
         else:
-            # Open in web browser
-            desktop.open(the_html.name)
+            # Open in web browser; check return code, if failed try webbrowser
+            self.webopen(the_html.name)
