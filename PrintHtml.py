@@ -15,10 +15,6 @@ if sublime.platform() == "linux":
         sys.path.append(linux_lib)
 from plistlib import readPlist
 
-lib_path = path.join(sublime.packages_path(), "PrintHtml")
-if path.exists(lib_path) and not lib_path in sys.path:
-    sys.path.append(lib_path)
-
 import PrintHtmlLib.desktop as desktop
 
 # HTML Code
