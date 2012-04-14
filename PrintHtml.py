@@ -24,12 +24,13 @@ CSS = \
 <title>%(title)s</title>
 <style type="text/css">
     pre { border: 0; margin: 0; padding: 0; }
-    td { display: %(display_mode)s; }
+    td { display: %(display_mode)s; padding: 0; }
     table { border: 0; margin: 0; padding: 0; }
     div { float:left; width:100%%; word-wrap: break-word; }
     .code_text { font: %(font_size)dpt "%(font_face)s", Consolas, Monospace; }
     .code_page { background-color: %(page_bg)s; }
-    .code_gutter { background-color: %(gutter_bg)s;}
+    .code_gutter { background-color: %(gutter_bg)s; }
+    .code_line { padding-left: 10px; }
     span { border: 0; margin: 0; padding: 0; }
     body { color: %(body_fg)s; }
 </style>
@@ -44,8 +45,8 @@ TABLE_START = """<table cellspacing="0" cellpadding="0" class="code_page">"""
 
 LINE = (
     '<tr>' +
-    '<td valign="top" id="L_%(table)d_%(line_id)d" class="code_text"><span class="code_gutter" style="color: %(color)s;">%(line)s&nbsp;</span>&nbsp;</td>' +
-    '<td class="code_text"><div id="C_%(table)d_%(code_id)d">%(code)s\n</div></td>' +
+    '<td valign="top" id="L_%(table)d_%(line_id)d" class="code_text code_gutter"><span style="color: %(color)s;">%(line)s&nbsp;</span></td>' +
+    '<td class="code_text code_line"><div id="C_%(table)d_%(code_id)d">%(code)s\n</div></td>' +
     '</tr>'
 )
 
@@ -115,6 +116,7 @@ WRAP = \
 """
 <script type="text/javascript">
 function wrap_code(numbered) {
+    var pad = 10;
     var ranges = [%(ranges)s];
     var start;
     var end;
@@ -129,11 +131,11 @@ function wrap_code(numbered) {
         if (numbered) {
             for(j = start; j < end; j++) {
                 var width = document.getElementById("L_" + i + "_" + j).offsetWidth;
-                document.getElementById("C_" + i + "_" + j).style.width = (wrap_size - width) + "px";
+                document.getElementById("C_" + i + "_" + j).style.width = (wrap_size - width - pad) + "px";
             }
         } else {
             for(j = start; j < end; j++) {
-                document.getElementById("C_" + i + "_" + j).style.width = wrap_size + "px";
+                document.getElementById("C_" + i + "_" + j).style.width = (wrap_size - pad) + "px";
             }
         }
     }
