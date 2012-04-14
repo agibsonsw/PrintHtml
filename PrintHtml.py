@@ -58,7 +58,7 @@ TABLE_END = """</table>"""
 
 DIVIDER = """<span style="color: %(color)s">\n...\n\n</span>"""
 
-BODY_END = """<pre/>\n%(js)s\n</body>\n</html>"""
+BODY_END = """<pre/>\n%(js)s\n</body>\n</html>\n"""
 
 TOGGLE_GUTTER = \
 """
