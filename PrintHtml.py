@@ -1,12 +1,9 @@
-import sublime
-import sublime_plugin
+import sublime, sublime_plugin
 from os import path
-import tempfile
-import desktop
-import re
-import sys
+import tempfile, desktop, re, sys
 
 PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
+gCommentry = {}
 
 if sublime.platform() == "linux":
 	# Try and load Linux Python2.6 lib.  Default path is for Ubuntu.
@@ -15,6 +12,82 @@ if sublime.platform() == "linux":
 	if not linux_lib in sys.path and path.exists(linux_lib):
 		sys.path.append(linux_lib)
 from plistlib import readPlist
+
+CSS_COMMENTS = \
+"""
+.tooltip {
+	border-bottom: 1px dotted #FFFFFF;
+	outline: none;
+	text-decoration: none;
+	position: relative;
+}
+.tooltip span.comment {
+	border-radius: 5px 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
+	-webkit-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
+	-moz-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
+	margin-left: -999em;
+	position: absolute;
+	padding: 0.8em 1em;
+	background: #FFFFAA; border: 1px solid #FFAD33;
+	font-family: Calibri, Tahoma, Geneva, sans-serif;
+	font-size: 10pt;
+	font-weight: bold;
+	width: 250px;
+}
+.tooltip:hover span.comment {
+	position: absolute;
+	left: 1em;
+	top: 2em;
+	z-index: 99;
+	margin-left: 0;
+}
+* html a:hover { background: transparent; }
+"""
+
+class CommentHtmlCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		view = self.window.active_view()
+		if view is None:
+			sublime.status_message('A view/tab must be active.')
+			return
+		the_sel = view.sel()[0]
+		if not the_sel.empty():
+			sublime.status_message('Do not hightlight text, just a cursor position.')
+			return
+		self.the_pt = the_sel.begin()
+		self.the_word = view.substr(view.word(self.the_pt))
+		if len(self.the_word) < 2:
+			sublime.status_message('Cursor should be within a word.')
+			return
+		else:
+			self.the_pt = view.word(self.the_pt).begin()	# pt at the start of the current word
+		self.vid = view.id()
+		if self.vid not in gCommentry:
+			gCommentry[self.vid] = {}
+		self.the_input = self.window.show_input_panel('Comment>', '', self.on_done, None, None)
+
+	def on_done(self, text):
+		view = self.window.active_view()
+		if view is None:
+			sublime.status_message('No active view to add comment to.')
+			return
+		elif view.id() != self.vid:
+			sublime.status_message('The active view has changed.')
+			return
+		if not len(text):
+			sublime.status_message('Comment has no text.')
+			return
+		if view.word(view.sel()[0].begin()).begin() != self.the_pt:
+			sublime.status_message('The cursor has moved - comment not added.')
+			return
+		comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+		comment = comment.replace('\t', '&nbsp;' * 4).strip()
+		if self.vid not in gCommentry:
+			gCommentry[self.vid] = {}
+		gCommentry[self.vid][self.the_pt] = (self.the_word, comment)
 
 class PrintHtmlCommand(sublime_plugin.WindowCommand):
 	def setup(self, numbers):
@@ -56,7 +129,7 @@ class PrintHtmlCommand(sublime_plugin.WindowCommand):
 			self.curr_row = self.view.rowcol(self.pt)[0] + 1
 			self.partial = True				# printing selection
 
-		# Create scope colours mapping from colour scheme file
+		# Create scope colour-mapping from colour-scheme file
 		self.colours = { self.view.scope_name(self.end).split(' ')[0]: self.fground }
 		for item in plist_file["settings"]:
 			scope = item.get('scope', None)
@@ -78,7 +151,7 @@ class PrintHtmlCommand(sublime_plugin.WindowCommand):
 					best_match = self.view.score_selector(self.pt, key)
 					the_colour = self.colours[key]
 			self.colours[the_key] = the_colour
-		return the_colour
+		return the_colour or self.fground
 
 	def write_header(self, the_html):
 		the_html.write('<!DOCTYPE html>\n')
@@ -86,7 +159,11 @@ class PrintHtmlCommand(sublime_plugin.WindowCommand):
 		the_html.write('<title>' + path.basename(the_html.name) + '</title>\n')
 
 		the_html.write('<style type=\"text/css\">\n')
-
+		self.vid = self.view.id()
+		self.comments = False
+		if self.vid in gCommentry:
+			self.comments = True
+			the_html.write(CSS_COMMENTS.encode('utf-8', 'xmlcharrefreplace') + '\n')
 		the_html.write('\tspan { display: inline; border: 0; margin: 0; padding: 0; }\n')
 		if not self.numbers:
 			the_html.write('\tol { list-style-type: none; list-style-position: inside; ' 
@@ -116,24 +193,46 @@ class PrintHtmlCommand(sublime_plugin.WindowCommand):
 						or (self.view.substr(self.end) in ('\t', ' ', '')))):
 					self.end += 1
 
-				the_colour = self.guess_colour(scope_name.strip())
-				region = sublime.Region(self.pt, self.end)		
+				region = sublime.Region(self.pt, self.end)
+				if region.empty():
+					self.pt = self.end
+					self.end = self.pt + 1
+					continue
+
 				tidied_text = self.view.substr(region)
+				text_len = len(tidied_text)
+				the_colour = self.guess_colour(scope_name.strip())
+				the_comment = None
+
+				if text_len and self.comments:
+					for x in range(self.pt, self.end):
+						if x in gCommentry[self.vid]:
+							the_word, the_comment = gCommentry[self.vid][x]
+							# has the pt moved since the comment was created?
+							if self.view.substr(self.view.word(x)) != the_word:
+								the_comment = None				# no longer pts at the same word
+								del gCommentry[self.vid][x]		# delete the comment/ dict entry
+							break
 
 				tidied_text = tidied_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 				tidied_text = tidied_text.replace('\t', '&nbsp;' * self.tab_size).strip('\r\n')
-				if len(tidied_text):
-					init_spaces = len(tidied_text) - len(tidied_text.lstrip(' '))
+				text_len = len(tidied_text)			# re-check the length
+				if text_len:
+					init_spaces = text_len - len(tidied_text.lstrip(' '))
 					if init_spaces:
 						tidied_text = (init_spaces * '&nbsp;') + tidied_text.lstrip(' ')
-					temp_line.append((the_colour, tidied_text))
+					temp_line.append((the_colour, tidied_text, the_comment))
 				self.pt = self.end
 				self.end = self.pt + 1
 
 			if len(temp_line):
 				html_line = ''
-				for (the_colour, tidied_text) in temp_line:
-					html_line += '<span style=\"color:' + the_colour + '\">' + tidied_text + '</span>'
+				for (the_colour, tidied_text, the_comment) in temp_line:
+					the_span = '<span style=\"color:' + the_colour + '\">' + tidied_text + '</span>'
+					if the_comment is not None:
+						the_span = '<a class=\"tooltip\" href=\"#\">' + the_span
+						the_span += '<span class=\"comment\">' + the_comment + '</span></a>'
+					html_line += the_span
 				the_html.write(html_line.encode('utf-8', 'xmlcharrefreplace'))
 				temp_line[:] = []
 			the_html.write('</li>\n<li>')
