@@ -36,12 +36,11 @@ CSS_COMMENTS = \
 	font-size: 10pt;
 	font-weight: bold;
 	width: 250px;
-}
-.tooltip:hover span.comment {
-	position: absolute;
 	left: 1em;
 	top: 2em;
 	z-index: 99;
+}
+.tooltip:hover span.comment {
 	margin-left: 0;
 }
 * html a:hover { background: transparent; }
@@ -84,13 +83,21 @@ class CommentHtmlCommand(sublime_plugin.WindowCommand):
 		if not len(text):
 			sublime.status_message('Comment has no text.')
 			return
+		if text.strip().upper() == 'SELECT':		# select commented words
+			sels = metrics['curr_view'].sel()
+			sels.clear()
+			if metrics['curr_id'] not in gCommentry: return
+			for x in gCommentry[metrics['curr_id']]:
+				sels.add(metrics['curr_view'].word(x))
+			return
+
 		comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 		comment = comment.replace('\t', '&nbsp;' * 4).strip()
 		if metrics['curr_id'] not in gCommentry:
 			gCommentry[metrics['curr_id']] = {}
 		gCommentry[metrics['curr_id']][metrics['word_pt']] = (metrics['curr_word'], comment)
 		if self.more_comments:
-			sublime.set_timeout(self.show_again, 200)
+			sublime.set_timeout(self.show_again, 100)
 
 	def show_again(self):			# the input panel
 		if self.more_comments:
