@@ -16,7 +16,7 @@ from plistlib import readPlist
 CSS_COMMENTS = \
 """
 .tooltip {
-	border-bottom: 1px dotted #FFFFFF;
+	border-bottom: 1px dotted %(dot_colour)s;
 	outline: none;
 	text-decoration: none;
 	position: relative;
@@ -48,46 +48,57 @@ CSS_COMMENTS = \
 """
 
 class CommentHtmlCommand(sublime_plugin.WindowCommand):
+	def get_metrics(self):
+		curr_view = self.window.active_view()
+		if curr_view is None:
+			return { 'curr_view': None }		# must always check this first!
+		curr_id = curr_view.id()
+		curr_sel = curr_view.sel()[0]
+		curr_pt = curr_sel.begin()
+		word_region = curr_view.word(curr_pt)
+		curr_word = curr_view.substr(word_region)
+		word_pt = word_region.begin()
+		return locals()							# shouldn't really do this :)
+
 	def run(self):
-		view = self.window.active_view()
-		if view is None:
+		metrics = self.get_metrics()
+		if metrics['curr_view'] is None:
 			sublime.status_message('A view/tab must be active.')
 			return
-		the_sel = view.sel()[0]
-		if not the_sel.empty():
-			sublime.status_message('Do not hightlight text, just a cursor position.')
-			return
-		self.the_pt = the_sel.begin()
-		self.the_word = view.substr(view.word(self.the_pt))
-		if len(self.the_word) < 2:
+		if len(metrics['curr_word']) < 2:
 			sublime.status_message('Cursor should be within a word.')
-			return
-		else:
-			self.the_pt = view.word(self.the_pt).begin()	# pt at the start of the current word
-		self.vid = view.id()
-		if self.vid not in gCommentry:
-			gCommentry[self.vid] = {}
-		self.the_input = self.window.show_input_panel('Comment>', '', self.on_done, None, None)
+		self.more_comments = True
+		self.the_input = self.window.show_input_panel('Comment>', '', self.on_done, None, self.hide_it)
 
 	def on_done(self, text):
-		view = self.window.active_view()
-		if view is None:
+		metrics = self.get_metrics()
+		if metrics['curr_view'] is None:
 			sublime.status_message('No active view to add comment to.')
 			return
-		elif view.id() != self.vid:
-			sublime.status_message('The active view has changed.')
+		if len(metrics['curr_word']) < 2:
+			sublime.status_message('Cursor should be within a word.')
+			return
+		if not metrics['curr_word'].isalpha():
+			sublime.status_message('Cursor needs to be within a fully alphabetic word.')
 			return
 		if not len(text):
 			sublime.status_message('Comment has no text.')
 			return
-		if view.word(view.sel()[0].begin()).begin() != self.the_pt:
-			sublime.status_message('The cursor has moved - comment not added.')
-			return
 		comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 		comment = comment.replace('\t', '&nbsp;' * 4).strip()
-		if self.vid not in gCommentry:
-			gCommentry[self.vid] = {}
-		gCommentry[self.vid][self.the_pt] = (self.the_word, comment)
+		if metrics['curr_id'] not in gCommentry:
+			gCommentry[metrics['curr_id']] = {}
+		gCommentry[metrics['curr_id']][metrics['word_pt']] = (metrics['curr_word'], comment)
+		if self.more_comments:
+			sublime.set_timeout(self.show_again, 200)
+
+	def show_again(self):			# the input panel
+		if self.more_comments:
+			self.the_input = self.window.show_input_panel('ESC to finish>', '', self.on_done,
+				None, self.hide_it)
+
+	def hide_it(self):				# the input panel
+		self.more_comments = False
 
 class PrintHtmlCommand(sublime_plugin.WindowCommand):
 	def setup(self, numbers):
@@ -163,7 +174,8 @@ class PrintHtmlCommand(sublime_plugin.WindowCommand):
 		self.comments = False
 		if self.vid in gCommentry:
 			self.comments = True
-			the_html.write(CSS_COMMENTS.encode('utf-8', 'xmlcharrefreplace') + '\n')
+			the_html.write((CSS_COMMENTS % { "dot_colour": self.fground }).encode('utf-8', 
+				'xmlcharrefreplace') + '\n')	
 		the_html.write('\tspan { display: inline; border: 0; margin: 0; padding: 0; }\n')
 		if not self.numbers:
 			the_html.write('\tol { list-style-type: none; list-style-position: inside; ' 
