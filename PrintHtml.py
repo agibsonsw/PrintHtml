@@ -76,7 +76,11 @@ HIGHLIGHTED_CODE = """<span class="%(class)s" style="background-color: %(highlig
 
 TABLE_END = """</table>"""
 
-DIVIDER = """<span style="color: %(color)s">\n...\n\n</span>"""
+ROW_START = """<tr><td>"""
+
+ROW_END = """</td></tr>"""
+
+DIVIDER = """<tr><td><span style="color: %(color)s">\n...\n\n</span></td></tr>"""
 
 BODY_END = """</pre>\n%(js)s\n</body>\n</html>\n"""
 
@@ -91,12 +95,11 @@ function show_hide_column(e, tables) {
     var rows;
     var r;
     var tbls;
-    var t_offset = %(table_offset)d;
     var rows;
     var r;
     if (evt.shiftKey) {
         tbls  = document.getElementsByTagName('table');
-        for (i = (0 + t_offset); i < (tables + t_offset); i++) {
+        for (i = 1; i <= tables; i++) {
             rows = tbls[i].getElementsByTagName('tr');
             r = rows.length;
             for (j = 0; j < r; j++) {
@@ -149,12 +152,12 @@ function wrap_code(numbered) {
     var i;
     var j;
     var idx;
-    var t_offset = %(table_offset)d;
-    if (t_offset) {
+    var header = %(header)s;
+    if (header) {
         document.getElementById("file_info").style.width = wrap_size + "px";
     }
-    for (i = (0 + t_offset); i < (tables + t_offset); i++) {
-        idx = (t_offset) ? i - 1 : i;
+    for (i = 1; i <= tables; i++) {
+        idx = i - 1;
         start = ranges[idx][0];
         end = ranges[idx][1];
         if (numbered) {
@@ -429,16 +432,16 @@ class PrintHtml(object):
         processed_rows = ""
         the_html.write(BODY_START)
 
+        the_html.write(TABLE_START)
         if not self.no_header:
-            the_html.write(TABLE_START)
             # Write file name
             fname = self.view.file_name()
             if fname == None or not path.exists(fname):
                 fname = "Untitled"
             date_time = datetime.datetime.now().strftime("%m/%d/%y %I:%M:%S")
             the_html.write(FILE_INFO % {"color": self.fground, "date_time": date_time, "file": fname})
-            the_html.write(TABLE_END)
 
+        the_html.write(ROW_START)
         the_html.write(TABLE_START)
         # Convert view to HTML
         if self.multi_select:
@@ -454,7 +457,9 @@ class PrintHtml(object):
 
                 if count < total:
                     the_html.write(TABLE_END)
+                    the_html.write(ROW_END)
                     the_html.write(DIVIDER % {"color": self.fground})
+                    the_html.write(ROW_START)
                     the_html.write(TABLE_START)
         else:
             self.setup_print_block(self.view.sel()[0])
@@ -463,6 +468,8 @@ class PrintHtml(object):
             processed_rows += str(self.curr_row) + "],"
             self.tables += 1
 
+        the_html.write(TABLE_END)
+        the_html.write(ROW_END)
         the_html.write(TABLE_END)
 
         # Write javascript snippets
@@ -474,14 +481,14 @@ class PrintHtml(object):
                     "wrap_size": self.wrap,
                     "tables":    self.tables,
                     "numbered": ("true" if self.numbers else "false"),
-                    "table_offset": 0 if self.no_header else 1
+                    "header": ("false" if self.no_header else "true")
                 }
             )
 
         if self.browser_print:
             js_options.append(PRINT)
 
-        js_options.append(TOGGLE_GUTTER % {"tables": self.tables, "table_offset": 0 if self.no_header else 1})
+        js_options.append(TOGGLE_GUTTER % {"tables": self.tables})
 
         # Write empty line to allow copying of last line and line number without issue
         the_html.write(BODY_END % {"js": ''.join(js_options)})
