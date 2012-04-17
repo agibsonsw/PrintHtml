@@ -55,7 +55,7 @@ CSS = \
 
 BODY_START = """<body class="code_page code_text">\n<pre class="code_page">"""
 
-FILE_INFO = """<div id="file_info"><span style="color: %(color)s">%(date_time)s %(file)s\n\n</span></div>"""
+FILE_INFO = """<tr><td colspan="2"><div id="file_info"><span style="color: %(color)s">%(date_time)s %(file)s\n\n</span></div></td></tr>"""
 
 TABLE_START = """<table cellspacing="0" cellpadding="0" class="code_page">"""
 
@@ -86,15 +86,19 @@ TOGGLE_GUTTER = \
 function show_hide_column(e, tables) {
     var i;
     var j;
-    var evt = e ? e:window.event;
+    var evt = e ? e : window.event;
     var mode;
-
+    var rows;
+    var r;
+    var tbls;
+    var t_offset = %(table_offset)d;
+    var rows;
+    var r;
     if (evt.shiftKey) {
-        var tbls  = document.getElementsByTagName('table');
-        var t = tables;
-        for (i = 0; i < t; i++) {
-            var rows = tbls[i].getElementsByTagName('tr');
-            var r = rows.length;
+        tbls  = document.getElementsByTagName('table');
+        for (i = (0 + t_offset); i < (tables + t_offset); i++) {
+            rows = tbls[i].getElementsByTagName('tr');
+            r = rows.length;
             for (j = 0; j < r; j++) {
                 cels = rows[j].getElementsByTagName('td');
                 if (mode == null) {
@@ -144,18 +148,23 @@ function wrap_code(numbered) {
     var tables = %(tables)s;
     var i;
     var j;
-    document.getElementById("file_info").style.width = wrap_size + "px";
-    for (i = 0; i < tables; i++) {
-        start = ranges[i][0]
-        end = ranges[i][1]
+    var idx;
+    var t_offset = %(table_offset)d;
+    if (t_offset) {
+        document.getElementById("file_info").style.width = wrap_size + "px";
+    }
+    for (i = (0 + t_offset); i < (tables + t_offset); i++) {
+        idx = (t_offset) ? i - 1 : i;
+        start = ranges[idx][0];
+        end = ranges[idx][1];
         if (numbered) {
             for(j = start; j < end; j++) {
-                var width = document.getElementById("L_" + i + "_" + j).offsetWidth;
-                document.getElementById("C_" + i + "_" + j).style.width = (wrap_size - width - pad) + "px";
+                var width = document.getElementById("L_" + idx + "_" + j).offsetWidth;
+                document.getElementById("C_" + idx + "_" + j).style.width = (wrap_size - width - pad) + "px";
             }
         } else {
             for(j = start; j < end; j++) {
-                document.getElementById("C_" + i + "_" + j).style.width = (wrap_size - pad) + "px";
+                document.getElementById("C_" + idx + "_" + j).style.width = (wrap_size - pad) + "px";
             }
         }
     }
@@ -199,7 +208,11 @@ class PrintHtml(object):
     def __init__(self, view):
         self.view = view
 
-    def setup(self, numbers, highlight_selections, browser_print, color_scheme, wrap, multi_select, style_gutter):
+    def setup(
+            self, numbers, highlight_selections, browser_print,
+            color_scheme, wrap, multi_select, style_gutter,
+            no_header
+        ):
         path_packages = sublime.packages_path()
 
         # Get get general document preferences from sublime preferences
@@ -230,6 +243,7 @@ class PrintHtml(object):
         self.curr_row = 0
         self.partial = False
         self.tables = 0
+        self.no_header = no_header
 
         # Get color scheme
         if color_scheme != None:
@@ -415,15 +429,17 @@ class PrintHtml(object):
         processed_rows = ""
         the_html.write(BODY_START)
 
-        # Write file name
-        fname = self.view.file_name()
-        if fname == None or not path.exists(fname):
-            fname = "Untitled"
-        date_time = datetime.datetime.now().strftime("%m/%d/%y %I:%M:%S")
-        the_html.write(FILE_INFO % {"color": self.fground, "date_time": date_time, "file": fname})
+        if not self.no_header:
+            the_html.write(TABLE_START)
+            # Write file name
+            fname = self.view.file_name()
+            if fname == None or not path.exists(fname):
+                fname = "Untitled"
+            date_time = datetime.datetime.now().strftime("%m/%d/%y %I:%M:%S")
+            the_html.write(FILE_INFO % {"color": self.fground, "date_time": date_time, "file": fname})
+            the_html.write(TABLE_END)
 
         the_html.write(TABLE_START)
-
         # Convert view to HTML
         if self.multi_select:
             count = 0
@@ -454,17 +470,18 @@ class PrintHtml(object):
         if self.wrap:
             js_options.append(
                 WRAP % {
-                    "ranges":     processed_rows,
+                    "ranges":     processed_rows.rstrip(','),
                     "wrap_size": self.wrap,
                     "tables":    self.tables,
-                    "numbered": ("true" if self.numbers else "false")
+                    "numbered": ("true" if self.numbers else "false"),
+                    "table_offset": 0 if self.no_header else 1
                 }
             )
 
         if self.browser_print:
             js_options.append(PRINT)
 
-        js_options.append(TOGGLE_GUTTER % {"tables": self.tables})
+        js_options.append(TOGGLE_GUTTER % {"tables": self.tables, "table_offset": 0 if self.no_header else 1})
 
         # Write empty line to allow copying of last line and line number without issue
         the_html.write(BODY_END % {"js": ''.join(js_options)})
@@ -472,9 +489,14 @@ class PrintHtml(object):
     def run(
         self, numbers=False, highlight_selections=False,
         clipboard_copy=False, browser_print=False, color_scheme=None,
-        wrap=None, view_open=False, multi_select=False, style_gutter=True
+        wrap=None, view_open=False, multi_select=False, style_gutter=True,
+        no_header=False
     ):
-        self.setup(numbers, highlight_selections, browser_print, color_scheme, wrap, multi_select, style_gutter)
+        self.setup(
+            numbers, highlight_selections, browser_print,
+            color_scheme, wrap, multi_select, style_gutter,
+            no_header
+        )
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
             self.write_header(the_html)
