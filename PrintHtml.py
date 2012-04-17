@@ -458,7 +458,9 @@ class PrintHtml(object):
                 if count < total:
                     the_html.write(TABLE_END)
                     the_html.write(ROW_END)
+                    the_html.write(ROW_START)
                     the_html.write(DIVIDER % {"color": self.fground})
+                    the_html.write(ROW_END)
                     the_html.write(ROW_START)
                     the_html.write(TABLE_START)
         else:
