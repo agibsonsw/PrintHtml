@@ -3,7 +3,6 @@ from os import path
 import tempfile, desktop, re, sys
 
 PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
-gCommentry = {}
 
 if sublime.platform() == "linux":
 	# Try and load Linux Python2.6 lib.  Default path is for Ubuntu.
@@ -46,71 +45,93 @@ CSS_COMMENTS = \
 * html a:hover { background: transparent; }
 """
 
-class CommentHtmlCommand(sublime_plugin.WindowCommand):
-	def get_metrics(self):
-		curr_view = self.window.active_view()
-		if curr_view is None:
-			return { 'curr_view': None }		# must always check this first!
-		curr_id = curr_view.id()
-		curr_sel = curr_view.sel()[0]
+class CommentHtmlCommand(sublime_plugin.TextCommand):
+	def get_metrics(self, view):
+		curr_id = view.id()
+		curr_sel = view.sel()[0]
 		curr_pt = curr_sel.begin()
-		word_region = curr_view.word(curr_pt)
-		curr_word = curr_view.substr(word_region)
+		word_region = view.word(curr_pt)
+		curr_word = view.substr(word_region)
 		word_pt = word_region.begin()
 		return locals()							# shouldn't really do this :)
 
-	def run(self):
-		metrics = self.get_metrics()
-		if metrics['curr_view'] is None:
-			sublime.status_message('A view/tab must be active.')
-			return
+	def run(self, edit):
+		metrics = self.get_metrics(self.view)
 		if len(metrics['curr_word']) < 2:
 			sublime.status_message('Cursor should be within a word.')
 		self.more_comments = True
-		self.the_input = self.window.show_input_panel('Comment>', '', self.on_done, None, self.hide_it)
+		if not hasattr(self.view, 'vcomments'):
+			self.view.vcomments = {}
+		self.show_comment_panel()
 
-	def on_done(self, text):
-		metrics = self.get_metrics()
-		if metrics['curr_view'] is None:
-			sublime.status_message('No active view to add comment to.')
-			return
+	def select_comments(self):
+		metrics = self.get_metrics(self.view)
+		if not len(self.view.vcomments):
+			sublime.status_message('No comments yet.')
+		else:
+			sels = self.view.sel()
+			sels.clear()
+			for key_pt in sorted(self.view.vcomments.iterkeys()):
+				curr_wd_region = self.view.word(key_pt)
+				curr_wd = self.view.substr(curr_wd_region)
+				if curr_wd == self.view.vcomments[key_pt][0]:
+					sels.add(curr_wd_region)
+				else:
+					print 'Commented word was', self.view.vcomments[key_pt][0], 'now', curr_wd
+					del self.view.vcomments[key_pt]
+			if not len(self.view.vcomments):
+				sublime.status_message('Comments no longer in original positions - deleted.')	
+
+	def add_comment(self, text):
+		metrics = self.get_metrics(self.view)
 		if len(metrics['curr_word']) < 2:
-			sublime.status_message('Cursor should be within a word.')
-			return
-		if not metrics['curr_word'].isalpha():
-			sublime.status_message('Cursor needs to be within a fully alphabetic word.')
-			return
+			sublime.status_message('Cursor should be within a word (2 characters min).')
+		elif not metrics['curr_word'].isalpha():
+			sublime.status_message('Cursor needs to be within a fully alphabetic word: ' \
+				+ str(metrics['curr_word']))
+		else:									# add the comment to the dictionary
+			comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+			comment = comment.replace('\t', '&nbsp;' * 4).strip()
+			self.view.vcomments[metrics['word_pt']] = (metrics['curr_word'], comment)
+
+	def process_commentry(self, text, caller_id):
 		if not len(text):
 			sublime.status_message('Comment has no text.')
+			self.more_coments = False
+			return
+		window = sublime.active_window()
+		view = window.active_view() if window != None else None
+		if view is None:
+			sublime.status_message('No active view.')
+			self.more_comments = False
+			return
+		elif view.id() != caller_id:
+			sublime.status_message('Not the same view - cancelled.')
+			self.more_comments = False
 			return
 		if text.strip().upper() == 'SELECT':		# select commented words
-			sels = metrics['curr_view'].sel()
-			sels.clear()
-			if metrics['curr_id'] not in gCommentry: return
-			for x in gCommentry[metrics['curr_id']]:
-				sels.add(metrics['curr_view'].word(x))
-			return
+			self.select_comments()
+		else:										# add new comment
+			self.add_comment(text)
+		self.show_again()
 
-		comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-		comment = comment.replace('\t', '&nbsp;' * 4).strip()
-		if metrics['curr_id'] not in gCommentry:
-			gCommentry[metrics['curr_id']] = {}
-		gCommentry[metrics['curr_id']][metrics['word_pt']] = (metrics['curr_word'], comment)
-		if self.more_comments:
-			sublime.set_timeout(self.show_again, 100)
+	def show_comment_panel(self):
+		caller_id = self.view.id()
+		self.view.window().show_input_panel('Comment>', '', \
+			lambda txt: self.process_commentry(txt, caller_id), None, self.hide_it)
 
 	def show_again(self):			# the input panel
 		if self.more_comments:
-			self.the_input = self.window.show_input_panel('ESC to finish>', '', self.on_done,
-				None, self.hide_it)
+			self.show_comment_panel()
 
 	def hide_it(self):				# the input panel
 		self.more_comments = False
 
-class PrintHtmlCommand(sublime_plugin.WindowCommand):
+class PrintHtmlCommand(sublime_plugin.TextCommand):
 	def setup(self, numbers):
 		path_packages = sublime.packages_path()
-
+		if not hasattr(self.view, 'vcomments'):
+			self.view.vcomments = {}
 		# Get general document preferences from sublime preferences
 		settings = sublime.load_settings('Preferences.sublime-settings')
 		self.font_size = settings.get('font_size', 10)
@@ -179,7 +200,7 @@ class PrintHtmlCommand(sublime_plugin.WindowCommand):
 		the_html.write('<style type=\"text/css\">\n')
 		self.vid = self.view.id()
 		self.comments = False
-		if self.vid in gCommentry:
+		if len(self.view.vcomments):
 			self.comments = True
 			the_html.write((CSS_COMMENTS % { "dot_colour": self.fground }).encode('utf-8', 
 				'xmlcharrefreplace') + '\n')	
@@ -225,17 +246,17 @@ class PrintHtmlCommand(sublime_plugin.WindowCommand):
 
 				if text_len and self.comments:
 					for x in range(self.pt, self.end):
-						if x in gCommentry[self.vid]:
-							the_word, the_comment = gCommentry[self.vid][x]
+						if x in self.view.vcomments:
+							the_word, the_comment = self.view.vcomments[x]
 							# has the pt moved since the comment was created?
 							if self.view.substr(self.view.word(x)) != the_word:
 								the_comment = None				# no longer pts at the same word
-								del gCommentry[self.vid][x]		# delete the comment/ dict entry
+								del self.view.vcomments[x]		# delete the comment/ dict entry
 							break
 
 				tidied_text = tidied_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 				tidied_text = tidied_text.replace('\t', '&nbsp;' * self.tab_size).strip('\r\n')
-				text_len = len(tidied_text)			# re-check the length
+				text_len = len(tidied_text)						# re-check the length
 				if text_len:
 					init_spaces = text_len - len(tidied_text.lstrip(' '))
 					if init_spaces:
@@ -275,15 +296,11 @@ class PrintHtmlCommand(sublime_plugin.WindowCommand):
 		the_html.write('</li>\n</ol>\n<br/>\n</body>\n</html>')
 		# included empty line (br) to allow copying of last line without issue
 
-	def run(self, numbers):
-		self.view = self.window.active_view()
-		if self.view is None:
-			sublime.status_message('A view/tab must be active.')
-		else:
-			self.setup(numbers)
-			with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
-				self.write_header(the_html)
-				self.write_body(the_html)
+	def run(self, edit, numbers):
+		self.setup(numbers)
+		with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
+			self.write_header(the_html)
+			self.write_body(the_html)
 
-			# Open in web browser
-			desktop.open(the_html.name)
+		# Open in web browser
+		desktop.open(the_html.name)
