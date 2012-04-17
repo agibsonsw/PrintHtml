@@ -85,8 +85,7 @@ try:
     def _run(cmd, shell, wait):
         opener = subprocess.Popen(cmd, shell=shell)
         if wait: opener.wait()
-        opener.communicate()
-        return opener.pid, opener.returncode
+        return opener.pid
 
     def _readfrom(cmd, shell):
         opener = subprocess.Popen(cmd, shell=shell, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -103,8 +102,7 @@ except ImportError:
     def _run(cmd, shell, wait):
         opener = popen2.Popen3(cmd)
         if wait: opener.wait()
-        opener.communicate()
-        return opener.pid, opener.returncode
+        return opener.pid
 
     def _readfrom(cmd, shell):
         opener = popen2.Popen3(cmd)
@@ -222,7 +220,7 @@ def is_standard():
 
 # Activity functions.
 
-def open(url, desktop=None, wait=0):
+def open(url, desktop=None, wait=0, status=False):
 
     """
     Open the 'url' in the current desktop's preferred file browser. If the
@@ -278,6 +276,9 @@ def open(url, desktop=None, wait=0):
     else:
         raise OSError, "Desktop '%s' not supported (neither DESKTOP_LAUNCH nor os.startfile could be used)" % desktop_in_use
 
-    return _run(cmd, 0, wait)
+    if status:
+        return _status(cmd, 0)
+    else:
+        return _run(cmd, 0, wait)
 
 # vim: tabstop=4 expandtab shiftwidth=4

@@ -28,11 +28,25 @@ CSS = \
     pre { border: 0; margin: 0; padding: 0; }
     td { display: %(display_mode)s; padding: 0; }
     table { border: 0; margin: 0; padding: 0; }
-    div { float:left; width:100%%; word-wrap: break-word; }
+    div {
+        float:left;
+        width:100%%;
+        white-space: -moz-pre-wrap; /* Mozilla */
+        white-space: -hp-pre-wrap; /* HP printers */
+        white-space: -o-pre-wrap; /* Opera 7 */
+        white-space: -pre-wrap; /* Opera 4-6 */
+        white-space: pre-wrap; /* CSS 2.1 */
+        white-space: pre-line; /* CSS 3 (and 2.1 as well, actually) */
+        word-wrap: break-word; /* IE */
+    }
     .code_text { font: %(font_size)dpt "%(font_face)s", Consolas, Monospace; }
     .code_page { background-color: %(page_bg)s; }
     .code_gutter { background-color: %(gutter_bg)s; }
     .code_line { padding-left: 10px; }
+    span.bold { font-weight: bold; }
+    span.italic { font-style: italic; }
+    span.normal { font-style: normal; }
+    span.underline { text-decoration:underline; }
     span { border: 0; margin: 0; padding: 0; }
     body { color: %(body_fg)s; }
 </style>
@@ -47,14 +61,18 @@ TABLE_START = """<table cellspacing="0" cellpadding="0" class="code_page">"""
 
 LINE = (
     '<tr>' +
-    '<td valign="top" id="L_%(table)d_%(line_id)d" class="code_text code_gutter"><span style="color: %(color)s;">%(line)s&nbsp;</span></td>' +
-    '<td class="code_text code_line"><div id="C_%(table)d_%(code_id)d">%(code)s\n</div></td>' +
+    '<td valign="top" id="L_%(table)d_%(line_id)d" class="code_text code_gutter">' +
+    '<span style="color: %(color)s;">%(line)s&nbsp;</span>' +
+    '</td>' +
+    '<td class="code_text code_line">' +
+    '<div id="C_%(table)d_%(code_id)d">%(code)s\n</div>' +
+    '</td>' +
     '</tr>'
 )
 
-CODE = """<span style="color:%(color)s">%(content)s</span>"""
+CODE = """<span class="%(class)s" style="color:%(color)s">%(content)s</span>"""
 
-HIGHLIGHTED_CODE = """<span style="background-color: %(highlight)s; color: %(color)s;">%(content)s</span>"""
+HIGHLIGHTED_CODE = """<span class="%(class)s" style="background-color: %(highlight)s; color: %(color)s;">%(content)s</span>"""
 
 TABLE_END = """</table>"""
 
@@ -181,11 +199,6 @@ class PrintHtml(object):
     def __init__(self, view):
         self.view = view
 
-    def webopen(self, name):
-        # Try desktop module first, if it fails, try webbrowser
-        if desktop.open(name)[1]:
-            webbrowser.open(name)
-
     def setup(self, numbers, highlight_selections, browser_print, color_scheme, wrap, multi_select, style_gutter):
         path_packages = sublime.packages_path()
 
@@ -243,17 +256,25 @@ class PrintHtml(object):
                     self.highlights.append(sel)
 
         # Create scope colors mapping from color scheme file
-        self.colours = {self.view.scope_name(self.end).split(' ')[0]: self.fground}
+        self.colours = {self.view.scope_name(self.end).split(' ')[0]: {"color": self.fground, "style": "normal"}}
         for item in plist_file["settings"]:
-            scope = None
+            scope = item.get('scope', None)
             colour = None
+            style = []
             if 'scope' in item:
                 scope = item['scope']
-            if 'settings' in item and 'foreground' in item['settings']:
-                colour = item['settings']['foreground']
+            if 'settings' in item:
+                colour = item['settings'].get('foreground', None)
+                if 'fontStyle' in item['settings']:
+                    for s in item['settings']['fontStyle'].split(' '):
+                        if s == "bold" or s == "italic":  # or s == "underline":
+                            style.append(s)
+
+            if len(style) == 0:
+                style.append('normal')
 
             if scope != None and colour != None:
-                self.colours[scope] = colour
+                self.colours[scope] = {"color": colour, "style": ' '.join(style)}
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
@@ -295,16 +316,19 @@ class PrintHtml(object):
 
     def guess_colour(self, the_key):
         the_colour = None
+        the_style = None
         if the_key in self.colours:
-            the_colour = self.colours[the_key]
+            the_colour = self.colours[the_key]["color"]
+            the_style = self.colours[the_key]["style"]
         else:
             best_match = 0
             for key in self.colours:
                 if self.view.score_selector(self.pt, key) > best_match:
                     best_match = self.view.score_selector(self.pt, key)
-                    the_colour = self.colours[key]
-            self.colours[the_key] = the_colour
-        return the_colour
+                    the_colour = self.colours[key]["color"]
+                    the_style = self.colours[key]["style"]
+            self.colours[the_key] = {"color": the_colour, "style": the_style}
+        return the_colour, the_style
 
     def write_header(self, the_html):
         header = CSS % {
@@ -361,6 +385,8 @@ class PrintHtml(object):
                     # Highlight is bigger than line, mark for continuation
                     self.end = self.size
                     self.hl_continue = sublime.Region(self.size + 1, self.curr_hl.end())
+                the_colour = self.sfground
+                the_style = "normal"
             else:
                 # Get text of like scope up to a highlight
                 scope_name = self.view.scope_name(self.pt)
@@ -369,17 +395,17 @@ class PrintHtml(object):
                     if self.curr_hl != None and self.end == self.curr_hl.begin():
                         break
                     self.end += 1
-                the_colour = self.guess_colour(scope_name)
+                the_colour, the_style = self.guess_colour(scope_name)
 
             tidied_text = self.html_encode(self.view.substr(sublime.Region(self.pt, self.end)))
 
             # Highlight span if needed
             if hl_found:
-                line.append(HIGHLIGHTED_CODE % {"highlight": self.sbground, "color": self.sfground, "content": tidied_text})
+                line.append(HIGHLIGHTED_CODE % {"highlight": self.sbground, "color": self.sfground, "content": tidied_text, "class": the_style})
                 hl_found = False
                 self.curr_hl = None
             else:
-                line.append(CODE % {"color": the_colour, "content": tidied_text})
+                line.append(CODE % {"color": the_colour, "content": tidied_text, "class": the_style})
 
             self.pt = self.end
             self.end = self.pt + 1
@@ -461,4 +487,6 @@ class PrintHtml(object):
             self.view.window().open_file(the_html.name)
         else:
             # Open in web browser; check return code, if failed try webbrowser
-            self.webopen(the_html.name)
+            status = desktop.open(the_html.name, status=True)
+            if not status:
+                webbrowser.open(the_html.name, new=2)
