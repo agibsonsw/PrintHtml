@@ -123,5 +123,35 @@
                 "color_scheme": "Packages/PrintHtml/ColorSchemes/Print-Grayscale.tmTheme"
             }
         }
+    ],
+
+    "forum_panel": [
+        {
+            "To Clipboard - Format as Format Post": {
+                "numbers": false,
+                "multi_select": true
+            }
+        },
+
+        {
+            "To Clipboard - Format as Format Post (show gutter)": {
+                "numbers": true,
+                "multi_select": true
+            }
+        },
+        {
+            "Sublime View - Show Forum Post in View": {
+                "numbers": false,
+                "multi_select": true,
+                "view_open": true
+            }
+        },
+        {
+            "Sublime View - Show Forum Post in View (show gutter)": {
+                "numbers": false,
+                "multi_select": true,
+                "view_open": true
+            }
+        }
     ]
 }

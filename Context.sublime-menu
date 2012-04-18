@@ -1,0 +1,19 @@
+[
+    { "caption": "-" },
+    { "command": "print_html_panel", "caption": "Print to HTML" },
+    {"command": "print_forum_panel", "caption": "Format for Forum Post"},
+    {
+        "caption": "Annotations",
+        "children":
+        [
+            { "command": "enable_annotation_mode", "caption": "Enable Annotation Mode" },
+            { "command": "disable_annotation_mode", "caption": "Disable Annotation Mode" },
+            { "caption": "-" },
+            { "command": "annotate_html", "caption": "Annotate Selection" },
+            { "command": "delete_annotations", "caption": "Delete Annotations" },
+            { "command": "clear_annotations", "caption": "Delete All Annotations" },
+            { "command": "show_annotation_comment", "caption": "Show Annotation Comment" }
+        ]
+    },
+    { "caption": "-"}
+]
