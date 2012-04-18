@@ -69,6 +69,7 @@ Example:
         }
     }
 
+ When viewing the HTML in your web browser, regardless of the gutter settings, the gutter can be toggled to show or be hidden using ```shift+double_mouse_click```.
 
 ## Settings File options
 - alternate_scheme (string or false): Defines a default theme to be used if a theme is not specified in a command.  When this is false, the current Sublime Text theme in use is used.
