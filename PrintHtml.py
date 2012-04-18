@@ -519,5 +519,5 @@ class PrintHtml(object):
         else:
             # Open in web browser; check return code, if failed try webbrowser
             status = desktop.open(the_html.name, status=True)
-            if status > 0:
+            if not status:
                 webbrowser.open(the_html.name, new=2)
