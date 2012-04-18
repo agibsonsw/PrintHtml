@@ -84,10 +84,11 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			for key_pt in sorted(self.view.vcomments.iterkeys()):
 				curr_wd_region = self.view.word(key_pt)
 				curr_wd = self.view.substr(curr_wd_region)
-				if curr_wd == self.view.vcomments[key_pt][0]:
+				prev_wd, prev_comment = self.view.vcomments[key_pt]
+				if curr_wd == prev_wd:
 					sels.add(curr_wd_region)
 				else:
-					print 'Commented word was', self.view.vcomments[key_pt][0], 'now', curr_wd
+					print 'Commented word was', prev_wd, 'now', curr_wd, 'comment:', prev_comment
 					del self.view.vcomments[key_pt]
 			if not len(self.view.vcomments):
 				sublime.status_message('Comments no longer in original positions - deleted.')
@@ -98,13 +99,18 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		if not len(self.view.vcomments):
 			sublime.status_message('No comments yet.')
 		else:
+			try:
+				self.view.erase_regions("comments")
+			except:
+				pass
 			for key_pt in sorted(self.view.vcomments.iterkeys()):
 				curr_wd_region = self.view.word(key_pt)
 				curr_wd = self.view.substr(curr_wd_region)
-				if curr_wd == self.view.vcomments[key_pt][0]:
+				prev_wd, prev_comment = self.view.vcomments[key_pt]
+				if curr_wd == prev_wd:
 					comment_regions.append(curr_wd_region)
 				else:
-					print 'Commented word was', self.view.vcomments[key_pt][0], 'now', curr_wd
+					print 'Commented word was', prev_wd, 'now', curr_wd, 'comment:', prev_comment
 					del self.view.vcomments[key_pt]
 			if not len(self.view.vcomments):
 				sublime.status_message('Comments no longer in original positions - deleted.')
