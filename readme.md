@@ -6,6 +6,7 @@ This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml
 # Features
 - Print to HTML using any tmTheme for syntax highlighting
 - Can handle any language supported by ST2
+- Supports bold and italic theme font styles as well
 - Configurable output
 - Format suitable for copying and pasting in emails
 - 2 included tmTheme files for color and grayscale printing (but any can be used)
