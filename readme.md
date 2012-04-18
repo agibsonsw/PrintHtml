@@ -81,5 +81,8 @@ Example:
 - agibsonsw: Original idea and algorithm for the plugin
 - Paul Boddie: Desktop module for open files in web browser cross platform
 
+# Version 0.1.1
+- Fix status returnd as None for Windows
+
 # Version 0.1.0
 - Initial release

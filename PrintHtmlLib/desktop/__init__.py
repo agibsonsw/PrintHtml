@@ -254,7 +254,8 @@ def open(url, desktop=None, wait=0, status=False):
 
     elif desktop_in_use == "Windows":
         # NOTE: This returns None in current implementations.
-        return os.startfile(url)
+        os.startfile(url)
+        return 0 if status else None
 
     elif desktop_in_use == "KDE":
         cmd = ["kfmclient", "exec", url]
