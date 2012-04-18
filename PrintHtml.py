@@ -46,6 +46,7 @@ CSS_COMMENTS = \
 """
 
 class CommentHtmlCommand(sublime_plugin.TextCommand):
+	sensible_word = re.compile(r"""[a-zA-Z_]{1}[a-zA-Z_0-9]+""")
 	def get_metrics(self, view):
 		try:
 			curr_id = view.id()
@@ -79,6 +80,11 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		if not len(self.view.vcomments):
 			sublime.status_message('No comments yet.')
 		else:
+			try:
+				self.view.erase_regions("comments")
+				self.view.erase_regions("comment_errs")
+			except:
+				pass
 			sels = self.view.sel()
 			sels.clear()
 			for key_pt in sorted(self.view.vcomments.iterkeys()):
@@ -88,21 +94,25 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				if curr_wd == prev_wd:
 					sels.add(curr_wd_region)
 				else:
-					print 'Commented word was', prev_wd, 'now', curr_wd, 'comment:', prev_comment
+					print "Commented word was \'" + prev_wd + "\' now \'" + curr_wd + "\' comment: " + prev_comment
 					del self.view.vcomments[key_pt]
 			if not len(self.view.vcomments):
 				sublime.status_message('Comments no longer in original positions - deleted.')
 
 	def highlight_comments(self):
 		# metrics = self.get_metrics(self.view)
-		comment_regions = []
+		try:
+			self.view.erase_regions("comments")
+			self.view.erase_regions("comment_errs")
+		except:
+			pass
 		if not len(self.view.vcomments):
-			sublime.status_message('No comments yet.')
+			sublime.status_message('No comments to highlight.')
 		else:
-			try:
-				self.view.erase_regions("comments")
-			except:
-				pass
+			sels = self.view.sel()
+			sels.clear()
+			comment_regions = []
+			comment_errors = []
 			for key_pt in sorted(self.view.vcomments.iterkeys()):
 				curr_wd_region = self.view.word(key_pt)
 				curr_wd = self.view.substr(curr_wd_region)
@@ -110,12 +120,22 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				if curr_wd == prev_wd:
 					comment_regions.append(curr_wd_region)
 				else:
-					print 'Commented word was', prev_wd, 'now', curr_wd, 'comment:', prev_comment
-					del self.view.vcomments[key_pt]
-			if not len(self.view.vcomments):
-				sublime.status_message('Comments no longer in original positions - deleted.')
-			else:
-				self.view.add_regions("comments", comment_regions, "comment", '')
+					print "Commented word was \'" + prev_wd + "\' now \'" + curr_wd + "\' comment: " + prev_comment
+					comment_errors.append(curr_wd_region)
+			if len(comment_regions):
+				self.view.add_regions("comments", comment_regions, "comment", "")
+			if len(comment_errors):
+				self.view.add_regions("comment_errs", comment_errors, "invalid", "")
+
+	def remove_highlight(self):
+		if not len(self.view.vcomments):
+			sublime.status_message('There are no remaining comments.')
+		try:
+			self.view.erase_regions("comments")
+			self.view.erase_regions("comment_errs")
+			sublime.status_message('Removed comment highlighting.')
+		except:
+			pass
 
 	def add_comment(self, text):
 		metrics = self.get_metrics(self.view)
@@ -124,9 +144,9 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			return
 		if len(metrics['curr_word']) < 2:
 			sublime.status_message('Cursor should be within a word (2 characters min).')
-		elif not metrics['curr_word'].isalpha():
-			sublime.status_message('Cursor needs to be within a fully alphabetic word: ' \
-				+ str(metrics['curr_word']))
+		elif not re.match(self.sensible_word, metrics['curr_word']):
+			sublime.status_message("Cursor needs to be within a \'sensible\' word, " \
+				+ "and cannot start with a number: " + str(metrics['curr_word']))
 		else:									# add the comment to the dictionary
 			comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 			comment = comment.replace('\t', '&nbsp;' * 4).strip()
@@ -139,9 +159,9 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			return
 		if len(metrics['curr_word']) < 2:
 			sublime.status_message('Cursor should be within a word (2 characters min).')
-		elif not metrics['curr_word'].isalpha():
-			sublime.status_message('Cursor needs to be within a fully alphabetic word: ' \
-				+ str(metrics['curr_word']))
+		elif not re.match(self.sensible_word, metrics['curr_word']):
+			sublime.status_message("Cursor needs to be within a \'sensible\' word, " \
+				+ "and cannot start with a number: " + str(metrics['curr_word']))
 		elif not len(self.view.vcomments):
 			sublime.status_message('No comments to delete.')
 		else:									# delete the comment from the dictionary
@@ -155,12 +175,13 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		if len(self.view.vcomments):
 			self.view.vcomments = {}
 			sublime.status_message('All comments deleted.')
-			try:
-				self.view.erase_regions("comments")
-			except:
-				pass
 		else:
 			sublime.status_message('No comments to delete.')
+		try:
+			self.view.erase_regions("comments")
+			self.view.erase_regions("comment_errs")
+		except:
+			pass
 
 	def push_comment(self):
 		metrics = self.get_metrics(self.view)
@@ -169,9 +190,9 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			return
 		if len(metrics['curr_word']) < 2:
 			sublime.status_message('Cursor should be within a word (2 characters min).')
-		elif not metrics['curr_word'].isalpha():
-			sublime.status_message('Cursor needs to be within a fully alphabetic word: ' \
-				+ str(metrics['curr_word']))
+		elif not re.match(self.sensible_word, metrics['curr_word']):
+			sublime.status_message("Cursor needs to be within a \'sensible\' word, " \
+				+ "and cannot start with a number: " + str(metrics['curr_word']))
 		elif not len(self.view.vcomments):
 			sublime.status_message('There are no comments for the current view.')
 		else:									# push this comment forward
@@ -182,8 +203,10 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				if new_region:
 					self.view.vcomments[new_region.begin()] = (prev_wd, prev_comment)
 					del self.view.vcomments[metrics['word_pt']]
-					_, new_comment_line = self.view.rowcol(new_region.begin())
-					sublime.status_message('Comment pushed forward to line ' + str(new_comment_line))
+					new_comment_line, _ = self.view.rowcol(new_region.begin())
+					sublime.status_message('Comment pushed forward to line ' + str(new_comment_line + 1))
+					sels = self.view.sel()
+					sels.clear()
 					self.view.sel().add(new_region)
 					self.view.show(new_region)
 				else:
@@ -207,19 +230,21 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			self.more_comments = False
 			return
 		comment_command = text.strip().upper()
-		if comment_command == 'SELECT':							# select commented words
+		if comment_command == 'SELECT':									# select commented words
 			self.select_comments()
-		elif comment_command == 'HIGHLIGHT':					# highlight comments
+		elif comment_command == 'HIGHLIGHT':							# highlight comments
 			self.highlight_comments()
-		elif comment_command == 'DELETE':						# delete comment at cursor
+		elif comment_command in ('REMOVE', 'REMOVE HIGHLIGHT'):			# remove highlights
+			self.remove_highlight()
+		elif comment_command == 'DELETE':								# delete comment at cursor
 			self.delete_comment()
-		elif comment_command in ('DELETE ALL', 'DELETEALL'):	# delete all comments
+		elif comment_command in ('DELETE ALL', 'DELETEALL'):			# delete all comments
 			self.delete_all_comments()
-		elif comment_command == 'PUSH':							# push this comment forward
+		elif comment_command == 'PUSH':									# push this comment forward
 			self.push_comment()
-		else:													# add new comment
+		else:															# add new comment
 			self.add_comment(text)
-		self.show_again()										# the "commments" panel
+		self.show_again()												# the "commments" panel
 
 	def show_comment_panel(self, existing_comment):
 		caller_id = self.view.id()
