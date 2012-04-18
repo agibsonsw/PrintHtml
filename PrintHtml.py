@@ -142,6 +142,8 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		elif not metrics['curr_word'].isalpha():
 			sublime.status_message('Cursor needs to be within a fully alphabetic word: ' \
 				+ str(metrics['curr_word']))
+		elif not len(self.view.vcomments):
+			sublime.status_message('No comments to delete.')
 		else:									# delete the comment from the dictionary
 			if self.view.vcomments.has_key(metrics['word_pt']):
 				del self.view.vcomments[metrics['word_pt']]
@@ -160,6 +162,35 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		else:
 			sublime.status_message('No comments to delete.')
 
+	def push_comment(self):
+		metrics = self.get_metrics(self.view)
+		if not len(metrics):
+			sublime.status_message('Unable to read word at cursor.')
+			return
+		if len(metrics['curr_word']) < 2:
+			sublime.status_message('Cursor should be within a word (2 characters min).')
+		elif not metrics['curr_word'].isalpha():
+			sublime.status_message('Cursor needs to be within a fully alphabetic word: ' \
+				+ str(metrics['curr_word']))
+		elif not len(self.view.vcomments):
+			sublime.status_message('There are no comments for the current view.')
+		else:									# push this comment forward
+			if self.view.vcomments.has_key(metrics['word_pt']):
+				prev_wd, prev_comment = self.view.vcomments[metrics['word_pt']]
+				# print 'Trying to find', prev_wd
+				new_region = self.view.find(prev_wd, metrics['word_pt'] + 1, sublime.LITERAL)
+				if new_region:
+					self.view.vcomments[new_region.begin()] = (prev_wd, prev_comment)
+					del self.view.vcomments[metrics['word_pt']]
+					_, new_comment_line = self.view.rowcol(new_region.begin())
+					sublime.status_message('Comment pushed forward to line ' + str(new_comment_line))
+					self.view.sel().add(new_region)
+					self.view.show(new_region)
+				else:
+					sublime.status_message('The current text does not occur further down.')
+			else:
+				sublime.status_message('No comment found at cursor.')
+
 	def process_commentry(self, text, caller_id):
 		if not len(text):
 			sublime.status_message('Comment has no text.')
@@ -176,7 +207,6 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			self.more_comments = False
 			return
 		comment_command = text.strip().upper()
-		print comment_command
 		if comment_command == 'SELECT':							# select commented words
 			self.select_comments()
 		elif comment_command == 'HIGHLIGHT':					# highlight comments
@@ -185,6 +215,8 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			self.delete_comment()
 		elif comment_command in ('DELETE ALL', 'DELETEALL'):	# delete all comments
 			self.delete_all_comments()
+		elif comment_command == 'PUSH':							# push this comment forward
+			self.push_comment()
 		else:													# add new comment
 			self.add_comment(text)
 		self.show_again()										# the "commments" panel
