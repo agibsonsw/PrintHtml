@@ -125,29 +125,29 @@
         }
     ],
 
-    "forum_panel": [
+    "bbcode_panel": [
         {
-            "To Clipboard - Format as Format Post": {
+            "To Clipboard - Format as BBCode": {
                 "numbers": false,
                 "multi_select": true
             }
         },
 
         {
-            "To Clipboard - Format as Format Post (show gutter)": {
+            "To Clipboard - Format as BBCode (show gutter)": {
                 "numbers": true,
                 "multi_select": true
             }
         },
         {
-            "Sublime View - Show Forum Post in View": {
+            "Sublime View - Show BBCode in View": {
                 "numbers": false,
                 "multi_select": true,
                 "view_open": true
             }
         },
         {
-            "Sublime View - Show Forum Post in View (show gutter)": {
+            "Sublime View - Show BBCode in View (show gutter)": {
                 "numbers": false,
                 "multi_select": true,
                 "view_open": true

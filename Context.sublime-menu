@@ -1,7 +1,7 @@
 [
     { "caption": "-" },
     { "command": "print_html_panel", "caption": "Print to HTML" },
-    {"command": "print_forum_panel", "caption": "Format for Forum Post"},
+    {"command": "print_bbcode_panel", "caption": "Print to BBCode"},
     {
         "caption": "Annotations",
         "children":

@@ -654,6 +654,7 @@ class PrintHtml(object):
             if clipboard_copy:
                 the_html.seek(0)
                 sublime.set_clipboard(the_html.read())
+                sublime.status_message("Print to HTML: copied to clipboard")
 
         if view_open:
             self.view.window().open_file(the_html.name)
