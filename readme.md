@@ -110,7 +110,26 @@ Example:
         }
     }
 
-## Settings File options
+# Usage: Annotations (HTML only)
+Annotations are comments you can make on selected text.  When the HTML is generated, the selected text will be underlined, and when the mouse hovers over them, a tooltip will appear with your comment.
+
+[Picture Goes Here]
+
+In order to use annotations, you must enter into an "Annotation Mode".  This puts your file in a read only state.  At this point, you can select text and create annotations using the annotation commands provided.  When you leave the "Annotation Mode", all annotations will be lost.  So you must print before leaving annotation mode.
+
+You can access the annotation commands from the command palette or from the context menu.
+
+The commands are as follows:
+
+- Enable Annotation Mode: Turn annotation mode on.
+- Disable Annotation Mode: Turn annotation mode off.
+- Annotate Selection: Annote the given selection (no multi-select support currently).
+- Delete Annotation(s): Delete the annotation region the the cursor resides in (multi-select support).
+- Delete All Annotations: Delete all annotation regions.
+- Show Annotation Comment: Show the annotation comment of the region under the cursor.
+
+
+# Settings File options
 - alternate_scheme (string or false): Defines a default theme to be used if a theme is not specified in a command.  When this is false, the current Sublime Text theme in use is used.
 - valid_selection_size (integer): Minimum allowable size for a selection to be accepted for only the selection to be printed.
 - linux_python2.6_lib (string): If you are on linux and Sublime Text is not including your Python 2.6 library folder, you can try and configure it here.
