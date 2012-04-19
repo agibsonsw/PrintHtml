@@ -59,48 +59,60 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			return {}
 		return locals()							# shouldn't really do this :)
 
+	def check_word(self, the_word):
+		unsuitable = 0; error_msg = ''
+		if len(the_word) < 2:
+			return (1, "Cursor should be within a word (2 characters min).")
+		elif not re.match(self.sensible_word, the_word):
+			return (2, "Cursor needs to be within a \'sensible\' word, " \
+				+ "and cannot start with a number: " + the_word)
+		else:
+			return (unsuitable, error_msg)		# word is okay
+
 	def run(self, edit):
 		metrics = self.get_metrics(self.view)
 		if not len(metrics):
 			sublime.status_message('Unable to read word at cursor.')
-			return
-		if len(metrics['curr_word']) < 2:
-			sublime.status_message('Cursor should be within a word.')
+		else:
+			unsuitable, error_msg = self.check_word(metrics['curr_word'])
+			if unsuitable:
+				sublime.status_message(error_msg)
 		self.more_comments = True
 		self.curr_comment = ''
 		if not hasattr(self.view, 'vcomments'):
 			self.view.vcomments = {}
 		else:
-			if self.view.vcomments.has_key(metrics['word_pt']):
-				_, self.curr_comment = self.view.vcomments[metrics['word_pt']]
+			try:
+				if self.view.vcomments.has_key(metrics['word_pt']):
+					_, self.curr_comment = self.view.vcomments[metrics['word_pt']]
+			except:
+				pass
 		self.show_comment_panel(self.curr_comment)
 
 	def select_comments(self):
-		# metrics = self.get_metrics(self.view)
+		try:
+			self.view.erase_regions("comments")
+			self.view.erase_regions("comment_errs")
+		except:
+			pass
 		if not len(self.view.vcomments):
-			sublime.status_message('No comments yet.')
-		else:
-			try:
-				self.view.erase_regions("comments")
-				self.view.erase_regions("comment_errs")
-			except:
-				pass
-			sels = self.view.sel()
-			sels.clear()
-			for key_pt in sorted(self.view.vcomments.iterkeys()):
-				curr_wd_region = self.view.word(key_pt)
-				curr_wd = self.view.substr(curr_wd_region)
-				prev_wd, prev_comment = self.view.vcomments[key_pt]
-				if curr_wd == prev_wd:
-					sels.add(curr_wd_region)
-				else:
-					print "Commented word was \'" + prev_wd + "\' now \'" + curr_wd + "\' comment: " + prev_comment
-					del self.view.vcomments[key_pt]
-			if not len(self.view.vcomments):
-				sublime.status_message('Comments no longer in original positions - deleted.')
+			sublime.status_message('No comments to select.')
+			return
+		sels = self.view.sel()
+		sels.clear()
+		for key_pt in sorted(self.view.vcomments.iterkeys()):
+			curr_wd_region = self.view.word(key_pt)
+			curr_wd = self.view.substr(curr_wd_region)
+			prev_wd, prev_comment = self.view.vcomments[key_pt]
+			if curr_wd == prev_wd:
+				sels.add(curr_wd_region)
+			else:
+				print "Commented word was \'%s\' now \'%s\' comment: %s" % (prev_wd, curr_wd, prev_comment)
+				del self.view.vcomments[key_pt]
+		if not len(self.view.vcomments):
+			sublime.status_message('Comments no longer in original positions - deleted.')
 
 	def highlight_comments(self):
-		# metrics = self.get_metrics(self.view)
 		try:
 			self.view.erase_regions("comments")
 			self.view.erase_regions("comment_errs")
@@ -120,14 +132,14 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				if curr_wd == prev_wd:
 					comment_regions.append(curr_wd_region)
 				else:
-					print "Commented word was \'" + prev_wd + "\' now \'" + curr_wd + "\' comment: " + prev_comment
+					print "Commented word was \'%s\' now \'%s\' comment: %s" % (prev_wd, curr_wd, prev_comment)
 					comment_errors.append(curr_wd_region)
 			if len(comment_regions):
 				self.view.add_regions("comments", comment_regions, "comment", "")
 			if len(comment_errors):
 				self.view.add_regions("comment_errs", comment_errors, "invalid", "")
 
-	def remove_highlight(self):
+	def remove_highlights(self):
 		if not len(self.view.vcomments):
 			sublime.status_message('There are no remaining comments.')
 		try:
@@ -142,28 +154,25 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		if not len(metrics):
 			sublime.status_message('Unable to read word at cursor.')
 			return
-		if len(metrics['curr_word']) < 2:
-			sublime.status_message('Cursor should be within a word (2 characters min).')
-		elif not re.match(self.sensible_word, metrics['curr_word']):
-			sublime.status_message("Cursor needs to be within a \'sensible\' word, " \
-				+ "and cannot start with a number: " + str(metrics['curr_word']))
+		unsuitable, error_msg = self.check_word(metrics['curr_word'])
+		if unsuitable:
+			sublime.status_message(error_msg)
 		else:									# add the comment to the dictionary
 			comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 			comment = comment.replace('\t', '&nbsp;' * 4).strip()
 			self.view.vcomments[metrics['word_pt']] = (metrics['curr_word'], comment)
 
 	def delete_comment(self):
+		if not len(self.view.vcomments):
+			sublime.status_message('No comments to delete.')
+			return
 		metrics = self.get_metrics(self.view)
 		if not len(metrics):
 			sublime.status_message('Unable to read word at cursor.')
 			return
-		if len(metrics['curr_word']) < 2:
-			sublime.status_message('Cursor should be within a word (2 characters min).')
-		elif not re.match(self.sensible_word, metrics['curr_word']):
-			sublime.status_message("Cursor needs to be within a \'sensible\' word, " \
-				+ "and cannot start with a number: " + str(metrics['curr_word']))
-		elif not len(self.view.vcomments):
-			sublime.status_message('No comments to delete.')
+		unsuitable, error_msg = self.check_word(metrics['curr_word'])
+		if unsuitable:
+			sublime.status_message(error_msg)
 		else:									# delete the comment from the dictionary
 			if self.view.vcomments.has_key(metrics['word_pt']):
 				del self.view.vcomments[metrics['word_pt']]
@@ -183,77 +192,117 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		except:
 			pass
 
-	def push_comment(self):
+	def push_comment_down(self):
+		if not len(self.view.vcomments):
+			sublime.status_message('There are no comments for the current view.')
+			return ''
 		metrics = self.get_metrics(self.view)
 		if not len(metrics):
 			sublime.status_message('Unable to read word at cursor.')
-			return
-		if len(metrics['curr_word']) < 2:
-			sublime.status_message('Cursor should be within a word (2 characters min).')
-		elif not re.match(self.sensible_word, metrics['curr_word']):
-			sublime.status_message("Cursor needs to be within a \'sensible\' word, " \
-				+ "and cannot start with a number: " + str(metrics['curr_word']))
-		elif not len(self.view.vcomments):
-			sublime.status_message('There are no comments for the current view.')
-		else:									# push this comment forward
-			if self.view.vcomments.has_key(metrics['word_pt']):
-				prev_wd, prev_comment = self.view.vcomments[metrics['word_pt']]
-				# print 'Trying to find', prev_wd
-				new_region = self.view.find(prev_wd, metrics['word_pt'] + 1, sublime.LITERAL)
+			return ''
+		unsuitable, error_msg = self.check_word(metrics['curr_word'])
+		if unsuitable:
+			sublime.status_message(error_msg)
+		else:									# push this comment downwards
+			prev_pt = metrics['word_pt']
+			if self.view.vcomments.has_key(prev_pt):
+				prev_wd, prev_comment = self.view.vcomments[prev_pt]
+				new_region = self.view.find(prev_wd, prev_pt + 1, sublime.LITERAL)
 				if new_region:
 					self.view.vcomments[new_region.begin()] = (prev_wd, prev_comment)
-					del self.view.vcomments[metrics['word_pt']]
+					del self.view.vcomments[prev_pt]
 					new_comment_line, _ = self.view.rowcol(new_region.begin())
-					sublime.status_message('Comment pushed forward to line ' + str(new_comment_line + 1))
+					sublime.status_message('Comment pushed downwards to line ' + str(new_comment_line + 1))
 					sels = self.view.sel()
 					sels.clear()
 					self.view.sel().add(new_region)
 					self.view.show(new_region)
+					return prev_comment
 				else:
 					sublime.status_message('The current text does not occur further down.')
 			else:
 				sublime.status_message('No comment found at cursor.')
+		return ''
+
+	def push_comment_up(self):
+		if not len(self.view.vcomments):
+			sublime.status_message('There are no comments for the current view.')
+			return ''
+		metrics = self.get_metrics(self.view)
+		if not len(metrics):
+			sublime.status_message('Unable to read word at cursor.')
+			return ''
+		unsuitable, error_msg = self.check_word(metrics['curr_word'])
+		if unsuitable:
+			sublime.status_message(error_msg)
+		else:									# push this comment upwards
+			prev_pt = metrics['word_pt']
+			if self.view.vcomments.has_key(prev_pt):
+				prev_wd, prev_comment = self.view.vcomments[prev_pt]
+				new_regions = (r for r in reversed(self.view.find_all(prev_wd, sublime.LITERAL)) if r.begin() < prev_pt)
+				# (a generator expression)
+				try:
+					new_region = new_regions.next()
+				except StopIteration:
+					new_region = None
+				if new_region:
+					self.view.vcomments[new_region.begin()] = (prev_wd, prev_comment)
+					del self.view.vcomments[prev_pt]
+					new_comment_line, _ = self.view.rowcol(new_region.begin())
+					sublime.status_message('Comment pushed upwards to line ' + str(new_comment_line + 1))
+					sels = self.view.sel()
+					sels.clear()
+					self.view.sel().add(new_region)
+					self.view.show(new_region)
+					return prev_comment
+				else:
+					sublime.status_message('The current text does not occur further up.')
+			else:
+				sublime.status_message('No comment found at cursor.')
+		return ''
 
 	def process_commentry(self, text, caller_id):
+		self.more_comments = False		# assume there is a problem with commentary
+		display_text = ''				# the text to display in the panel, if shown again
 		if not len(text):
 			sublime.status_message('Comment has no text.')
-			self.more_coments = False
 			return
 		window = sublime.active_window()
 		view = window.active_view() if window != None else None
 		if view is None:
 			sublime.status_message('No active view.')
-			self.more_comments = False
 			return
 		elif view.id() != caller_id:
 			sublime.status_message('Not the same view - cancelled.')
-			self.more_comments = False
 			return
+		self.more_comments = True		# okay to continue displaying the panel
 		comment_command = text.strip().upper()
-		if comment_command == 'SELECT':									# select commented words
+		if comment_command in ('SEL', 'SELECT'):						# select commented words
 			self.select_comments()
-		elif comment_command == 'HIGHLIGHT':							# highlight comments
+		elif comment_command in ('HIGH', 'HIGHLIGHT'):					# highlight all comments
 			self.highlight_comments()
-		elif comment_command in ('REMOVE', 'REMOVE HIGHLIGHT'):			# remove highlights
-			self.remove_highlight()
-		elif comment_command == 'DELETE':								# delete comment at cursor
+		elif comment_command in ('REMOVE', 'REMOVE HIGHLIGHT', 'REMOVE HIGHLIGHTS'):	# remove highlights
+			self.remove_highlights()
+		elif comment_command in ('DEL', 'DELETE'):						# delete comment at cursor
 			self.delete_comment()
-		elif comment_command in ('DELETE ALL', 'DELETEALL'):			# delete all comments
+		elif comment_command in ('DEL ALL', 'DELALL', 'DELETE ALL', 'DELETEALL'):	# delete all comments
 			self.delete_all_comments()
-		elif comment_command == 'PUSH':									# push this comment forward
-			self.push_comment()
-		else:															# add new comment
+		elif comment_command in ('PUSH', 'PUSH D', 'PUSH DOWN', 'PUSHDOWN'):		# push this comment downwards
+			display_text = self.push_comment_down()
+		elif comment_command in ('PUSH U', 'PUSH UP', 'PUSHUP'):		# push this comment upwards
+			display_text = self.push_comment_up()
+		else:															# add new comment at cursor
 			self.add_comment(text)
-		self.show_again()												# the "commments" panel
+		self.show_again(display_text)									# the "commments" panel
 
 	def show_comment_panel(self, existing_comment):
 		caller_id = self.view.id()
 		self.view.window().show_input_panel('Comment>', existing_comment, \
 			lambda txt: self.process_commentry(txt, caller_id), None, self.hide_it)
 
-	def show_again(self):			# the input panel
+	def show_again(self, display_text = ''):			# the input panel
 		if self.more_comments:
-			self.show_comment_panel('')
+			self.show_comment_panel(display_text)
 
 	def hide_it(self):				# the input panel
 		self.more_comments = False
@@ -424,8 +473,12 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		# Convert view to HTML
 		self.convert_view_to_html(the_html)
 
-		the_html.write('</li>\n</ol>\n<br/>\n</body>\n</html>')
+		the_html.write('</li>\n</ol>\n<br/>\n')
 		# included empty line (br) to allow copying of last line without issue
+		if self.comments:
+			# an option to list the comments could be added
+			pass
+		the_html.write('\n</body>\n</html>')
 
 	def run(self, edit, numbers):
 		self.setup(numbers)
