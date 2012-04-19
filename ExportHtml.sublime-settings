@@ -13,6 +13,13 @@
     // Multi-select will also ignore selections whose size is less than this.
     "valid_selection_size": 4,
 
+    // Scope to use for color for annotations in a Sublime Text view
+    "annotation_highlight_scope": "comment",
+
+    // Style to use for for annotations in a Sublime Text view
+    // (outline|solid)
+    "annotation_highlight_style": "outline",
+
     // Define configurations for the drop down export menu
     "html_panel": [
         // Browser print color (selections and multi-selections allowed)

@@ -1,6 +1,18 @@
 import sublime
 import sublime_plugin
 
+PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
+
+
+def get_highlight_style():
+    style_flag = 0
+    settings = sublime.load_settings(PACKAGE_SETTINGS)
+    scope = settings.get("annotation_highlight_scope", "comment")
+    style = settings.get("annotation_highlight_style", "outline")
+    if style == "outline":
+        style_flag |= sublime.DRAW_OUTLINED
+    return scope, style_flag
+
 
 def clean_invalid_regions(view, annotations):
     deletions = 0
@@ -15,11 +27,13 @@ def clean_invalid_regions(view, annotations):
                 del annotations["annotations"][key_name]
                 new_region = annotations["annotations"][new_key]["region"]
                 view.erase_regions(key_name)
+                scope, style = get_highlight_style()
                 view.add_regions(
                     new_key,
                     [sublime.Region(new_region[0], new_region[1])],
-                    "text",
-                    ""
+                    scope,
+                    "",
+                    style
                 )
         else:
             del annotations["annotations"]["html_annotation_%d" % x]
@@ -202,11 +216,13 @@ class AnnotateHtmlCommand(sublime_plugin.TextCommand):
                 self.annotations["count"] += 1
             self.view.settings().set("annotation_comments", self.annotations)
 
+            scope, style = get_highlight_style()
             self.view.add_regions(
                 key_name,
                 [self.sel],
-                "text",
-                ""
+                scope,
+                "",
+                style
             )
 
     def annotation_panel(self, default_comment, subset):

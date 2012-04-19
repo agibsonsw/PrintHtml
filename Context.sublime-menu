@@ -10,7 +10,7 @@
             { "command": "disable_annotation_mode", "caption": "Disable Annotation Mode" },
             { "caption": "-" },
             { "command": "annotate_html", "caption": "Annotate Selection" },
-            { "command": "delete_annotations", "caption": "Delete Annotations" },
+            { "command": "delete_annotations", "caption": "Delete Annotation(s)" },
             { "command": "clear_annotations", "caption": "Delete All Annotations" },
             { "command": "show_annotation_comment", "caption": "Show Annotation Comment" }
         ]

@@ -296,6 +296,11 @@ class ExportHtml(object):
         self.open_annot = False
         self.no_header = no_header
 
+        fname = self.view.file_name()
+        if fname == None or not path.exists(fname):
+            fname = "Untitled"
+        self.file_name = fname
+
         # Get color scheme
         if color_scheme != None:
             alt_scheme = color_scheme
@@ -395,7 +400,7 @@ class ExportHtml(object):
 
     def write_header(self, the_html):
         header = CSS % {
-            "title":     path.basename(the_html.name),
+            "title":     path.basename(self.file_name),
             "font_size": self.font_size,
             "font_face": self.font_face,
             "page_bg":   self.bground,
@@ -532,7 +537,7 @@ class ExportHtml(object):
                 the_colour, the_style = self.guess_colour(scope_name)
 
             # Get new annotation
-            if self.curr_annot == None and len(self.annotations):
+            if (self.curr_annot == None or self.curr_annot.end() < self.pt) and len(self.annotations):
                 self.curr_annot, self.curr_comment = self.annotations.pop(0)
                 while self.pt > self.curr_annot[1]:
                     if len(self.annotations):
@@ -576,11 +581,8 @@ class ExportHtml(object):
         the_html.write(TABLE_START)
         if not self.no_header:
             # Write file name
-            fname = self.view.file_name()
-            if fname == None or not path.exists(fname):
-                fname = "Untitled"
             date_time = datetime.datetime.now().strftime("%m/%d/%y %I:%M:%S")
-            the_html.write(FILE_INFO % {"color": self.fground, "date_time": date_time, "file": fname})
+            the_html.write(FILE_INFO % {"color": self.fground, "date_time": date_time, "file": self.file_name})
 
         the_html.write(ROW_START)
         the_html.write(TABLE_START)
