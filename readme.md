@@ -1,7 +1,7 @@
 # About
 This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml) plugin.  This plugin allows the exporting of a document in ST2 to an HTML file or to BBCode.  It duplicates ST2's theme colors and font styles.
 
-<img src="http://dl.dropbox.com/u/342698/PrintHtml/preview.png" border="0"/>
+<img src="http://dl.dropbox.com/u/342698/ExportHtml/preview.png" border="0"/>
 
 # Features
 - Export to HTML using any tmTheme for syntax highlighting
