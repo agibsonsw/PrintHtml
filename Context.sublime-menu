@@ -1,7 +1,7 @@
 [
     { "caption": "-" },
-    { "command": "print_html_panel", "caption": "Print to HTML" },
-    {"command": "print_bbcode_panel", "caption": "Print to BBCode"},
+    { "command": "export_html_panel", "caption": "Export to HTML" },
+    {"command": "export_bbcode_panel", "caption": "Export to BBCode"},
     {
         "caption": "Annotations",
         "children":

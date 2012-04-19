@@ -3,18 +3,18 @@
     // You can define a string path to an alternate default
     // Color scheme here, it must be relative to the
     // Example:
-    //     "alternate_scheme": "Packages/PrintHtml/themes/Print-Color.tmTheme"
+    //     "alternate_scheme": "Packages/ExportHtml/themes/Print-Color.tmTheme"
     "alternate_scheme": false,
 
     //Path to linux Python 2.6 lib
     "linux_python2.6_lib": "/usr/lib/python2.6/lib-dynload",
 
-    // Minimum allowable size for a selection to be accepted for only the selection to be printed
+    // Minimum allowable size for a selection to be accepted for only the selection to be exproted
     // Multi-select will also ignore selections whose size is less than this.
     "valid_selection_size": 4,
 
-    // Define configurations for the drop down print menu
-    "print_panel": [
+    // Define configurations for the drop down export menu
+    "html_panel": [
         // Browser print color (selections and multi-selections allowed)
         {
             "Browser Print - Color": {
@@ -22,7 +22,7 @@
                 "wrap": 900,
                 "browser_print": true,
                 "multi_select": true,
-                "color_scheme": "Packages/PrintHtml/ColorSchemes/Print-Color.tmTheme",
+                "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Color.tmTheme",
                 "style_gutter": false
             }
         },
@@ -34,7 +34,7 @@
                 "wrap": 900,
                 "browser_print": true,
                 "multi_select": true,
-                "color_scheme": "Packages/PrintHtml/ColorSchemes/Print-Grayscale.tmTheme",
+                "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Grayscale.tmTheme",
                 "style_gutter": false
             }
         },
@@ -48,7 +48,7 @@
                 "wrap": 900,
                 "browser_print": true,
                 "highlight_selections": true,
-                "color_scheme": "Packages/PrintHtml/ColorSchemes/Print-Color.tmTheme",
+                "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Color.tmTheme",
                 "style_gutter": false
             }
         },
@@ -62,7 +62,7 @@
                 "wrap": 900,
                 "browser_print": true,
                 "highlight_selections": true,
-                "color_scheme": "Packages/PrintHtml/ColorSchemes/Print-Grayscale.tmTheme",
+                "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Grayscale.tmTheme",
                 "style_gutter": false
             }
         },
@@ -71,7 +71,7 @@
             "Browser View - Color": {
                 "numbers": true,
                 "multi_select": true,
-                "color_scheme": "Packages/PrintHtml/ColorSchemes/Print-Color.tmTheme"
+                "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Color.tmTheme"
             }
         },
 
@@ -80,7 +80,7 @@
             "Browser View - Grayscale": {
                 "numbers": true,
                 "multi_select": true,
-                "color_scheme": "Packages/PrintHtml/ColorSchemes/Print-Grayscale.tmTheme"
+                "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Grayscale.tmTheme"
             }
         },
 
@@ -89,7 +89,7 @@
             "Browser View - Color (Selection Highlights)": {
                 "numbers": true,
                 "highlight_selections": true,
-                "color_scheme": "Packages/PrintHtml/ColorSchemes/Print-Color.tmTheme"
+                "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Color.tmTheme"
             }
         },
 
@@ -98,7 +98,7 @@
             "Browser View - Grayscale (Selection Highlights)": {
                 "numbers": true,
                 "highlight_selections": true,
-                "color_scheme": "Packages/PrintHtml/ColorSchemes/Print-Grayscale.tmTheme"
+                "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Grayscale.tmTheme"
             }
         },
 
@@ -109,7 +109,7 @@
                 "numbers": true,
                 "wrap": 900,
                 "multi_select": true,
-                "color_scheme": "Packages/PrintHtml/ColorSchemes/Print-Color.tmTheme"
+                "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Color.tmTheme"
             }
         },
 
@@ -120,7 +120,7 @@
                 "numbers": true,
                 "wrap": 900,
                 "multi_select": true,
-                "color_scheme": "Packages/PrintHtml/ColorSchemes/Print-Grayscale.tmTheme"
+                "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Grayscale.tmTheme"
             }
         }
     ],

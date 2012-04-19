@@ -6,9 +6,9 @@ import sys
 import datetime
 import webbrowser
 from HtmlAnnotations import get_annotations
-import PrintHtmlLib.desktop as desktop
+import ExportHtmlLib.desktop as desktop
 
-PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
+PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
 
 if sublime.platform() == "linux":
     # Try and load Linux Python2.6 lib.  Default path is for Ubuntu.
@@ -222,15 +222,15 @@ wrap_code(%(numbered)s)
 """
 
 
-class PrintHtmlPanelCommand(sublime_plugin.WindowCommand):
+class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
     def execute(self, value):
         if value >= 0:
             view = self.window.active_view()
             if view != None:
-                PrintHtml(view).run(**self.args[value])
+                ExportHtml(view).run(**self.args[value])
 
     def run(self):
-        options = sublime.load_settings(PACKAGE_SETTINGS).get("print_panel", {})
+        options = sublime.load_settings(PACKAGE_SETTINGS).get("html_panel", {})
         menu = []
         self.args = []
         for opt in options:
@@ -245,14 +245,14 @@ class PrintHtmlPanelCommand(sublime_plugin.WindowCommand):
             )
 
 
-class PrintHtmlCommand(sublime_plugin.WindowCommand):
+class ExportHtmlCommand(sublime_plugin.WindowCommand):
     def run(self, **kwargs):
         view = self.window.active_view()
         if view != None:
-            PrintHtml(view).run(**kwargs)
+            ExportHtml(view).run(**kwargs)
 
 
-class PrintHtml(object):
+class ExportHtml(object):
     def __init__(self, view):
         self.view = view
 
@@ -654,7 +654,7 @@ class PrintHtml(object):
             if clipboard_copy:
                 the_html.seek(0)
                 sublime.set_clipboard(the_html.read())
-                sublime.status_message("Print to HTML: copied to clipboard")
+                sublime.status_message("Export to HTML: copied to clipboard")
 
         if view_open:
             self.view.window().open_file(the_html.name)

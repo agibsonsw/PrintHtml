@@ -1,31 +1,31 @@
 [
-    // Print to HTML
+    // Export to HTML
     {
-        "caption": "Print to HTML: Show Print Menu",
-        "command": "print_html_panel"
+        "caption": "Export to HTML: Show Export Menu",
+        "command": "export_html_panel"
     },
     {
-        "caption": "Print to BBCode: Show Print Menu",
-        "command": "print_bbcode_panel"
+        "caption": "Export to BBCode: Show Export Menu",
+        "command": "export_bbcode_panel"
     },
     {
-        "caption": "Print to HTML: Toggle Annotation Mode",
+        "caption": "Export to HTML: Toggle Annotation Mode",
         "command": "toggle_annotation_html_mode"
     },
     {
-        "caption": "Print to HTML: Annotate Selection",
+        "caption": "Export to HTML: Annotate Selection",
         "command": "annotate_html"
     },
     {
-        "caption": "Print to HTML: Delete Annotation(s)",
+        "caption": "Export to HTML: Delete Annotation(s)",
         "command": "delete_annotations"
     },
     {
-        "caption": "Print to HTML: Delete All Annotations",
+        "caption": "Export to HTML: Delete All Annotations",
         "command": "clear_annotations"
     },
     {
-        "caption": "Print to HTML: Show Annotation Comment",
+        "caption": "Export to HTML: Show Annotation Comment",
         "command": "show_annotation_comment"
     }
 ]

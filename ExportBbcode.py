@@ -3,6 +3,7 @@ import sublime_plugin
 from os import path
 import tempfile
 import sys
+import re
 
 PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
 
@@ -19,17 +20,25 @@ BBCODE_LINE = '%(code)s\n'
 
 BBCODE_CODE = '[color=%(color)s]%(content)s[/color]'
 
+BBCODE_ESCAPE = '[/color][color=%(color_open)s]%(content)s[/color][color=%(color_close)s]'
+
+BBCODE_BOLD = '[b]%(content)s[/b]'
+
+BBCODE_ITALIC = '[i]%(content)s[/i]'
+
 POST_START = '[pre=%(bg_color)s]'
 
 POST_END = '[/pre]\n'
 
+BBCODE_MATCH = r"""(\[/?)((?:code|pre|table|tr|td|th|b|i|u|sup|color|url|img|list|trac|center|quote|size|li|ul|ol|youtube|gvideo)(?:=[^\]]+)?)(\])"""
 
-class PrintBbcodePanelCommand(sublime_plugin.WindowCommand):
+
+class ExportBbcodePanelCommand(sublime_plugin.WindowCommand):
     def execute(self, value):
         if value >= 0:
             view = self.window.active_view()
             if view != None:
-                PrintBbcode(view).run(**self.args[value])
+                ExportBbcode(view).run(**self.args[value])
 
     def run(self):
         options = sublime.load_settings(PACKAGE_SETTINGS).get("bbcode_panel", {})
@@ -47,14 +56,14 @@ class PrintBbcodePanelCommand(sublime_plugin.WindowCommand):
             )
 
 
-class PrintBbcodeCommand(sublime_plugin.WindowCommand):
+class ExportBbcodeCommand(sublime_plugin.WindowCommand):
     def run(self, **kwargs):
         view = self.window.active_view()
         if view != None:
-            PrintBbcode(view).run(**kwargs)
+            ExportBbcode(view).run(**kwargs)
 
 
-class PrintBbcode(object):
+class ExportBbcode(object):
     def __init__(self, view):
         self.view = view
 
@@ -176,6 +185,15 @@ class PrintBbcode(object):
             the_bbcode.write(self.print_line(line, self.curr_row))
             self.curr_row += 1
 
+    def repl(self, m, the_colour):
+        return m.group(1) + (
+            BBCODE_ESCAPE % {
+                "color_open": the_colour,
+                "color_close": the_colour,
+                "content": m.group(2)
+            }
+        ) + m.group(3)
+
     def format_text(self, line, text, the_colour, the_style):
         text = text.replace('\t', ' ' * self.tab_size).replace('\n', '')
         if self.empty_space != None:
@@ -185,6 +203,7 @@ class PrintBbcode(object):
             self.empty_space = text
         else:
             code = ""
+            text = re.sub(BBCODE_MATCH, lambda m: self.repl(m, the_colour), text)
             bold = False
             italic = False
             for s in the_style:
@@ -192,15 +211,11 @@ class PrintBbcode(object):
                     bold = True
                 if s == "italic":
                     italic = True
-            if bold:
-                code += '[b]'
-            if italic:
-                code += '[i]'
             code += (BBCODE_CODE % {"color": the_colour, "content": text})
             if italic:
-                code += '[/i]'
+                code = (BBCODE_ITALIC % {"color": the_colour, "content": code})
             if bold:
-                code += '[/b]'
+                code = (BBCODE_BOLD % {"color": the_colour, "content": code})
             line.append(code)
 
     def convert_line_to_bbcode(self):
@@ -259,7 +274,7 @@ class PrintBbcode(object):
             if clipboard_copy:
                 the_bbcode.seek(0)
                 sublime.set_clipboard(the_bbcode.read())
-                sublime.status_message("Print to BBCode: copied to clipboard")
+                sublime.status_message("Export to BBCode: copied to clipboard")
 
         if view_open:
             self.view.window().open_file(the_bbcode.name)
