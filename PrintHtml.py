@@ -12,6 +12,9 @@ if sublime.platform() == "linux":
 		sys.path.append(linux_lib)
 from plistlib import readPlist
 
+CSS_BODY = \
+"""body { color: %(fcolor)s; background-color: %(bcolor)s; font: %(fsize)dpt '%(fface)s', Consolas, Monospace; } """
+
 CSS_COMMENTS = \
 """
 .tooltip {
@@ -42,7 +45,31 @@ CSS_COMMENTS = \
 .tooltip:hover span.comment {
 	margin-left: 0;
 }
+.tooltip span.linenumber {
+	display: none;
+}
 * html a:hover { background: transparent; }
+"""
+
+COMMENTS_LIST = \
+"""
+<script type="text/javascript">
+	function listComments() {
+		var the_list = '<html><head><style>';
+		the_list += "%(styling)s";
+		the_list += 'span.nos { display: inline-block; width: 30px; text-align:right; padding-right: 10px; }'
+		the_list += '</style></head><body>';
+		the_list += '<p>Comments for: %(fname)s</p>';
+		var the_comments = document.getElementsByClassName('comment');
+		for (i=0; i < the_comments.length; i++) {
+			the_list += '<p>Line no:<span class=nos>' + the_comments[i].nextSibling.firstChild.nodeValue + '</span>';
+			the_list += the_comments[i].firstChild.nodeValue + '</p>';
+		}
+		the_list += '<br/><p>Refresh the page to go back.</p>';
+		the_list += '</body></html>';
+		document.write(the_list);
+	}
+</script>
 """
 
 class CommentHtmlCommand(sublime_plugin.TextCommand):
@@ -373,6 +400,9 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		return the_colour or self.fground
 
 	def write_header(self, the_html):
+		self.fname = self.view.file_name()
+		if self.fname == None or not path.exists(self.fname):
+			self.fname = "Untitled"
 		the_html.write('<!DOCTYPE html>\n')
 		the_html.write('<html>\n<head>\n<meta charset=\"UTF-8\">\n')
 		the_html.write('<title>' + path.basename(the_html.name) + '</title>\n')
@@ -383,20 +413,24 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		if len(self.view.vcomments):
 			self.comments = True
 			the_html.write((CSS_COMMENTS % { "dot_colour": self.fground }).encode('utf-8', 
-				'xmlcharrefreplace') + '\n')	
-		the_html.write('\tspan { display: inline; border: 0; margin: 0; padding: 0; }\n')
+				'xmlcharrefreplace') + '\n')
+
+		the_html.write('span { display: inline; border: 0; margin: 0; padding: 0; }\n')
 		if not self.numbers:
-			the_html.write('\tol { list-style-type: none; list-style-position: inside; ' 
+			the_html.write('ol { list-style-type: none; list-style-position: inside; ' 
 				+ 'margin: 0px; padding: 0px; }\n')
-		the_html.write('\tli { color: ' + self.gfground + '; margin-top: ' +
+		the_html.write('li { color: ' + self.gfground + '; margin-top: ' +
 			str(self.padd_top) + 'pt; margin-bottom: ' + str(self.padd_bottom) + 'pt; }\n')
 
-		the_html.write('\tbody { \n\t')
-		the_html.write('color: ' + self.fground + '; background-color: ' + self.bground + ';\n\t')
-		the_html.write('font: ' + str(self.font_size) + 'pt \"' + self.font_face + '\", Consolas, Monospace;')
-		the_html.write('}\n')					# close body-css
+		the_html.write((CSS_BODY % {"fcolor": self.fground, "bcolor": self.bground, 
+					"fsize": self.font_size, "fface": self.font_face}).encode('utf-8', 'xmlcharrefreplace'))
+		the_html.write('</style>\n')
 
-		the_html.write('</style>\n</head>\n')
+		if self.comments:
+			the_html.write((COMMENTS_LIST % {"fname": (self.fname).replace('\\', '\\\\'), 
+				"styling": (CSS_BODY % {"fcolor": self.fground, "bcolor": self.bground,
+					"fsize": self.font_size, "fface": self.font_face})}).encode('utf-8', 'xmlcharrefreplace'))
+		the_html.write('</head>\n')
 
 	def convert_view_to_html(self, the_html):
 		for line in self.view.split_by_newlines(sublime.Region(self.pt, self.size)):
@@ -451,20 +485,22 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 					the_span = '<span style=\"color:' + the_colour + '\">' + tidied_text + '</span>'
 					if the_comment is not None:
 						the_span = '<a class=\"tooltip\" href=\"#\">' + the_span
-						the_span += '<span class=\"comment\">' + the_comment + '</span></a>'
+						the_span += '<span class=\"comment\">' + the_comment + '</span>'
+						line_no, _ = self.view.rowcol(self.pt - 1)
+						the_span += '<span class=\"linenumber\">' + str(line_no + 1) + '</a>'
 					html_line += the_span
 				the_html.write(html_line.encode('utf-8', 'xmlcharrefreplace'))
 				temp_line[:] = []
-			the_html.write('</li>\n<li>')
+				the_html.write('</li>\n<li>')
 
 	def write_body(self, the_html):
 		the_html.write('<body>\n')
 
-		# Write file name
-		fname = self.view.file_name()
-		if fname == None or not path.exists(fname):
-			fname = "Untitled"
-		the_html.write('<span style=\"color:' + self.fground + '\">' + fname + '</span>\n')
+		# Write file name (set in write_header)
+		the_html.write('<span style=\"color:' + self.fground + '\">' + self.fname + '</span>\n')
+		if self.comments:
+			the_html.write('<br/>Show list of comments: ')
+			the_html.write('<input type=\"checkbox\" name=\"ckbComments\" value=\"1\" onclick=\"listComments()\">\n')
 		if self.numbers:
 			the_html.write('<ol>\n<li value="%d">' % self.curr_row)  # use code's line numbering
 		else:
@@ -478,7 +514,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		if self.comments:
 			# an option to list the comments could be added
 			pass
-		the_html.write('\n</body>\n</html>')
+		the_html.write('</body>\n</html>')
 
 	def run(self, edit, numbers):
 		self.setup(numbers)
