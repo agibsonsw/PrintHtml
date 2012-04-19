@@ -5,7 +5,7 @@ import tempfile
 import sys
 import re
 
-PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
+PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
 
 if sublime.platform() == "linux":
     # Try and load Linux Python2.6 lib.  Default path is for Ubuntu.
