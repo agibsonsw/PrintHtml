@@ -120,7 +120,7 @@ Example:
 #Credits
 - agibsonsw: Original idea and algorithm for the plugin
 - Paul Boddie: Desktop module for open files in web browser cross platform
-- Print-Color and Pring-Grayscale tmThemes were derived from Monokai Bright
+- Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright
 
 # Version 0.1.1
 - Fix status returnd as None for Windows
