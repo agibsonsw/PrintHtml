@@ -45,29 +45,39 @@ CSS_COMMENTS = \
 .tooltip:hover span.comment {
 	margin-left: 0;
 }
-.tooltip span.linenumber {
-	display: none;
-}
+
+table#tblComments { display: none; border: thin solid; border-collapse: collapse; margin: 20px; }
+table#tblComments th, table#tblComments td { border: thin solid %(commment_border)s; padding: 5px; }
+td.nos { width: 60px; text-align: right; padding-right: 20px; }
+td.cmts { min-width: 500px; }
+
 * html a:hover { background: transparent; }
 """
 
-COMMENTS_LIST = \
+JS_COMMENTS = \
 """
 <script type="text/javascript">
 	function listComments() {
-		var the_list = '<html><head><style>';
-		the_list += "%(styling)s";
-		the_list += 'span.nos { display: inline-block; width: 30px; text-align:right; padding-right: 10px; }'
-		the_list += '</style></head><body>';
-		the_list += '<p>Comments for: %(fname)s</p>';
-		var the_comments = document.getElementsByClassName('comment');
-		for (i=0; i < the_comments.length; i++) {
-			the_list += '<p>Line no:<span class=nos>' + the_comments[i].nextSibling.firstChild.nodeValue + '</span>';
-			the_list += the_comments[i].firstChild.nodeValue + '</p>';
+		var the_tbl = document.getElementById('tblComments');
+		if (!the_tbl.style.display || the_tbl.style.display == 'none') {
+			the_tbl.style.display = 'table';
+			document.getElementById('thecode').style.display = 'none';
 		}
-		the_list += '<br/><p>Refresh the page to go back.</p>';
-		the_list += '</body></html>';
-		document.write(the_list);
+		else {
+			the_tbl.style.display = 'none';
+			document.getElementById('thecode').style.display = 'block';
+		}
+	}
+	function toggleComments() {
+		var comments = document.getElementsByClassName('comment');
+		for (i=0; i < comments.length; i++) {
+			if (comments[i].style.marginLeft && comments[i].style.marginLeft == '0pt') {
+				comments[i].style.marginLeft = '-999em';
+			}
+			else {
+				comments[i].style.marginLeft = '0pt';
+			}
+		}
 	}
 </script>
 """
@@ -86,7 +96,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			return {}
 		return locals()							# shouldn't really do this :)
 
-	def check_word(self, the_word):
+	def check_word(self, the_word):			# suitable to attach a comment to?
 		unsuitable = 0; error_msg = ''
 		if len(the_word) < 2:
 			return (1, "Cursor should be within a word (2 characters min).")
@@ -95,6 +105,18 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				+ "and cannot start with a number: " + the_word)
 		else:
 			return (unsuitable, error_msg)		# word is okay
+
+	def get_comment(self):
+		if not hasattr(self.view, 'vcomments'): return False
+		metrics = self.get_metrics(self.view)
+		if not len(metrics): return False
+		unsuitable, _ = self.check_word(metrics['curr_word'])
+		if unsuitable: return False
+		if self.view.vcomments.has_key(metrics['word_pt']):
+			_, curr_comment = self.view.vcomments[metrics['word_pt']]
+			return curr_comment
+		else:
+			return False
 
 	def run(self, edit):
 		metrics = self.get_metrics(self.view)
@@ -105,16 +127,16 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			if unsuitable:
 				sublime.status_message(error_msg)
 		self.more_comments = True
-		self.curr_comment = ''
+		curr_comment = ''
 		if not hasattr(self.view, 'vcomments'):
 			self.view.vcomments = {}
 		else:
 			try:
 				if self.view.vcomments.has_key(metrics['word_pt']):
-					_, self.curr_comment = self.view.vcomments[metrics['word_pt']]
+					_, curr_comment = self.view.vcomments[metrics['word_pt']]
 			except:
 				pass
-		self.show_comment_panel(self.curr_comment)
+		self.show_comment_panel(curr_comment)
 
 	def select_comments(self):
 		try:
@@ -267,7 +289,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			if self.view.vcomments.has_key(prev_pt):
 				prev_wd, prev_comment = self.view.vcomments[prev_pt]
 				new_regions = (r for r in reversed(self.view.find_all(prev_wd, sublime.LITERAL)) if r.begin() < prev_pt)
-				# (a generator expression)
+				# (generator expression)
 				try:
 					new_region = new_regions.next()
 				except StopIteration:
@@ -291,9 +313,6 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 	def process_commentry(self, text, caller_id):
 		self.more_comments = False		# assume there is a problem with commentary
 		display_text = ''				# the text to display in the panel, if shown again
-		if not len(text):
-			sublime.status_message('Comment has no text.')
-			return
 		window = sublime.active_window()
 		view = window.active_view() if window != None else None
 		if view is None:
@@ -302,7 +321,13 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		elif view.id() != caller_id:
 			sublime.status_message('Not the same view - cancelled.')
 			return
-		self.more_comments = True		# okay to continue displaying the panel
+		if not len(text):					# attempt to display comment at cursor
+			display_text = self.get_comment()
+			if display_text:
+				self.more_comments = True
+				self.show_again(display_text)
+			return
+		self.more_comments = True					# okay to continue displaying the panel
 		comment_command = text.strip().upper()
 		if comment_command in ('SEL', 'SELECT'):						# select commented words
 			self.select_comments()
@@ -339,6 +364,11 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		path_packages = sublime.packages_path()
 		if not hasattr(self.view, 'vcomments'):
 			self.view.vcomments = {}
+		if len(self.view.vcomments):
+			self.has_comments = True
+		else:
+			self.has_comments = False
+
 		# Get general document preferences from sublime preferences
 		settings = sublime.load_settings('Preferences.sublime-settings')
 		self.font_size = settings.get('font_size', 10)
@@ -399,44 +429,58 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 			self.colours[the_key] = the_colour
 		return the_colour or self.fground
 
+	def add_comments_table(self, the_html):
+		the_html.write('<table id=\"tblComments\">\n');
+		the_html.write('\t<th>Line</th><th>The comment</th>\n')
+		for (line_no, comment) in self.comments_list:
+			the_html.write(('\t<tr><td class=\"nos\">' + str(line_no) + '</td><td class=\"cmts\">' + comment + 
+				'</td><tr>\n').encode('utf-8', 'xmlcharrefreplace'))
+		the_html.write('</table>')
+
 	def write_header(self, the_html):
-		self.fname = self.view.file_name()
-		if self.fname == None or not path.exists(self.fname):
-			self.fname = "Untitled"
 		the_html.write('<!DOCTYPE html>\n')
 		the_html.write('<html>\n<head>\n<meta charset=\"UTF-8\">\n')
 		the_html.write('<title>' + path.basename(the_html.name) + '</title>\n')
 
 		the_html.write('<style type=\"text/css\">\n')
-		self.vid = self.view.id()
-		self.comments = False
-		if len(self.view.vcomments):
-			self.comments = True
-			the_html.write((CSS_COMMENTS % { "dot_colour": self.fground }).encode('utf-8', 
-				'xmlcharrefreplace') + '\n')
+
+		if self.has_comments:
+			the_html.write((CSS_COMMENTS % { "dot_colour": self.fground,
+				"commment_border": self.fground}).encode('utf-8', 'xmlcharrefreplace') + '\n')
 
 		the_html.write('span { display: inline; border: 0; margin: 0; padding: 0; }\n')
-		if not self.numbers:
-			the_html.write('ol { list-style-type: none; list-style-position: inside; ' 
+
+		if self.numbers:
+			the_html.write('ol#thecode { display: block; list-style-type: decimal; list-style-position: outside; }\n')
+		else:
+			the_html.write('ol#thecode { display: block; list-style-type: none; list-style-position: inside; ' 
 				+ 'margin: 0px; padding: 0px; }\n')
+
 		the_html.write('li { color: ' + self.gfground + '; margin-top: ' +
 			str(self.padd_top) + 'pt; margin-bottom: ' + str(self.padd_bottom) + 'pt; }\n')
 
 		the_html.write((CSS_BODY % {"fcolor": self.fground, "bcolor": self.bground, 
 					"fsize": self.font_size, "fface": self.font_face}).encode('utf-8', 'xmlcharrefreplace'))
+
 		the_html.write('</style>\n')
 
-		if self.comments:
-			the_html.write((COMMENTS_LIST % {"fname": (self.fname).replace('\\', '\\\\'), 
-				"styling": (CSS_BODY % {"fcolor": self.fground, "bcolor": self.bground,
-					"fsize": self.font_size, "fface": self.font_face})}).encode('utf-8', 'xmlcharrefreplace'))
+		if self.has_comments:
+			the_html.write(JS_COMMENTS)			# JavaScript code to display comments
+
 		the_html.write('</head>\n')
 
 	def convert_view_to_html(self, the_html):
+		first_line = True
+		if self.has_comments:
+			self.comments_list = []
 		for line in self.view.split_by_newlines(sublime.Region(self.pt, self.size)):
 			self.pt = line.begin(); self.end = self.pt + 1
 			if line.empty():
-				the_html.write('<br/></li>\n<li>')
+				if first_line:
+					the_html.write('<br/></li>\n')
+					first_line = False
+				else:
+					the_html.write('<li><br/></li>\n')
 				continue
 			self.line_end = line.end()
 			temp_line = []
@@ -458,7 +502,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 				the_colour = self.guess_colour(scope_name.strip())
 				the_comment = None
 
-				if text_len and self.comments:
+				if text_len and self.has_comments:
 					for x in range(self.pt, self.end):
 						if x in self.view.vcomments:
 							the_word, the_comment = self.view.vcomments[x]
@@ -480,43 +524,58 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 				self.end = self.pt + 1
 
 			if len(temp_line):
-				html_line = ''
+				if first_line:
+					html_line = ''; first_line = False
+				else:
+					html_line = '<li>'
 				for (the_colour, tidied_text, the_comment) in temp_line:
 					the_span = '<span style=\"color:' + the_colour + '\">' + tidied_text + '</span>'
 					if the_comment is not None:
 						the_span = '<a class=\"tooltip\" href=\"#\">' + the_span
-						the_span += '<span class=\"comment\">' + the_comment + '</span>'
+						the_span += '<span class=\"comment\">' + the_comment + '</span></a>'
 						line_no, _ = self.view.rowcol(self.pt - 1)
-						the_span += '<span class=\"linenumber\">' + str(line_no + 1) + '</a>'
+						self.comments_list.append((line_no, the_comment))	# used to create the comments table
 					html_line += the_span
+				html_line += '</li>\n'
 				the_html.write(html_line.encode('utf-8', 'xmlcharrefreplace'))
 				temp_line[:] = []
-				the_html.write('</li>\n<li>')
+			elif first_line:
+				the_html.write('<br/></li>')
+			first_line = False
 
 	def write_body(self, the_html):
 		the_html.write('<body>\n')
-
+		fname = self.view.file_name()
+		if fname == None or not path.exists(fname):
+			fname = "Untitled"
 		# Write file name (set in write_header)
-		the_html.write('<span style=\"color:' + self.fground + '\">' + self.fname + '</span>\n')
-		if self.comments:
-			the_html.write('<br/>Show list of comments: ')
+		the_html.write('<p style=\"color:' + self.fground + '\">' + fname + '</p>\n')
+		if self.has_comments:
+			the_html.write('<p>Show table of comments: ')
 			the_html.write('<input type=\"checkbox\" name=\"ckbComments\" value=\"1\" onclick=\"listComments()\">\n')
+			the_html.write('&nbsp;Show/hide comments: ')
+			the_html.write('<input type=\"checkbox\" name=\"ckbToggle\" value=\"1\" onclick=\"toggleComments()\"></p>\n')
 		if self.numbers:
-			the_html.write('<ol>\n<li value="%d">' % self.curr_row)  # use code's line numbering
+			the_html.write('<ol id=\"thecode\">\n<li value="%d">' % self.curr_row)  # use code's line numbering
 		else:
-			the_html.write('<ol>\n<li>')
+			the_html.write('<ol id=\"thecode\">\n')
 
 		# Convert view to HTML
 		self.convert_view_to_html(the_html)
 
-		the_html.write('</li>\n</ol>\n<br/>\n')
+		the_html.write('\n</ol>\n<br/>\n')
 		# included empty line (br) to allow copying of last line without issue
-		if self.comments:
-			# an option to list the comments could be added
-			pass
+		if self.has_comments and len(self.view.vcomments):			# check if all comments were deleted
+			self.add_comments_table(the_html)						# initially, display: none
+
 		the_html.write('</body>\n</html>')
 
 	def run(self, edit, numbers):
+		window = sublime.active_window()
+		view = window.active_view() if window != None else None
+		if view is None or view.id() != self.view.id():
+			sublime.status_message('Click into the view/tab first.')
+			return
 		self.setup(numbers)
 		with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
 			self.write_header(the_html)
