@@ -113,7 +113,7 @@ Example:
 # Usage: Annotations (HTML only)
 Annotations are comments you can make on selected text.  When the HTML is generated, the selected text will be underlined, and when the mouse hovers over them, a tooltip will appear with your comment.
 
-[Picture Goes Here]
+<img src="http://dl.dropbox.com/u/342698/ExportHtml/annotation_preview.png" border="0"/>
 
 In order to use annotations, you must enter into an "Annotation Mode".  This puts your file in a read only state.  At this point, you can select text and create annotations using the annotation commands provided.  When you leave the "Annotation Mode", all annotations will be lost.  So you must print before leaving annotation mode.
 
