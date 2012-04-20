@@ -97,9 +97,9 @@ JS_COMMENTS = \
 		}
 	}
 	function gotoLine(line_no) {
-		line_no += 1;
+		// scroll the line to 5 lines from the top of the viewport
+		line_no = (line_no - 5 + 1) * (line_no - 5 + 1 > 0);
 		var code_list = document.getElementById('thecode');
-		window.alert(line_no);
 		var code_lines = code_list.getElementsByTagName('li');
 		code_lines[line_no].scrollIntoView();
 		return false;
