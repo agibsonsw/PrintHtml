@@ -141,6 +141,14 @@ The commands are as follows:
 - Paul Boddie: Desktop module for open files in web browser cross platform
 - Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright
 
+# Version 0.2.0
+- Fix issue where html is opened twice
+- New annotation feature
+- New export to BBCode
+- Rename PrintHTML to ExportHTML
+- Fix HTML Title (display actual file name of content)
+- Update documentation
+
 # Version 0.1.1
 - Fix status returnd as None for Windows
 
