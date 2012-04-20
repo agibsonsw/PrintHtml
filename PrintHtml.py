@@ -46,13 +46,15 @@ CSS_COMMENTS = \
 	margin-left: 0pt;
 }
 
-div#divComments { display: none; background-color: yellow; }
+div#divComments { display: none; }
 #divComments.inpage { position: static; }
-#divComments.overlay { position: fixed; z-index: 99; left:600px; top: 200px; }
-table#tblComments { border: thin solid; border-collapse: collapse; margin: 20px; }
+#divComments.overlay { position: fixed; z-index: 99; right:50px; top: 100px; }
+table#tblComments { border: thin solid; border-collapse: collapse; margin: 20px;
+	color: #000000; background-color: lightyellow;
+}
 table#tblComments th, table#tblComments td { border: thin solid; padding: 5px; }
 td.nos { width: 60px; text-align: right; padding-right: 20px; }
-td.cmts { min-width: 500px; }
+td.cmts { min-width: 400px; max-width: 600px; }
 
 * html a:hover { background: transparent; }
 """
@@ -434,7 +436,6 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		the_html.write('<title>' + path.basename(the_html.name) + '</title>\n')
 
 		the_html.write('<style type=\"text/css\">\n')
-
 		if self.has_comments:
 			the_html.write((CSS_COMMENTS % { "dot_colour": self.fground }).encode('utf-8', 'xmlcharrefreplace') + '\n')
 
