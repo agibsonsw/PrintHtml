@@ -46,10 +46,10 @@ CSS_COMMENTS = \
 	margin-left: 0pt;
 }
 
-div#divComments { display: none; }
+div#divComments { display: none; height: 400px; width: 500px; overflow: auto; margin: 0; }
 #divComments.inpage { position: static; }
 #divComments.overlay { position: fixed; z-index: 99; right:50px; top: 100px; }
-table#tblComments { border: thin solid; border-collapse: collapse; margin: 20px;
+table#tblComments { border: thin solid; border-collapse: collapse; margin: 0;
 	color: #000000; background-color: lightyellow;
 }
 table#tblComments th, table#tblComments td { border: thin solid; padding: 5px; }
@@ -95,6 +95,14 @@ JS_COMMENTS = \
 				comments[i].style.marginLeft = '0pt';
 			}
 		}
+	}
+	function gotoLine(line_no) {
+		line_no += 1;
+		var code_list = document.getElementById('thecode');
+		window.alert(line_no);
+		var code_lines = code_list.getElementsByTagName('li');
+		code_lines[line_no].scrollIntoView();
+		return false;
 	}
 </script>
 """
@@ -426,8 +434,9 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		the_html.write('<div id=\"divComments\" class=\"inpage\"><table id=\"tblComments\">\n');
 		the_html.write('\t<th>Line</th><th>The comment</th>\n')
 		for (line_no, comment) in self.comments_list:
-			the_html.write(('\t<tr><td class=\"nos\">' + str(line_no) + '</td><td class=\"cmts\">' + comment + 
-				'</td><tr>\n').encode('utf-8', 'xmlcharrefreplace'))
+			the_html.write(('\t<tr><td class=\"nos\"><a href=\"#\" onclick=\"gotoLine(' + str(line_no - self.curr_row) + ');return false;\">'  
+				+ str(line_no + 1) + '</a></td>').encode('utf-8', 'xmlcharrefreplace'))
+			the_html.write(('<td class=\"cmts\">' + comment + '</td><tr>\n').encode('utf-8', 'xmlcharrefreplace'))
 		the_html.write('</table></div>')
 
 	def write_header(self, the_html):
