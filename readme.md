@@ -128,6 +128,10 @@ The commands are as follows:
 - Delete All Annotations: Delete all annotation regions.
 - Show Annotation Comment: Show the annotation comment of the region under the cursor.
 
+You can navigate the annotations in the generate HTML by using a jump table.  You can show the jump table at any time wiht ```alt+double_mouse_click```.  If it gets in the way, you can dock in the bottom right.
+
+<img src="http://dl.dropbox.com/u/342698/ExportHtml/annotation_table_preview.png" border="0"/>
+
 
 # Settings File options
 - alternate_scheme (string or false): Defines a default theme to be used if a theme is not specified in a command.  When this is false, the current Sublime Text theme in use is used.
@@ -140,6 +144,9 @@ The commands are as follows:
 - agibsonsw: Original idea and algorithm for the plugin
 - Paul Boddie: Desktop module for open files in web browser cross platform
 - Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright
+
+# Version 0.3.0
+- Add annotation jump table for the HTML.  Show table with "alt+double_click"
 
 # Version 0.2.0
 - Fix issue where html is opened twice

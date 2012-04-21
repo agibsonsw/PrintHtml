@@ -28,7 +28,7 @@ CSS = \
     pre { border: 0; margin: 0; padding: 0; }
     td { display: %(display_mode)s; padding: 0; }
     table { border: 0; margin: 0; padding: 0; }
-    div {
+    td div {
         float:left;
         width:100%%;
         white-space: -moz-pre-wrap; /* Mozilla */
@@ -61,6 +61,7 @@ CSS_ANNOTATIONS = \
         outline: none;
         text-decoration: none;
         position: relative;
+        color: black;
     }
     .tooltip div.annotation {
         border-radius: 5px 5px;
@@ -79,7 +80,7 @@ CSS_ANNOTATIONS = \
         margin-left: -999em;
         position: absolute;
         padding: 0.8em 1em;
-        background: #FFFFAA; border: 1px solid #FFAD33;
+        background: lightyellow; border: solid black;
         font-family: Calibri, Tahoma, Geneva, sans-serif;
         font-size: 10pt;
         font-weight: bold;
@@ -91,6 +92,41 @@ CSS_ANNOTATIONS = \
     .tooltip:hover div.annotation {
         margin-left: 0;
     }
+
+    div#comment_list {
+        visibility: hidden;
+        display: none;
+        margin: auto auto;
+        text-align: center;
+        position: fixed;
+        z-index: 99;
+        left:0px;
+        top: 0px;
+    }
+    div#comment_wrapper {
+        max-height: 200px;
+        overflow: auto;
+        border: solid;
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+        box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
+        -webkit-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
+        -moz-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
+    }
+    table#comment_table {
+        border: thin solid; border-collapse: collapse;
+        color: #000000; background-color: lightyellow; margin: auto auto;
+    }
+    div.table_footer { text-align:right; }
+    a.table_close { float: right; }
+    a.table_close:link { color: black; text-decoration: None;}
+    a.table_close:active { color: black; text-decoration: None;}
+    a.table_close:visited { color: black; text-decoration: None;}
+    a.table_close:hover { color: red; text-decoration: None;}
+    table#comment_table th, table#comment_table td { border: thin solid; padding: 5px; }
+    td.annotation_link { width: 60px; text-align: right; padding-right: 20px; }
+    .annotation_comment { width: 500px; }
+
     * html a:hover { background: transparent; }
 """
 
@@ -127,48 +163,87 @@ ROW_END = """</td></tr>"""
 
 DIVIDER = """<span style="color: %(color)s">\n...\n\n</span>"""
 
+ANNOTATION_TBL_START = (
+    '<div id="comment_list" style="display:none"><div id="comment_wrapper">' +
+    '<table id="comment_table">' +
+    '<tr><th>Line/Col</th><th>Comments' +
+    '<a href="javascript:void(0)" class="table_close" onclick="overlayComments();return false;">(close)</a>'
+    '</th></tr>'
+)
+
+ANNOTATION_TBL_END = """</table></div></div>"""
+
+ANNOTATION_ROW = (
+    '<tr>' +
+    '<td class="annotation_link">' +
+    '<a href="javascript:void(0)" onclick="scroll_to_line(\'C_%(table)d_%(row)d\');return false;">%(link)s</a>' +
+    '</td>' +
+    '<td class="annotation_comment"><div class="annotation_comment">%(comment)s</div></td>' +
+    '<tr>'
+)
+
+ANNOTATION_FOOTER = (
+    '<tr><td colspan=2>' +
+    '<div class="table_footer"><label for="check_br">Dock Bottom Right </label>' +
+    '<input type="checkbox" id="check_br" name="check_br" id="ckbBottom" value="1" onclick="table_to_bottom()">' +
+    '</div>' +
+    '</td></tr>'
+)
+
 BODY_END = """</pre>\n%(js)s\n</body>\n</html>\n"""
+
+DOUBLE_CLICK_EVENTS = \
+"""
+<script type="text/javascript">
+function double_click_events(e) {
+    var evt = e ? e : window.event;
+    if (evt.shiftKey && typeof show_hide_column !== "undefined") {
+        show_hide_column();
+    } else if (evt.altKey && typeof overlayComments !== "undefined") {
+        overlayComments();
+    }
+}
+document.getElementsByTagName('body')[0].ondblclick = function (e) { double_click_events(e); };
+</script>
+"""
 
 TOGGLE_GUTTER = \
 """
 <script type="text/javascript">
-function show_hide_column(e, tables) {
+function show_hide_column() {
     var i;
     var j;
-    var evt = e ? e : window.event;
     var mode;
     var rows;
     var r;
     var tbls;
     var rows;
     var r;
-    if (evt.shiftKey) {
-        tbls  = document.getElementsByTagName('table');
-        for (i = 1; i <= tables; i++) {
-            rows = tbls[i].getElementsByTagName('tr');
-            r = rows.length;
-            for (j = 0; j < r; j++) {
-                cels = rows[j].getElementsByTagName('td');
-                if (mode == null) {
-                    if (cels[0].style.display == 'none') {
-                        mode = 'table-cell';
-                    } else {
-                        mode = 'none';
-                    }
+    var tables = %(tables)s;
+    tbls  = document.getElementsByTagName('table');
+    for (i = 1; i <= tables; i++) {
+        rows = tbls[i].getElementsByTagName('tr');
+        r = rows.length;
+        for (j = 0; j < r; j++) {
+            cels = rows[j].getElementsByTagName('td');
+            if (mode == null) {
+                if (cels[0].style.display == 'none') {
+                    mode = 'table-cell';
+                } else {
+                    mode = 'none';
                 }
-                cels[0].style.display = mode;
             }
+            cels[0].style.display = mode;
         }
-        if (typeof wrap_code !== "undefined" && mode != null) {
-            if (mode == 'table-cell') {
-                setTimeout("wrap_code(true)", 500)
-            } else {
-                setTimeout("wrap_code(false)", 500)
-            }
+    }
+    if (typeof wrap_code !== "undefined" && mode != null) {
+        if (mode == 'table-cell') {
+            setTimeout("wrap_code(true)", 500)
+        } else {
+            setTimeout("wrap_code(false)", 500)
         }
     }
 }
-document.getElementsByTagName('body')[0].ondblclick = function (e) { show_hide_column(e, %(tables)d); }
 </script>
 """
 
@@ -218,6 +293,108 @@ function wrap_code(numbered) {
     }
 }
 wrap_code(%(numbered)s)
+</script>
+"""
+
+BOTTOM_RIGHT = \
+"""
+<script type="text/javascript">
+function table_to_bottom() {
+    var comments_div = document.getElementById('comment_list');
+    if (comments_div.className != "bottom_right") {
+        comments_div.className = "bottom_right";
+        setTimeout(function () {bottom_right.set(comments_div); comments_div.style.visibility = 'visible';}, 300)
+    } else {
+        comments_div.className = "";
+        setTimeout(function () {center.set(comments_div); comments_div.style.visibility = 'visible';}, 300)
+    }
+}
+</script>
+"""
+
+SHOW_COMMENTS = \
+"""
+<script type="text/javascript">
+function overlayComments() {
+    var comments_div = document.getElementById('comment_list');
+    var mode = comments_div.style.display;
+    if (mode == 'none') {
+        comments_div.style.display = 'block';
+        if (comments_div.className != "bottom_right") {
+            setTimeout(function () {center.set(comments_div); comments_div.style.visibility = 'visible';}, 300)
+        } else {
+            setTimeout(function () {center.set(comments_div); comments_div.style.visibility = 'visible';}, 300)
+        }
+    } else {
+        comments_div.style.visibility = 'hidden'
+        comments_div.style.display = 'none';
+    }
+}
+</script>
+"""
+
+CENTER = \
+"""
+<script type="text/javascript">
+var center = {
+    set :function (el, dim) {
+        var c = win_attr.get(),
+            top    = (c.y - (el.offsetHeight/2)),
+            left   = (c.x - (el.offsetWidth/2));
+        if (dim == null || dim === 'y') el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
+        if (dim == null || dim === 'x') el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
+    }
+};
+
+var bottom_right = {
+    set :function (el) {
+        var top    = (win_attr.get_size('y') - (el.offsetHeight));
+        var left   = (win_attr.get_size('x') - (el.offsetWidth));
+        el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
+        el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
+    }
+}
+
+var win_attr = {
+    get : function (dim) {
+        var c = {
+            'x' : (win_attr.get_size('x')/2),
+            'y' : (win_attr.get_size('y')/2)
+        };
+        return ((dim) ? c[dim] : c);
+    },
+
+    get_size : function(dir) {
+        dir = (dir === 'x') ? 'Width' : 'Height';
+        return ((window['inner'+dir]) ?
+            window['inner'+dir] :
+            ((window.document.documentElement && window.document.documentElement['client'+dir]) ?
+                window.document.documentElement['client'+dir] :
+                window.document.body['client'+dir]
+            )
+        );
+    }
+};
+</script>
+"""
+
+SCROLL_TO_LINE = \
+"""
+<script type="text/javascript">
+function scroll_to_line(value) {
+    var pos = 0;
+    var el = document.getElementById(value);
+    window.scrollTo(0, 0);
+    while(el) {
+        pos += el.offsetTop;
+        el = el.offsetParent;
+    }
+    pos -= win_attr.get('y');
+    if (pos < 0) {
+        pos = 0;
+    }
+    window.scrollTo(0, pos);
+}
 </script>
 """
 
@@ -295,6 +472,7 @@ class ExportHtml(object):
         self.annotations = self.get_annotations()
         self.open_annot = False
         self.no_header = no_header
+        self.annot_tbl = []
 
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
@@ -479,6 +657,16 @@ class ExportHtml(object):
         if post_text != None:
             self.format_text(line, post_text, the_colour, the_style, highlight=highlight)
 
+    def add_annotation_table_entry(self, ):
+        row, col = self.view.rowcol(self.annot_pt)
+        self.annot_tbl.append(
+            (
+                self.tables, self.curr_row, "Line %d Col %d" % (row + 1, col + 1),
+                self.curr_comment.encode('ascii', 'xmlcharrefreplace')
+            )
+        )
+        self.annot_pt = None
+
     def format_text(self, line, text, the_colour, the_style, highlight=False, annotate=False):
         if highlight:
             # Highlighted code
@@ -489,16 +677,23 @@ class ExportHtml(object):
         if annotate:
             if self.curr_annot != None and not self.open_annot:
                 # Open an annotation
+                if self.annot_pt != None:
+                    self.add_annotation_table_entry()
                 code = ANNOTATE_OPEN % {"code": code}
                 self.open_annot = True
             elif self.curr_annot == None:
                 if self.open_annot:
                     # Close an annotation
-                    code += ANNOTATE_CLOSE % {"comment": self.curr_comment}
+                    code += ANNOTATE_CLOSE % {"comment": self.curr_comment.encode('ascii', 'xmlcharrefreplace')}
                     self.open_annot = False
                 else:
                     # Do a complete annotation
-                    code = ANNOTATE_OPEN % {"code": code} + ANNOTATE_CLOSE % {"comment": self.curr_comment}
+                    if self.annot_pt != None:
+                        self.add_annotation_table_entry()
+                    code = (
+                        ANNOTATE_OPEN % {"code": code} +
+                        ANNOTATE_CLOSE % {"comment": self.curr_comment.encode('ascii', 'xmlcharrefreplace')}
+                    )
         line.append(code)
 
     def convert_line_to_html(self, the_html):
@@ -539,9 +734,11 @@ class ExportHtml(object):
             # Get new annotation
             if (self.curr_annot == None or self.curr_annot.end() < self.pt) and len(self.annotations):
                 self.curr_annot, self.curr_comment = self.annotations.pop(0)
+                self.annot_pt = self.curr_annot[0]
                 while self.pt > self.curr_annot[1]:
                     if len(self.annotations):
                         self.curr_annot, self.curr_comment = self.annotations.pop(0)
+                        self.annot_pt = self.curr_annot[0]
                     else:
                         self.curr_annot = None
                         self.curr_comment = None
@@ -617,8 +814,14 @@ class ExportHtml(object):
         the_html.write(ROW_END)
         the_html.write(TABLE_END)
 
-        # Write javascript snippets
         js_options = []
+        if len(self.annot_tbl):
+            self.add_comments_table(the_html)
+            js_options.append(CENTER)
+            js_options.append(SHOW_COMMENTS)
+            js_options.append(SCROLL_TO_LINE)
+
+        # Write javascript snippets
         if self.wrap:
             js_options.append(
                 WRAP % {
@@ -634,9 +837,17 @@ class ExportHtml(object):
             js_options.append(PRINT)
 
         js_options.append(TOGGLE_GUTTER % {"tables": self.tables})
+        js_options.append(BOTTOM_RIGHT)
+        js_options.append(DOUBLE_CLICK_EVENTS)
 
         # Write empty line to allow copying of last line and line number without issue
         the_html.write(BODY_END % {"js": ''.join(js_options)})
+
+    def add_comments_table(self, the_html):
+        the_html.write(ANNOTATION_TBL_START)
+        the_html.write(''.join([ANNOTATION_ROW % {"table": t, "row": r, "link": l, "comment": c} for t, r, l, c in self.annot_tbl]))
+        the_html.write(ANNOTATION_FOOTER)
+        the_html.write(ANNOTATION_TBL_END)
 
     def run(
         self, numbers=False, highlight_selections=False,
