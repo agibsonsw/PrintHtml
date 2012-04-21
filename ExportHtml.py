@@ -117,7 +117,7 @@ CSS_ANNOTATIONS = \
         border: thin solid; border-collapse: collapse;
         color: #000000; background-color: lightyellow; margin: auto auto;
     }
-    div.table_footer { text-align:right; }
+    div.table_footer { text-align:right; font-size: 8pt; font-weight: bold;}
     a.table_close { float: right; }
     a.table_close:link { color: black; text-decoration: None;}
     a.table_close:active { color: black; text-decoration: None;}
@@ -126,6 +126,7 @@ CSS_ANNOTATIONS = \
     table#comment_table th, table#comment_table td { border: thin solid; padding: 5px; }
     td.annotation_link { width: 60px; text-align: right; padding-right: 20px; }
     .annotation_comment { width: 500px; }
+    div.annotation_comment { float: left; text-align: left; }
 
     * html a:hover { background: transparent; }
 """
