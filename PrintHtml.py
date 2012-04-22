@@ -380,6 +380,35 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				sublime.status_message('No comment found at cursor.')
 		return ''
 
+	def push_all_comments(self, direction = 'down'):	# move all comments down or up (from the cursor position)
+		if not len(self.view.vcomments):
+			sublime.status_message('There are no comments for the current view.')
+			return
+		sels = self.view.sel()
+		curr_pt = sels[0].begin()
+		sels.clear()
+		if direction == 'down':
+			sorted_pts = (key_pt for key_pt in sorted(self.view.vcomments.iterkeys()) if key_pt > curr_pt)
+		else:
+			sorted_pts = (key_pt for key_pt in reversed(sorted(self.view.vcomments.iterkeys())) if key_pt < curr_pt)
+		for next_pt in sorted_pts:
+			prev_wd, prev_comment, prev_line = self.view.vcomments[next_pt]
+			if direction == 'down':
+				new_region = self.view.find(prev_wd, next_pt + 1, sublime.LITERAL)
+			else:
+				new_regions = (r for r in reversed(self.view.find_all(prev_wd, sublime.LITERAL)) if r.begin() < next_pt)
+				try:
+					new_region = new_regions.next()
+				except StopIteration:
+					new_region = None
+			if new_region:
+				new_comment_line, _ = self.view.rowcol(new_region.begin())
+				self.view.vcomments[new_region.begin()] = (prev_wd, prev_comment, new_comment_line)
+				if new_region.begin() != next_pt:		# delete the comment from its previous position
+					del self.view.vcomments[next_pt]
+				sels.add(new_region)
+				if len(sels) == 1: self.view.show(new_region)
+
 	def process_commentry(self, text, caller_id):					# on_done for comments panel
 		self.more_comments = False			# assume there is a problem with commentary
 		display_text = ''					# the text to display in the panel, if shown again
@@ -419,6 +448,10 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			display_text = self.push_comment('down')
 		elif comment_command in ('PUSH U', 'PUSH UP', 'PUSHUP'):		# push this comment upwards
 			display_text = self.push_comment('up')
+		elif comment_command in ('PUSH ALL', 'PUSH ALL DOWN', 'PUSHALLDOWN'):	# push all comments (after the cursor)
+			self.push_all_comments('down')
+		elif comment_command in ('PUSH ALL UP', 'PUSHALLUP'):		# push all comments up (before the cursor)
+			self.push_all_comments('up')
 		else:															# add new comment at cursor
 			self.add_comment(text)
 		self.show_again(display_text)									# the "commments panel"
