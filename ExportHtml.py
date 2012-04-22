@@ -330,25 +330,43 @@ function dock_table() {
 function position_table(el) {
     var sel = document.getElementById('dock');
     var option = sel.options[sel.selectedIndex].value;
-    if (option == 0) {
-        setTimeout(function () {position_el.center(el); el.style.visibility = 'visible';}, 300)
-    } else if (option == 1) {
-        setTimeout(function () {position_el.top(el); el.style.visibility = 'visible';}, 300)
-    } else if (option == 2) {
-        setTimeout(function () {position_el.bottom(el); el.style.visibility = 'visible';}, 300)
-    } else if (option == 3) {
-        setTimeout(function () {position_el.left(el); el.style.visibility = 'visible';}, 300)
-    } else if (option == 4) {
-        setTimeout(function () {position_el.right(el); el.style.visibility = 'visible';}, 300)
-    } else if (option == 5) {
-        setTimeout(function () {position_el.top_left(el); el.style.visibility = 'visible';}, 300)
-    } else if (option == 6) {
-        setTimeout(function () {position_el.top_right(el); el.style.visibility = 'visible';}, 300)
-    } else if (option == 7) {
-        setTimeout(function () {position_el.bottom_left(el); el.style.visibility = 'visible';}, 300)
-    } else if (option == 8) {
-        setTimeout(function () {position_el.bottom_right(el); el.style.visibility = 'visible';}, 300)
+    var x;
+    var y;
+    switch(option) {
+        case "0":
+            break;
+        case "1":
+            y = 'top';
+            break;
+        case "2":
+            y = 'bottom';
+            break;
+        case "3":
+            x = 'left';
+            break;
+        case "4":
+            x = 'right';
+            break;
+        case "5":
+            y = 'top';
+            x = 'left';
+            break;
+        case "6":
+            y = 'top';
+            x = 'right';
+            break;
+        case "7":
+            y = 'bottom';
+            x = 'left';
+            break;
+        case "8":
+            y = 'bottom';
+            x = 'right';
+            break;
+        default:
+            break;
     }
+    setTimeout(function () {position_el.set(el, x, y); el.style.visibility = 'visible';}, 300)
 }
 </script>
 """
@@ -364,44 +382,34 @@ var position_el = {
         if (dim == null || dim === 'y') el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
         if (dim == null || dim === 'x') el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
     },
-    right : function (el) {
-        var left   = (win_attr.get_size('x') - (el.offsetWidth));
-        position_el.center(el, 'y');
-        el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
-    },
-    left : function (el) {
-        position_el.center(el, 'y');
-        el.style.left = 0 + 'px';
-    },
-    top_right : function (el) {
-        var left   = (win_attr.get_size('x') - (el.offsetWidth));
-        el.style.top  = 0 + 'px';
-        el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
-    },
-    top_left : function (el) {
-        el.style.top  = 0 + 'px';
-        el.style.left = 0 + 'px';
-    },
-    top : function (el) {
-        el.style.top  = 0 + 'px';
-        position_el.center(el, 'x');
-    },
-    bottom_right : function (el) {
-        var top    = (win_attr.get_size('y') - (el.offsetHeight));
-        var left   = (win_attr.get_size('x') - (el.offsetWidth));
-        el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
-        el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
-    },
-    bottom_left : function (el) {
-        var top    = (win_attr.get_size('y') - (el.offsetHeight));
-        el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
-        el.style.left = 0 + 'px';
-    },
-    bottom : function (el) {
-        var c = win_attr.get(),
-            top    = (win_attr.get_size('y') - (el.offsetHeight));
-        el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
-        position_el.center(el, 'x');
+
+    set : function (el, x, y) {
+        var left;
+        var top;
+
+        if (typeof x === "undefined") x = null;
+        if (typeof y === "undefined") y = null;
+
+        if (y == null || (y !== "top" && y !== "bottom")) {
+            position_el.center(el, 'y');
+        } else {
+            if (y === 'top') {
+                el.style.top = 0 + 'px';
+            } else {
+                top   = (win_attr.get_size('y') - (el.offsetHeight));
+                el.style.top = (top < 0) ? 0 + 'px' : top + 'px';
+            }
+        }
+        if (x == null || (x !== "left" && x !== "right")) {
+            position_el.center(el, 'x');
+        } else {
+            if (x === 'left') {
+                el.style.left = 0 + 'px';
+            } else {
+                left   = (win_attr.get_size('x') - (el.offsetWidth));
+                el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
+            }
+        }
     }
 };
 
