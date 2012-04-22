@@ -13,8 +13,12 @@
         "command": "toggle_annotation_html_mode"
     },
     {
-        "caption": "Export to HTML: Annotate Selection",
-        "command": "annotate_html"
+        "caption": "Export to HTML: Add Annotation",
+        "command": "add_annotation"
+    },
+    {
+        "caption": "Export to HTML: Edit Annotation",
+        "command": "edit_annotation"
     },
     {
         "caption": "Export to HTML: Delete Annotation(s)",

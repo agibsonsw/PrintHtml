@@ -83,7 +83,7 @@ def get_annotation_comment(view):
     return comment
 
 
-def is_selection_in_annotation(view):
+def is_selection_in_annotation(view, first_only=False):
     mode = view.settings().get("annotation_mode", False)
     selection = False
     if mode:
@@ -95,6 +95,8 @@ def is_selection_in_annotation(view):
                 if annotation.contains(sel):
                     selection = True
                     break
+            if first_only:
+                break
     return mode and selection
 
 
@@ -110,16 +112,12 @@ def annotations_exist(view):
 
 def is_selected(view):
     mode = view.settings().get("annotation_mode", False)
-    selected = False
-    if mode:
-        for sel in view.sel():
-            if not sel.empty():
-                selected = True
+    selected = not view.sel()[0].empty()
     return mode and selected
 
 
 class ShowAnnotationCommentCommand(sublime_plugin.TextCommand):
-    def is_enabled(self):
+    def is_visible(self):
         return is_selection_in_annotation(self.view)
 
     def run(self, edit):
@@ -130,7 +128,7 @@ class ShowAnnotationCommentCommand(sublime_plugin.TextCommand):
 
 
 class ClearAnnotationsCommand(sublime_plugin.TextCommand):
-    def is_enabled(self):
+    def is_visible(self):
         return annotations_exist(self.view)
 
     def run(self, edit):
@@ -138,7 +136,7 @@ class ClearAnnotationsCommand(sublime_plugin.TextCommand):
 
 
 class DeleteAnnotationsCommand(sublime_plugin.TextCommand):
-    def is_enabled(self):
+    def is_visible(self):
         return is_selection_in_annotation(self.view)
 
     def run(self, edit):
@@ -178,7 +176,26 @@ class ToggleAnnotationHtmlModeCommand(sublime_plugin.TextCommand):
             self.view.erase_status("html_annotation_mode")
 
 
-class AnnotateHtmlCommand(sublime_plugin.TextCommand):
+class AddAnnotationCommand(sublime_plugin.TextCommand):
+    def is_visible(self):
+        return is_selected(self.view)
+
+    def run(self, edit):
+        AnnotateHtml(self.view).run()
+
+
+class EditAnnotationCommand(sublime_plugin.TextCommand):
+    def is_visible(self):
+        return is_selection_in_annotation(self.view, first_only=True)
+
+    def run(self, edit):
+        AnnotateHtml(self.view).run()
+
+
+class AnnotateHtml(object):
+    def __init__(self, view):
+        self.view = view
+
     def subset_annotation_adjust(self):
         subset = None
         comment = ""
@@ -235,15 +252,11 @@ class AnnotateHtmlCommand(sublime_plugin.TextCommand):
             None
         )
 
-    def is_enabled(self):
-        return is_selected(self.view)
-
-    def run(self, edit):
+    def run(self):
         self.sel = self.view.sel()[0]
         self.annotations = get_annotations(self.view)
-        if not self.sel.empty():
-            comment, subset, intersects = self.subset_annotation_adjust()
-            if not intersects:
-                self.annotation_panel(comment, subset)
-            else:
-                sublime.error_message("Cannot have intersecting annotation regions!")
+        comment, subset, intersects = self.subset_annotation_adjust()
+        if not intersects:
+            self.annotation_panel(comment, subset)
+        else:
+            sublime.error_message("Cannot have intersecting annotation regions!")

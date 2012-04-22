@@ -57,7 +57,7 @@ CSS = \
 CSS_ANNOTATIONS = \
 """
     .tooltip {
-        border-bottom: 1px dotted %(dot_colour)s;
+        border-bottom: 2px dotted %(dot_colour)s;
         outline: none;
         text-decoration: none;
         position: relative;
