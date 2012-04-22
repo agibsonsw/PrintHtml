@@ -169,6 +169,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 
 	def run(self, edit):
 		self.more_comments = True
+		self.just_added = False
 		if not hasattr(self.view, 'vcomments'):
 			self.view.vcomments = {}
 			curr_comment = ''
@@ -216,6 +217,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		if not len(self.view.vcomments):
 			sublime.status_message('No comments to highlight.')
 		else:
+			beyond_eov = False
 			sels = self.view.sel()
 			sels.clear()
 			comment_regions = []
@@ -223,9 +225,10 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			eov = self.view.size()
 			for key_pt in sorted(self.view.vcomments.iterkeys()):
 				prev_wd, prev_comment, prev_line = self.view.vcomments[key_pt]
-				if key_pt >= eov:						# delete comments past end of the view
-					del self.view.vcomments[key_pt]
-					print "Comment past end-of-view deleted: %s (was line %d)" % (prev_comment, prev_line)
+				if key_pt >= eov:							# comment is beyond the view-size
+					print "Comment is past end-of-view - use \'recover\' command: %s (was line %d)" \
+						% (prev_comment, prev_line)
+					beyond_eov = True
 					continue
 				curr_wd_region = self.view.word(key_pt)
 				curr_wd = self.view.substr(curr_wd_region)
@@ -249,6 +252,8 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				self.view.add_regions("comments", comment_regions, "comment", "")
 			if len(comment_errors):
 				self.view.add_regions("comment_errs", comment_errors, "invalid", "")
+			if beyond_eov:
+				sublime.status_message('There are comment(s) beyond the view-size - use \'recover\' command.')
 
 	def remove_highlights(self):
 		if not len(self.view.vcomments):
@@ -272,6 +277,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 			comment = comment.replace('\t', '&nbsp;' * 4).strip()
 			self.view.vcomments[metrics['word_pt']] = (metrics['curr_word'], comment, metrics['word_line'])
+			self.just_added = True			# don't re-display the comment text
 
 	def delete_comment(self):						# at cursor position
 		if not len(self.view.vcomments):
@@ -303,7 +309,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 	def move_to_next(self, direction = 'down'):
 		if not len(self.view.vcomments):
 			sublime.status_message('No comments exist to move to.')
-			return ''
+			return
 		sels = self.view.sel()
 		curr_pt = sels[0].begin()
 		if direction == 'down':
@@ -316,11 +322,11 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			next_pt = None
 		if next_pt:
 			next_wd, next_comment, next_line = self.view.vcomments[next_pt]
-			if next_pt >= self.view.size():						# delete comment past end of the view
-				del self.view.vcomments[next_pt]
-				sublime.status_message("Comment past end-of-view deleted: %s (was line %d)" % (next_comment, next_line))
-				print "Comment past end-of-view deleted: %s (was line %d)" % (next_comment, next_line)
-				return ''
+			if next_pt >= self.view.size():						# next comment is beyond the view-size
+				sublime.status_message("Comment is past end-of-view - use \'recover\' command: %s (was line %d)" \
+					% (next_comment, next_line))
+				print "Comment past end-of-view: %s (was line %d)" % (next_comment, next_line)
+				return
 			sels.clear()
 			next_wd_region = self.view.word(next_pt)
 			curr_wd = self.view.substr(next_wd_region)
@@ -337,19 +343,19 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 						del self.view.vcomments[next_pt]		# delete comment from its previous position
 			sels.add(next_wd_region)
 			self.view.show(next_wd_region)
-			return next_comment
+			return
 		else:
 			sublime.status_message('No next comment.')
-			return ''
+			return
 
 	def push_comment(self, direction = 'down'):			# move the current comment down or up
 		if not len(self.view.vcomments):
 			sublime.status_message('There are no comments for the current view.')
-			return ''
+			return
 		metrics = self.get_metrics(self.view)
 		if not len(metrics):
 			sublime.status_message('Unable to read word at cursor.')
-			return ''
+			return
 		else:									# push this comment down or up
 			prev_pt = metrics['word_pt']
 			if self.view.vcomments.has_key(prev_pt):
@@ -358,7 +364,6 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 					new_region = self.view.find(prev_wd, prev_pt + 1, sublime.LITERAL)
 				else:
 					new_regions = (r for r in reversed(self.view.find_all(prev_wd, sublime.LITERAL)) if r.begin() < prev_pt)
-					# (generator expression)
 					try:
 						new_region = new_regions.next()
 					except StopIteration:
@@ -373,12 +378,12 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 					sels.clear()
 					self.view.sel().add(new_region)
 					self.view.show(new_region)
-					return prev_comment
+					return
 				else:
 					sublime.status_message('The current text does not occur further %s.' % direction)
 			else:
 				sublime.status_message('No comment found at cursor.')
-		return ''
+		return
 
 	def push_all_comments(self, direction = 'down'):	# move all comments down or up (from the cursor position)
 		if not len(self.view.vcomments):
@@ -409,9 +414,31 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				sels.add(new_region)
 				if len(sels) == 1: self.view.show(new_region)
 
+	def recover_comments(self):				# re-position comments that are beyond the view-size
+		if not len(self.view.vcomments):
+			sublime.status_message('There are no comments for the current view.')
+			return
+		end_pt = self.view.size()
+		sels = self.view.sel()
+		sels.clear()
+		sorted_pts = (key_pt for key_pt in reversed(sorted(self.view.vcomments.iterkeys())) if key_pt >= end_pt)
+		for next_pt in sorted_pts:
+			prev_wd, prev_comment, prev_line = self.view.vcomments[next_pt]
+			new_regions = (r for r in reversed(self.view.find_all(prev_wd, sublime.LITERAL)) if r.begin() < next_pt)
+			try:
+				new_region = new_regions.next()
+			except StopIteration:
+				new_region = None
+			if new_region:
+				new_comment_line, _ = self.view.rowcol(new_region.begin())
+				self.view.vcomments[new_region.begin()] = (prev_wd, prev_comment, new_comment_line)
+				if new_region.begin() != next_pt:		# delete the comment from its previous position
+					del self.view.vcomments[next_pt]
+				sels.add(new_region)
+				if len(sels) == 1: self.view.show(new_region)
+
 	def process_commentry(self, text, caller_id):					# on_done for comments panel
 		self.more_comments = False			# assume there is a problem with commentary
-		display_text = ''					# the text to display in the panel, if shown again
 		window = sublime.active_window()
 		view = window.active_view() if window != None else None
 		if view is None:
@@ -424,7 +451,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			display_text = self.get_comment()
 			if display_text != '':
 				self.more_comments = True
-				self.show_again(display_text)
+				self.show_again()
 			return
 
 		self.more_comments = True					# okay to continue displaying the panel
@@ -441,29 +468,36 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			self.delete_all_comments()
 		elif comment_command in ('NEXT', 'DN', 'DWN', 'DOWN', 'MOVE DOWN',
 				'MOVE DWN', 'MOVEDOWN'):								# move to the next comment
-			display_text = self.move_to_next('down')
+			self.move_to_next('down')
 		elif comment_command in ('PREV', 'PREVIOUS', 'UP', 'MOVE UP', 'MOVEUP'):	# move to the previous comment
-			display_text = self.move_to_next('up')
+			self.move_to_next('up')
 		elif comment_command in ('PUSH', 'PUSH D', 'PUSH DOWN', 'PUSHDOWN', 'PUSHDWN'):	# push this comment downwards
-			display_text = self.push_comment('down')
+			self.push_comment('down')
 		elif comment_command in ('PUSH U', 'PUSH UP', 'PUSHUP'):		# push this comment upwards
-			display_text = self.push_comment('up')
+			self.push_comment('up')
 		elif comment_command in ('PUSH ALL', 'PUSH ALL DOWN', 'PUSHALLDOWN'):	# push all comments (after the cursor)
 			self.push_all_comments('down')
 		elif comment_command in ('PUSH ALL UP', 'PUSHALLUP'):		# push all comments up (before the cursor)
 			self.push_all_comments('up')
+		elif comment_command in ('RECOVER', 'RECOVER COMMENTS', 'RECOVER COMMENT'):
+			self.recover_comments()									# recover comments that are beyond the view-size
 		else:															# add new comment at cursor
 			self.add_comment(text)
-		self.show_again(display_text)									# the "commments panel"
+		self.show_again()									# the "commments panel"
 
 	def show_comment_panel(self, existing_comment):
 		caller_id = self.view.id()
 		self.view.window().show_input_panel('Comment>', existing_comment, \
 			lambda txt: self.process_commentry(txt, caller_id), None, self.hide_it)
 
-	def show_again(self, display_text = ''):			# the input panel
+	def show_again(self):								# the input panel
 		if self.more_comments:
-			self.show_comment_panel(display_text)
+			if self.just_added:				# don't show comment text if it has just been added
+				self.just_added = False
+				curr_comment = ''
+			else:
+				curr_comment = self.get_comment()
+			self.show_comment_panel(curr_comment)
 
 	def hide_it(self):									# the input panel
 		self.more_comments = False
@@ -507,10 +541,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		path_packages = sublime.packages_path()
 		if not hasattr(self.view, 'vcomments'):
 			self.view.vcomments = {}
-		if len(self.view.vcomments):
-			self.has_comments = True
-		else:
-			self.has_comments = False
+		self.has_comments = (len(self.view.vcomments) > 0)
 
 		fname = self.view.file_name()
 		if fname == None or not path.exists(fname):
