@@ -222,15 +222,8 @@ TOGGLE_GUTTER = \
 """
 <script type="text/javascript">
 function show_hide_column() {
-    var i;
-    var j;
-    var mode;
-    var rows;
-    var r;
-    var tbls;
-    var rows;
-    var r;
-    var tables = %(tables)s;
+    var i, j, mode, rows, r, tbls, rows, r,
+        tables = %(tables)s;
     tbls  = document.getElementsByTagName('table');
     for (i = 1; i <= tables; i++) {
         rows = tbls[i].getElementsByTagName('tr');
@@ -274,16 +267,12 @@ WRAP = \
 """
 <script type="text/javascript">
 function wrap_code(numbered) {
-    var pad = 10;
-    var ranges = [%(ranges)s];
-    var start;
-    var end;
-    var wrap_size = %(wrap_size)d;
-    var tables = %(tables)s;
-    var i;
-    var j;
-    var idx;
-    var header = %(header)s;
+    var start, end, i, j, idx,
+        pad = 10,
+        ranges = [%(ranges)s],
+        wrap_size = %(wrap_size)d,
+        tables = %(tables)s,
+        header = %(header)s;
     if (header) {
         document.getElementById("file_info").style.width = wrap_size + "px";
     }
@@ -311,8 +300,8 @@ SHOW_COMMENTS = \
 """
 <script type="text/javascript">
 function overlayComments() {
-    var comments_div = document.getElementById('comment_list');
-    var mode = comments_div.style.display;
+    var comments_div = document.getElementById('comment_list'),
+        mode = comments_div.style.display;
     if (mode == 'none') {
         comments_div.style.display = 'block';
         position_table(comments_div)
@@ -328,43 +317,20 @@ function dock_table() {
 }
 
 function position_table(el) {
-    var sel = document.getElementById('dock');
-    var option = sel.options[sel.selectedIndex].value;
-    var x;
-    var y;
+    var x, y,
+        sel = document.getElementById('dock'),
+        option = sel.options[sel.selectedIndex].value;
     switch(option) {
-        case "0":
-            break;
-        case "1":
-            y = 'top';
-            break;
-        case "2":
-            y = 'bottom';
-            break;
-        case "3":
-            x = 'left';
-            break;
-        case "4":
-            x = 'right';
-            break;
-        case "5":
-            y = 'top';
-            x = 'left';
-            break;
-        case "6":
-            y = 'top';
-            x = 'right';
-            break;
-        case "7":
-            y = 'bottom';
-            x = 'left';
-            break;
-        case "8":
-            y = 'bottom';
-            x = 'right';
-            break;
-        default:
-            break;
+        case "0": x = 'center'; y = 'center';  break;
+        case "1": x = 'center'; y = 'top';     break;
+        case "2": x = 'center'; y = 'bottom';  break;
+        case "3": x = 'left';   y = 'center';  break;
+        case "4": x = 'right';  y = 'center';  break;
+        case "5": x = 'left';   y = 'top';     break;
+        case "6": x = 'right';  y = 'top';     break;
+        case "7": x = 'left';   y = 'bottom';  break;
+        case "8": x = 'right';  y = 'bottom';  break;
+        default: break;
     }
     setTimeout(function () {position_el.set(el, x, y); el.style.visibility = 'visible';}, 300)
 }
@@ -384,31 +350,31 @@ var position_el = {
     },
 
     set : function (el, x, y) {
-        var left;
-        var top;
+        var left, top;
 
         if (typeof x === "undefined") x = null;
         if (typeof y === "undefined") y = null;
 
-        if (y == null || (y !== "top" && y !== "bottom")) {
+        if (y === 'center') {
             position_el.center(el, 'y');
-        } else {
-            if (y === 'top') {
-                el.style.top = 0 + 'px';
-            } else {
-                top   = (win_attr.get_size('y') - (el.offsetHeight));
-                el.style.top = (top < 0) ? 0 + 'px' : top + 'px';
-            }
+        } else if (y === 'top') {
+            el.style.top = 0 + 'px';
+        } else if (y === 'bottom') {
+            top = (win_attr.get_size('y') - (el.offsetHeight));
+            el.style.top = (top < 0) ? 0 + 'px' : top + 'px';
+        } else if (y.match(/^[\\d]+(%%|px|em|mm|cm|in|pt|pc)$/) != null) {
+            el.style.top = y;
         }
-        if (x == null || (x !== "left" && x !== "right")) {
+
+        if (x === "center") {
             position_el.center(el, 'x');
-        } else {
-            if (x === 'left') {
-                el.style.left = 0 + 'px';
-            } else {
-                left   = (win_attr.get_size('x') - (el.offsetWidth));
-                el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
-            }
+        } else if (x === 'left') {
+            el.style.left = 0 + 'px';
+        } else if (x === 'right') {
+            left = (win_attr.get_size('x') - (el.offsetWidth));
+            el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
+        } else if (x.match(/^[\\d]+(%%|px|em|mm|cm|in|pt|pc)$/) != null) {
+            el.style.left = x;
         }
     }
 };
@@ -440,8 +406,8 @@ SCROLL_TO_LINE = \
 """
 <script type="text/javascript">
 function scroll_to_line(value) {
-    var pos = 0;
-    var el = document.getElementById(value);
+    var pos = 0,
+        el = document.getElementById(value);
     window.scrollTo(0, 0);
     while(el) {
         pos += el.offsetTop;
