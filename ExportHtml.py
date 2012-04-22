@@ -185,8 +185,18 @@ ANNOTATION_ROW = (
 
 ANNOTATION_FOOTER = (
     '<tr><td colspan=2>' +
-    '<div class="table_footer"><label for="check_br">Dock Bottom Right </label>' +
-    '<input type="checkbox" id="check_br" name="check_br" id="ckbBottom" value="1" onclick="table_to_bottom()">' +
+    '<div class="table_footer"><label>Position </label>' +
+    '<select id="dock" size="1" onchange="dock_table();">' +
+    '<option value="0" selected="selected">center</option>' +
+    '<option value="1">top</option>' +
+    '<option value="2">bottom</option>' +
+    '<option value="3">left</option>' +
+    '<option value="4">right</option>' +
+    '<option value="5">top left</option>' +
+    '<option value="6">top right</option>' +
+    '<option value="7">bottom left</option>' +
+    '<option value="8">bottom right</option>' +
+    '</select>' +
     '</div>' +
     '</td></tr>'
 )
@@ -297,22 +307,6 @@ wrap_code(%(numbered)s)
 </script>
 """
 
-BOTTOM_RIGHT = \
-"""
-<script type="text/javascript">
-function table_to_bottom() {
-    var comments_div = document.getElementById('comment_list');
-    if (comments_div.className != "bottom_right") {
-        comments_div.className = "bottom_right";
-        setTimeout(function () {bottom_right.set(comments_div); comments_div.style.visibility = 'visible';}, 300)
-    } else {
-        comments_div.className = "";
-        setTimeout(function () {center.set(comments_div); comments_div.style.visibility = 'visible';}, 300)
-    }
-}
-</script>
-"""
-
 SHOW_COMMENTS = \
 """
 <script type="text/javascript">
@@ -321,40 +315,95 @@ function overlayComments() {
     var mode = comments_div.style.display;
     if (mode == 'none') {
         comments_div.style.display = 'block';
-        if (comments_div.className != "bottom_right") {
-            setTimeout(function () {center.set(comments_div); comments_div.style.visibility = 'visible';}, 300)
-        } else {
-            setTimeout(function () {center.set(comments_div); comments_div.style.visibility = 'visible';}, 300)
-        }
+        position_table(comments_div)
     } else {
         comments_div.style.visibility = 'hidden'
         comments_div.style.display = 'none';
     }
 }
+
+function dock_table() {
+    var comments_div = document.getElementById('comment_list');
+    position_table(comments_div)
+}
+
+function position_table(el) {
+    var sel = document.getElementById('dock');
+    var option = sel.options[sel.selectedIndex].value;
+    if (option == 0) {
+        setTimeout(function () {position_el.center(el); el.style.visibility = 'visible';}, 300)
+    } else if (option == 1) {
+        setTimeout(function () {position_el.top(el); el.style.visibility = 'visible';}, 300)
+    } else if (option == 2) {
+        setTimeout(function () {position_el.bottom(el); el.style.visibility = 'visible';}, 300)
+    } else if (option == 3) {
+        setTimeout(function () {position_el.left(el); el.style.visibility = 'visible';}, 300)
+    } else if (option == 4) {
+        setTimeout(function () {position_el.right(el); el.style.visibility = 'visible';}, 300)
+    } else if (option == 5) {
+        setTimeout(function () {position_el.top_left(el); el.style.visibility = 'visible';}, 300)
+    } else if (option == 6) {
+        setTimeout(function () {position_el.top_right(el); el.style.visibility = 'visible';}, 300)
+    } else if (option == 7) {
+        setTimeout(function () {position_el.bottom_left(el); el.style.visibility = 'visible';}, 300)
+    } else if (option == 8) {
+        setTimeout(function () {position_el.bottom_right(el); el.style.visibility = 'visible';}, 300)
+    }
+}
 </script>
 """
 
-CENTER = \
+POSITION = \
 """
 <script type="text/javascript">
-var center = {
-    set :function (el, dim) {
+var position_el = {
+    center : function (el, dim) {
         var c = win_attr.get(),
             top    = (c.y - (el.offsetHeight/2)),
             left   = (c.x - (el.offsetWidth/2));
         if (dim == null || dim === 'y') el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
         if (dim == null || dim === 'x') el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
-    }
-};
-
-var bottom_right = {
-    set :function (el) {
+    },
+    right : function (el) {
+        var left   = (win_attr.get_size('x') - (el.offsetWidth));
+        position_el.center(el, 'y');
+        el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
+    },
+    left : function (el) {
+        position_el.center(el, 'y');
+        el.style.left = 0 + 'px';
+    },
+    top_right : function (el) {
+        var left   = (win_attr.get_size('x') - (el.offsetWidth));
+        el.style.top  = 0 + 'px';
+        el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
+    },
+    top_left : function (el) {
+        el.style.top  = 0 + 'px';
+        el.style.left = 0 + 'px';
+    },
+    top : function (el) {
+        el.style.top  = 0 + 'px';
+        position_el.center(el, 'x');
+    },
+    bottom_right : function (el) {
         var top    = (win_attr.get_size('y') - (el.offsetHeight));
         var left   = (win_attr.get_size('x') - (el.offsetWidth));
         el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
         el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
+    },
+    bottom_left : function (el) {
+        var top    = (win_attr.get_size('y') - (el.offsetHeight));
+        el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
+        el.style.left = 0 + 'px';
+    },
+    bottom : function (el) {
+        var c = win_attr.get(),
+            top    = (win_attr.get_size('y') - (el.offsetHeight));
+        el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
+        position_el.center(el, 'x');
     }
-}
+};
 
 var win_attr = {
     get : function (dim) {
@@ -818,7 +867,7 @@ class ExportHtml(object):
         js_options = []
         if len(self.annot_tbl):
             self.add_comments_table(the_html)
-            js_options.append(CENTER)
+            js_options.append(POSITION)
             js_options.append(SHOW_COMMENTS)
             js_options.append(SCROLL_TO_LINE)
 
@@ -838,7 +887,6 @@ class ExportHtml(object):
             js_options.append(PRINT)
 
         js_options.append(TOGGLE_GUTTER % {"tables": self.tables})
-        js_options.append(BOTTOM_RIGHT)
         js_options.append(DOUBLE_CLICK_EVENTS)
 
         # Write empty line to allow copying of last line and line number without issue

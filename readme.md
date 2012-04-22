@@ -145,6 +145,9 @@ You can navigate the annotations in the generate HTML by using a jump table.  Yo
 - Paul Boddie: Desktop module for open files in web browser cross platform
 - Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright
 
+# Version 0.3.1
+- Position annotation jump table in different locations via drop down list
+
 # Version 0.3.0
 - Add annotation jump table for the HTML.  Show table with "alt+double_click"
 
