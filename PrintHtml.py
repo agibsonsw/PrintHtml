@@ -145,7 +145,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			word_line, word_col = view.rowcol(word_pt)
 		except:
 			return {}
-		return locals()							# shouldn't really do this :)
+		return locals()
 
 	def check_word(self, the_word):			# suitable to attach a comment to?
 		unsuitable = 0; error_msg = ''
@@ -169,7 +169,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 
 	def run(self, edit):
 		self.more_comments = True
-		self.just_added = False
+		self.just_added = False						# haven't just added a new comment
 		if not hasattr(self.view, 'vcomments'):
 			self.view.vcomments = {}
 			curr_comment = ''
@@ -217,7 +217,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		if not len(self.view.vcomments):
 			sublime.status_message('No comments to highlight.')
 		else:
-			beyond_eov = False
+			beyond_eov = False				# are their any comments beyond the view-size?
 			sels = self.view.sel()
 			sels.clear()
 			comment_regions = []
@@ -277,7 +277,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 			comment = comment.replace('\t', '&nbsp;' * 4).strip()
 			self.view.vcomments[metrics['word_pt']] = (metrics['curr_word'], comment, metrics['word_line'])
-			self.just_added = True			# don't re-display the comment text
+			self.just_added = True				# don't re-display the comment text
 
 	def delete_comment(self):						# at cursor position
 		if not len(self.view.vcomments):
@@ -368,7 +368,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 						new_region = new_regions.next()
 					except StopIteration:
 						new_region = None
-				if new_region:
+				if new_region:							# the same word has been found to attach the comment to
 					new_comment_line, _ = self.view.rowcol(new_region.begin())
 					self.view.vcomments[new_region.begin()] = (prev_wd, prev_comment, new_comment_line)
 					if new_region.begin() != prev_pt:		# delete the comment from its previous position
@@ -435,10 +435,10 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				if new_region.begin() != next_pt:		# delete the comment from its previous position
 					del self.view.vcomments[next_pt]
 				sels.add(new_region)
-				if len(sels) == 1: self.view.show(new_region)
+				if len(sels) == 1: self.view.show(new_region)		# show the first new region
 
 	def process_commentry(self, text, caller_id):					# on_done for comments panel
-		self.more_comments = False			# assume there is a problem with commentary
+		self.more_comments = False					# assume there is a problem with commentary
 		window = sublime.active_window()
 		view = window.active_view() if window != None else None
 		if view is None:
@@ -526,7 +526,7 @@ class QuickCommentsCommand(sublime_plugin.TextCommand):
 			sublime.status_message('Comment point not found.')
 			return
 		if the_key > self.view.size():
-			sublime.status_message('The commented word is no longer within the view size.')
+			sublime.status_message('The commented word is no longer within the view-size - use \'recover\' command.')
 			return
 		sels = self.view.sel()
 		sels.clear()
@@ -535,6 +535,8 @@ class QuickCommentsCommand(sublime_plugin.TextCommand):
 		self.view.show(comment_region)
 		if self.view.substr(comment_region) != self.view.vcomments[the_key][0]:
 			sublime.status_message('The comment is no longer on its original word.')
+		else:
+			sublime.status_message("Comment: %s" % (self.view.vcomments[the_key][1]))
 
 class PrintHtmlCommand(sublime_plugin.TextCommand):
 	def setup(self, numbers):
