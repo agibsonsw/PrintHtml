@@ -1,6 +1,7 @@
 import sublime, sublime_plugin
 from os import path
 import tempfile, desktop, re, sys
+import pickle
 
 PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
 
@@ -24,7 +25,7 @@ CSS_COMMENTS = \
 	text-decoration: none;
 	position: relative;
 }
-.tooltip span.comment {
+.tooltip .comment {
 	border-radius: 5px 5px;
 	-moz-border-radius: 5px;
 	-webkit-border-radius: 5px;
@@ -35,10 +36,10 @@ CSS_COMMENTS = \
 	padding: 0.8em 1em;
 	background: #FFFFAA; border: 1px solid #FFAD33;
 	font-family: Calibri, Tahoma, Geneva, sans-serif;
-	font-size: 10pt; font-weight: bold; 
+	font-size: %(fsize)dpt; font-weight: bold; min-height: %(fsize)spt;
 	width: 250px; left: 1em; top: 2em; z-index: 99;
 }
-.tooltip:hover span.comment { margin-left: 0pt; }
+.tooltip:hover .comment { margin-left: 0pt; }
 
 div#divComments { display: none; height: 400px; width: 500px; overflow: auto; margin: 0; }
 #divComments.inpage { position: static; }
@@ -129,6 +130,41 @@ JS_COMMENTS = \
 		code_lines[line_no].scrollIntoView();
 		return false;
 	}
+	function addComment(e) {
+		//if (!document.designMode)
+		//	return false;
+		if (!e) e = window.event;    	// for IE
+		var span_target = e.target || e.srcElement;    // IE uses srcElement
+		if (span_target.nodeName != 'SPAN' || span_target.className == 'comment') {
+			return false;
+		}
+		var awrapper = document.createElement('a');
+		awrapper.href = '#';
+		awrapper.className = 'tooltip';
+		var new_comment = document.createElement('textarea');
+		new_comment.className = 'comment';
+		new_comment.style.marginLeft = '0pt';
+		new_comment.style.minHeight = '13pt';
+		var comment_text = document.createTextNode('New comment text');
+		//comment_text.contentEditable = 'true';
+		//comment_text.tabIndex = '-1';			// to enable focus()
+		new_comment.appendChild(comment_text);
+		// new_comment.onclick = function () {
+		// 	var the_text = this.textContent || this.innerText;
+		// 	if (the_text && the_text == 'New comment text') {
+		// 		this.firstChild.nodeValue = '';
+		// 	}
+		// 	// document.designMode = (document.designMode == 'on') ? 'off' : 'on';
+		// };
+		awrapper.appendChild(span_target.cloneNode(true));
+		awrapper.appendChild(new_comment);
+		span_target.parentNode.replaceChild(awrapper, span_target);
+		//document.designMode = 'on';
+		//comment_text.focus();
+	}
+	window.onload = function () {
+		document.body.ondblclick = addComment;
+	};
 </script>
 """
 
@@ -542,7 +578,12 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 	def setup(self, numbers):
 		path_packages = sublime.packages_path()
 		if not hasattr(self.view, 'vcomments'):
-			self.view.vcomments = {}
+			self.view.vcomments = {}				# create empty dictionary anyway
+		# else:
+		# 	comments_file = open('test_comments.tmp', 'wb')
+		# 	pickle.dump(self.view.vcomments, comments_file)
+		# 	comments_file.close()
+
 		self.has_comments = (len(self.view.vcomments) > 0)
 
 		fname = self.view.file_name()
@@ -632,7 +673,8 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
 		the_html.write('<style type=\"text/css\">\n')
 		if self.has_comments:
-			the_html.write((CSS_COMMENTS % { "dot_colour": self.fground }).encode('utf-8', 'xmlcharrefreplace') + '\n')
+			the_html.write((CSS_COMMENTS % { "dot_colour": self.fground, "fsize": self.font_size }
+				).encode('utf-8', 'xmlcharrefreplace') + '\n')
 
 		the_html.write('span { display: inline; border: 0; margin: 0; padding: 0; }\n')
 
@@ -741,7 +783,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 			the_html.write('<input type=\"checkbox\" name=\"ckbToggle\" value=\"1\" onclick=\"toggleComments() \">\n')
 			the_html.write('(disables hover effect)</p>\n')
 		if self.numbers:
-			the_html.write('<ol id=\"thecode\">\n<li value="%d">' % self.curr_row)  	# use code's line numbering
+			the_html.write('<ol id=\"thecode\">\n<li value="%d">' % self.curr_row)  # use code's line numbering
 		else:
 			the_html.write('<ol id=\"thecode\">\n')
 
