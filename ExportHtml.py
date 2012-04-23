@@ -465,13 +465,16 @@ class ExportHtml(object):
         path_packages = sublime.packages_path()
 
         # Get get general document preferences from sublime preferences
+        eh_settings = sublime.load_settings(PACKAGE_SETTINGS)
         settings = sublime.load_settings('Preferences.sublime-settings')
-        self.font_size = settings.get('font_size', 10)
-        self.font_face = settings.get('font_face', 'Consolas')
+        alternate_font_size = eh_settings.get("alternate_font_size", False)
+        alternate_font_face = eh_settings.get("alternate_font_face", False)
+        self.font_size = settings.get('font_size', 10) if alternate_font_size == False else alternate_font_size
+        self.font_face = settings.get('font_face', 'Consolas') if alternate_font_face == False else alternate_font_face
         self.tab_size = settings.get('tab_size', 4)
         self.padd_top = settings.get('line_padding_top', 0)
         self.padd_bottom = settings.get('line_padding_bottom', 0)
-        self.char_limit = int(sublime.load_settings(PACKAGE_SETTINGS).get("valid_selection_size", 4))
+        self.char_limit = int(eh_settings.get("valid_selection_size", 4))
         self.bground = ''
         self.fground = ''
         self.gbground = ''
@@ -507,7 +510,7 @@ class ExportHtml(object):
         if color_scheme != None:
             alt_scheme = color_scheme
         else:
-            alt_scheme = sublime.load_settings(PACKAGE_SETTINGS).get("alternate_scheme", False)
+            alt_scheme = eh_settings.get("alternate_scheme", False)
         scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
         colour_scheme = path.normpath(scheme_file)
         plist_file = readPlist(path_packages + colour_scheme.replace('Packages', ''))
@@ -636,7 +639,7 @@ class ExportHtml(object):
     def get_annotations(self):
         annotations = get_annotations(self.view)
         comments = []
-        for x in range(0, annotations["count"]):
+        for x in range(0, int(annotations["count"])):
             region = annotations["annotations"]["html_annotation_%d" % x]["region"]
             comments.append((region, annotations["annotations"]["html_annotation_%d" % x]["comment"]))
         comments.sort()

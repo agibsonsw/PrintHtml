@@ -6,6 +6,18 @@
     //     "alternate_scheme": "Packages/ExportHtml/themes/Print-Color.tmTheme"
     "alternate_scheme": false,
 
+    // By default, ExportHtml uses your current font_face and font_size.
+    // You can change this setting to always use this value.  By default,
+    // the setting is a literal false, but you can change it to an actual
+    // font_face to enable this setting.
+    "alternate_font_face": false,
+
+    // By default, ExportHtml uses your current font_face and font_size.
+    // You can change this setting to always use this value.  By default,
+    // the setting is a literal false, but you can change it to an actual
+    // font_size to enable this setting.
+    "alternate_font_size": false,
+
     //Path to linux Python 2.6 lib
     "linux_python2.6_lib": "/usr/lib/python2.6/lib-dynload",
 

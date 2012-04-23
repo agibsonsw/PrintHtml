@@ -72,8 +72,9 @@ class ExportBbcode(object):
 
         # Get get general document preferences from sublime preferences
         settings = sublime.load_settings('Preferences.sublime-settings')
+        eh_settings = sublime.load_settings(PACKAGE_SETTINGS)
         self.tab_size = settings.get('tab_size', 4)
-        self.char_limit = int(sublime.load_settings(PACKAGE_SETTINGS).get("valid_selection_size", 4))
+        self.char_limit = int(eh_settings.get("valid_selection_size", 4))
         self.bground = ''
         self.fground = ''
         self.gbground = ''
@@ -95,7 +96,7 @@ class ExportBbcode(object):
         if color_scheme != None:
             alt_scheme = color_scheme
         else:
-            alt_scheme = sublime.load_settings(PACKAGE_SETTINGS).get("alternate_scheme", False)
+            alt_scheme = eh_settings.get("alternate_scheme", False)
         scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
         colour_scheme = path.normpath(scheme_file)
         plist_file = readPlist(path_packages + colour_scheme.replace('Packages', ''))

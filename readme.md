@@ -135,6 +135,8 @@ You can navigate the annotations in the generate HTML by using a jump table.  Yo
 
 # Settings File options
 - alternate_scheme (string or false): Defines a default theme to be used if a theme is not specified in a command.  When this is false, the current Sublime Text theme in use is used.
+- alternate_font_size (int or false): Define an alternate font_size to use by default instead of the current one in use.  Use the current one in use if set to a literal ```false```.  Default is ```false```.
+- alternate_font_face (string or false): Define an alternate font_face to use by default instead of the current one in use.  Use the current one in use if set to a literal ```false```.  Default is ```false```.
 - valid_selection_size (integer): Minimum allowable size for a selection to be accepted for only the selection to be printed.
 - linux_python2.6_lib (string): If you are on linux and Sublime Text is not including your Python 2.6 library folder, you can try and configure it here.
 - html_panel (array of commands): Define export configurations to appear under the ```Export to HTML: Show Export Menu``` command palette command.
@@ -144,6 +146,10 @@ You can navigate the annotations in the generate HTML by using a jump table.  Yo
 - agibsonsw: Original idea and algorithm for the plugin
 - Paul Boddie: Desktop module for open files in web browser cross platform
 - Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright
+
+# Version 0.3.2
+- Allow alternate font size and face via the settings file
+- Tweak annotation jump table style and code
 
 # Version 0.3.1
 - Position annotation jump table in different locations via drop down list
