@@ -140,6 +140,9 @@ JS_COMMENTS = \
 		}
 		var awrapper = document.createElement('a');
 		awrapper.href = '#';
+		awrapper.onclick = function () {
+			return false;
+		};
 		awrapper.className = 'tooltip';
 		var new_comment = document.createElement('textarea');
 		new_comment.className = 'comment';
@@ -759,7 +762,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 				for (the_colour, tidied_text, the_comment) in temp_line:
 					the_span = '<span style=\"color:' + the_colour + '\">' + tidied_text + '</span>'
 					if the_comment is not None:
-						the_span = '<a class=\"tooltip\" href=\"#\">' + the_span
+						the_span = '<a class=\"tooltip\" href=\"#\" onclick=\"return false;\">' + the_span
 						the_span += '<span class=\"comment\">' + the_comment + '</span></a>'
 						line_no, _ = self.view.rowcol(self.pt - 1)
 						self.comments_list.append((line_no, the_comment))	# used to create the comments table
