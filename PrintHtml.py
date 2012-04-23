@@ -131,8 +131,6 @@ JS_COMMENTS = \
 		return false;
 	}
 	function addComment(e) {
-		//if (!document.designMode)
-		//	return false;
 		if (!e) e = window.event;    	// for IE
 		var span_target = e.target || e.srcElement;    // IE uses srcElement
 		if (span_target.nodeName != 'SPAN' || span_target.className == 'comment') {
@@ -149,24 +147,13 @@ JS_COMMENTS = \
 		new_comment.style.marginLeft = '0pt';
 		new_comment.style.minHeight = '13pt';
 		var comment_text = document.createTextNode('New comment text');
-		//comment_text.contentEditable = 'true';
-		//comment_text.tabIndex = '-1';			// to enable focus()
 		new_comment.appendChild(comment_text);
-		// new_comment.onclick = function () {
-		// 	var the_text = this.textContent || this.innerText;
-		// 	if (the_text && the_text == 'New comment text') {
-		// 		this.firstChild.nodeValue = '';
-		// 	}
-		// 	// document.designMode = (document.designMode == 'on') ? 'off' : 'on';
-		// };
 		awrapper.appendChild(span_target.cloneNode(true));
 		awrapper.appendChild(new_comment);
 		span_target.parentNode.replaceChild(awrapper, span_target);
-		//document.designMode = 'on';
-		//comment_text.focus();
 	}
 	window.onload = function () {
-		document.body.ondblclick = addComment;
+		document.getElementById('thecode').ondblclick = addComment;
 	};
 </script>
 """
