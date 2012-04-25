@@ -168,7 +168,7 @@ ANNOTATION_TBL_START = (
     '<div id="comment_list" style="display:none"><div id="comment_wrapper">' +
     '<table id="comment_table">' +
     '<tr><th>Line/Col</th><th>Comments' +
-    '<a href="javascript:void(0)" class="table_close" onclick="overlayComments();return false;">(close)</a>'
+    '<a href="javascript:void(0)" class="table_close" onclick="toggle_comments();return false;">(close)</a>'
     '</th></tr>'
 )
 
@@ -208,10 +208,10 @@ DOUBLE_CLICK_EVENTS = \
 <script type="text/javascript">
 function double_click_events(e) {
     var evt = e ? e : window.event;
-    if (evt.shiftKey && typeof show_hide_column !== "undefined") {
-        show_hide_column();
-    } else if (evt.altKey && typeof overlayComments !== "undefined") {
-        overlayComments();
+    if (evt.shiftKey && typeof toggle_gutter !== "undefined") {
+        toggle_gutter();
+    } else if (evt.altKey && typeof toggle_comments !== "undefined") {
+        toggle_comments();
     }
 }
 document.getElementsByTagName('body')[0].ondblclick = function (e) { double_click_events(e); };
@@ -221,7 +221,7 @@ document.getElementsByTagName('body')[0].ondblclick = function (e) { double_clic
 TOGGLE_GUTTER = \
 """
 <script type="text/javascript">
-function show_hide_column() {
+function toggle_gutter() {
     var i, j, mode, rows, r, tbls, rows, r,
         tables = %(tables)s;
     tbls  = document.getElementsByTagName('table');
@@ -296,10 +296,10 @@ wrap_code(%(numbered)s)
 </script>
 """
 
-SHOW_COMMENTS = \
+TOGGLE_COMMENTS = \
 """
 <script type="text/javascript">
-function overlayComments() {
+function toggle_comments() {
     var comments_div = document.getElementById('comment_list'),
         mode = comments_div.style.display;
     if (mode == 'none') {
@@ -342,7 +342,7 @@ POSITION = \
 <script type="text/javascript">
 var position_el = {
     center : function (el, dim) {
-        var c = win_attr.get(),
+        var c = win_attr.get_center(),
             top    = (c.y - (el.offsetHeight/2)),
             left   = (c.x - (el.offsetWidth/2));
         if (dim == null || dim === 'y') el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
@@ -380,7 +380,7 @@ var position_el = {
 };
 
 var win_attr = {
-    get : function (dim) {
+    get_center : function (dim) {
         var c = {
             'x' : (win_attr.get_size('x')/2),
             'y' : (win_attr.get_size('y')/2)
