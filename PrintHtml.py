@@ -24,9 +24,9 @@ CSS_MAIN = \
 """
 	<style type="text/css">
 	body { color: %(fcolor)s; background-color: %(bcolor)s; font: %(fsize)dpt '%(fface)s', Consolas, Monospace; }
+	p { margin-top: 4px; margin-bottom: 4px; }
 	#preCode { border: 0; margin: 0; padding: 0; font: %(fsize)dpt '%(fface)s', Consolas, Monospace; }
 	span { color: %(fcolor)s; background-color: %(bcolor)s; display: inline; border: 0; margin: 0; padding: 0; }
-	span:hover { outline: 1px solid red; }
 	* html a:hover { background: transparent; }
 """
 
@@ -101,19 +101,27 @@ JS_TIDYSPACES = \
 		var spans = olCode.getElementsByTagName('span');
 		for (i = 0; i < spans.length; i++) {
 			if ( spans[i].previousSibling ) {
+				if ( spans[i].className && spans[i].className == 'comment')
+					continue;
 				span_textnode = spans[i].firstChild;
 				span_text = span_textnode.data;
 				tidied = span_text.replace(/\s{2,}$/,'');
 				if (span_text.length && (span_text.length > tidied.length)) {
 					if ( spans[i].nextSibling ) {
-						span_next = spans[i].nextSibling;
-						offLeft = span_next.offsetLeft;
-						newLeft = (parseInt(offLeft / 50)) * 50 + 50;
-						spans[i].nextSibling.style.paddingLeft = (newLeft - offLeft) + 'px';
+						span_next = spans[i];
+						while ( (span_next = span_next.nextSibling) && span_next.className 
+							&& span_next.className == 'comment' && span_next.nextSibling )
+							;		// do nothing, get next span (or 'a' tag)
+						if ( span_next ) {
+							offLeft = span_next.offsetLeft;
+							newLeft = (parseInt(offLeft / 60)) * 60 + 60;
+							spans[i].nextSibling.style.paddingLeft = (newLeft - offLeft) + 'px';
+						}
 					}
 				}
 			}
 		}
+		document.getElementById('pTidy').style.display = 'none';	// refresh page to reset
 	}
 </script>
 """
@@ -784,8 +792,8 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 	def write_body(self, the_html):
 		temp_body = '<body>\n'
 		temp_body += '<p id=\"top\" style=\"color:%s\">%s</p>\n' % (self.fground, self.file_name)
-		temp_body += '<p>Tidy spaces: <input type=\"checkbox\" name=\"ckbTidy\" id=\"ckbTidy\" value=\"1\"' \
-			+ 'onclick=\"tidySpaces()\"></p>'
+		temp_body += '<p id=\"pTidy\">Attempt to tidy spaces:<input type=\"checkbox\" name=\"ckbTidy\"' \
+			+ 'id=\"ckbTidy\" value=\"1\" onclick=\"tidySpaces()\">(refresh page to reset)</p>'
 
 		if self.has_comments:
 			temp_body += CKBs_COMMENTS				# the checkbox options
