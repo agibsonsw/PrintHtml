@@ -1,7 +1,6 @@
 import sublime, sublime_plugin
 from os import path
 import tempfile, desktop, re, sys
-import pickle
 
 PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
 
@@ -13,55 +12,110 @@ if sublime.platform() == "linux":
 		sys.path.append(linux_lib)
 from plistlib import readPlist
 
-CSS_BODY = \
-"""body { color: %(fcolor)s; background-color: %(bcolor)s; font: %(fsize)dpt '%(fface)s', 
-	Consolas, Monospace; } """
+HEADER = \
+"""<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>%(fname)s</title>
+"""
+
+CSS_MAIN = \
+"""
+	<style type="text/css">
+	body { color: %(fcolor)s; background-color: %(bcolor)s; font: %(fsize)dpt '%(fface)s', Consolas, Monospace; }
+	#preCode { border: 0; margin: 0; padding: 0; font: %(fsize)dpt '%(fface)s', Consolas, Monospace; }
+	span { color: %(fcolor)s; background-color: %(bcolor)s; display: inline; border: 0; margin: 0; padding: 0; }
+	span:hover { outline: 1px solid red; }
+	* html a:hover { background: transparent; }
+"""
 
 CSS_COMMENTS = \
 """
-.tooltip {
-	border-bottom: 1px dotted %(dot_colour)s;
-	outline: none;
-	text-decoration: none;
-	position: relative;
-}
-.tooltip .comment {
-	border-radius: 5px 5px;
-	-moz-border-radius: 5px;
-	-webkit-border-radius: 5px;
-	box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
-	-webkit-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
-	-moz-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
-	margin-left: -999em; position: absolute;
-	padding: 0.8em 1em;
-	background: #FFFFAA; border: 1px solid #FFAD33;
-	font-family: Calibri, Tahoma, Geneva, sans-serif;
-	font-size: %(fsize)dpt; font-weight: bold; min-height: %(fsize)spt;
-	width: 250px; left: 1em; top: 2em; z-index: 99;
-}
-.tooltip:hover .comment { margin-left: 0pt; }
+	.tooltip {
+		border-bottom: 1px dotted %(dot_colour)s;
+		outline: none; text-decoration: none;
+		position: relative;
+	}
+	.tooltip .comment {
+		border-radius: 5px 5px;
+		-moz-border-radius: 5px;
+		-webkit-border-radius: 5px;
+		box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
+		-webkit-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
+		-moz-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
 
-div#divComments { display: none; height: 400px; width: 500px; overflow: auto; margin: 0; }
-#divComments.inpage { position: static; }
-#divComments.overlay { position: fixed; z-index: 99; height: 400px; right:50px;
-	top: 100px; bottom: auto; left: auto; }
-#divComments.overlay_bl { position: fixed; z-index: 99; height: 200px; right: auto;
-	top: auto; bottom: 50px; left: 50px; overflow-y: scroll; }
-table#tblComments {
-	box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
-	-webkit-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
-	-moz-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
-	font-family: Calibri, Tahoma, Geneva, sans-serif;
-	border-collapse: collapse; margin: 0;
-	color: #000000; background-color: lightyellow;
-}
-table#tblComments th, table#tblComments td { border: thin solid; padding: 5px; }
-td.nos { width: 50px; text-align: right; padding-right: 10px !important; }
-td.cmts { min-width: 400px; max-width: 600px; }
-tr#bottom_row { display: none; }
-td#bottoml { font-size: smaller; text-align: right; }
+		position: absolute; z-index: 99;
+		width: 250px; left: 1em; top: 2em;
 
-* html a:hover { background: transparent; }
+		margin-left: -999em;
+
+		padding: 0.8em 1em;
+		color: blue; background: #FFFFAA; border: 1px solid #FFAD33;
+		font-family: Calibri, Tahoma, Geneva, sans-serif;
+		font-size: %(fsize)dpt; font-weight: bold;
+	}
+	.tooltip:hover .comment { margin-left: 0pt; }
+
+	#divComments { display: none; height: 400px; width: 500px; overflow: auto; margin: 0; }
+	#divComments.inpage { position: static; }
+	#divComments.inpage #bottom_row { display: none; }
+	#divComments.overlay { position: fixed; z-index: 99; height: 400px; right:50px;
+		top: 100px; bottom: auto; left: auto; }
+	#divComments.overlay_bl { position: fixed; z-index: 99; height: 200px; right: auto;
+		top: auto; bottom: 50px; left: 50px; overflow-y: scroll; }
+	#divComments.overlay #bottom_row, #divComments.overlay_bl #bottom_row { display: table-row; }
+	#tblComments {
+		box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
+		-webkit-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
+		-moz-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
+		border-collapse: collapse; margin: 0;
+		font-family: Calibri, Tahoma, Geneva, sans-serif;
+		color: #000000; background-color: lightyellow;
+	}
+	#tblComments th, #tblComments td { border: thin solid; padding: 5px; }
+	td.nos { width: 50px; text-align: right; padding-right: 10px !important; }
+	td.cmts { min-width: 400px; max-width: 600px; }
+"""
+
+CKBs_COMMENTS = \
+"""
+<p>Show table of comments:<input type="checkbox" name="ckbComments" id="ckbComments" value="1" onclick="listComments()">&nbsp;
+Overlay table of comments:<input type="checkbox" name="ckbOverlay" id="ckbOverlay" value="1" onclick="overlayComments()">&nbsp;
+Show/hide comments (disables hover):<input type="checkbox" name="ckbToggle" id="ckbToggle" value="1" onclick="toggleComments()"></p>
+"""
+
+SCOPED = \
+"""<span>%(t_text)s</span>"""
+SCOPEDCOLOR = \
+"""<span style="color:%(colour)s;">%(t_text)s</span>"""
+SCOPEDCOMMENT = \
+"""<a class="tooltip" href="#" onclick="return false;">%(scoped)s<span class="comment">%(comment)s</span></a>"""
+
+JS_TIDYSPACES = \
+"""
+<script type="text/javascript">
+	function tidySpaces() {
+		var olCode, spans, i, span_textnode, span_text, span_next, offLeft, newLeft;
+		var olCode = document.getElementById('olCode');
+		var spans = olCode.getElementsByTagName('span');
+		for (i = 0; i < spans.length; i++) {
+			if ( spans[i].previousSibling ) {
+				span_textnode = spans[i].firstChild;
+				span_text = span_textnode.data;
+				tidied = span_text.replace(/\s{2,}$/,'');
+				if (span_text.length && (span_text.length > tidied.length)) {
+					if ( spans[i].nextSibling ) {
+						span_next = spans[i].nextSibling;
+						offLeft = span_next.offsetLeft;
+						newLeft = (parseInt(offLeft / 50)) * 50 + 50;
+						spans[i].nextSibling.style.paddingLeft = (newLeft - offLeft) + 'px';
+					}
+				}
+			}
+		}
+	}
+</script>
 """
 
 JS_COMMENTS = \
@@ -70,96 +124,110 @@ JS_COMMENTS = \
 	function listComments() {
 		var comments_div = document.getElementById('divComments');
 		if (!comments_div.style.display || comments_div.style.display == 'none') {
-			comments_div.style.display = 'block';
 			if (!comments_div.className || comments_div.className == 'inpage')
-				document.getElementById('thecode').style.display = 'none';
+				document.getElementById('preCode').style.display = 'none';
+			comments_div.style.display = 'block';
 		}
 		else {
 			comments_div.style.display = 'none';
-			document.getElementById('thecode').style.display = 'block';
+			document.getElementById('preCode').style.display = 'block';
 			document.getElementById('ckbComments').checked = false;
 		}
 	}
 	function overlayComments() {
 		var comments_div = document.getElementById('divComments');
-		if (!comments_div.className || comments_div.className == 'inpage') {
-			if (document.getElementById('ckbBottom').checked)
-				comments_div.className = 'overlay_bl';
-			else
-				comments_div.className = 'overlay';
-			document.getElementById('bottom_row').style.display = 'table-row';
-			document.getElementById('thecode').style.display = 'block';
+
+		document.getElementById('preCode').style.display = 'block';
+		if (document.getElementById('ckbOverlay').checked) {
+			comments_div.className = (document.getElementById('ckbBottom').checked) ? 'overlay_bl' : 'overlay';
 		}
 		else {
 			comments_div.className = 'inpage';
-			document.getElementById('bottom_row').style.display = 'none';
-			document.getElementById('thecode').style.display = 'block';
 		}
 	}
 	function tableToBottom() {
-		var comments_div = document.getElementById('divComments');
-		if (comments_div.className) {
-			if (comments_div.className == 'overlay')
-				comments_div.className = 'overlay_bl';
-			else if (comments_div.className == 'overlay_bl')
-				comments_div.className = 'overlay';
-		}
+		document.getElementById('divComments').className = 
+			(document.getElementById('ckbBottom').checked) ? 'overlay_bl' : 'overlay';
 	}
 	function toggleComments() {
-		var comments;
+		var comments, newMargin, i;
+
 		if (document.getElementsByClassName) {
 			comments = document.getElementsByClassName('comment');
 		}
 		else if (document.querySelectorAll) {
 			comments = document.querySelectorAll('.comment');
 		}
-		for (i=0; i < comments.length; i++) {
-			if (comments[i].style.marginLeft && comments[i].style.marginLeft == '0pt') {
-				comments[i].style.marginLeft = '-999em';
-			}
-			else {
-				comments[i].style.marginLeft = '0pt';
-			}
+		else {
+			return false;
+		}
+		newMargin = (document.getElementById('ckbToggle').checked) ? '0pt' : '-999em';
+		for (i = 0; i < comments.length; i++) {
+			comments[i].style.marginLeft = newMargin;
 		}
 	}
 	function gotoLine(line_no) {
+		var code_list = document.getElementById('olCode');
+		var code_lines = code_list.getElementsByTagName('li');
+
 		// scroll the line(-5) into view (so it's not right at the top)
 		line_no = (line_no - 5 + 1) * (line_no - 5 + 1 > 0);
-		var code_list = document.getElementById('thecode');
-		var code_lines = code_list.getElementsByTagName('li');
 		code_lines[line_no].scrollIntoView();
 		return false;
 	}
 	function addComment(e) {
-		if (!e) e = window.event;    	// for IE
-		var span_target = e.target || e.srcElement;    // IE uses srcElement
+		var span_target, awrapper, new_comment, comment_text;
+
+		if (!e) e = window.event;
+		span_target = e.target || e.srcElement;
 		if (span_target.nodeName != 'SPAN' || span_target.className == 'comment') {
 			return false;
 		}
-		var awrapper = document.createElement('a');
+		awrapper = document.createElement('a');
 		awrapper.href = '#';
-		awrapper.onclick = function () {
-			return false;
-		};
+		awrapper.onclick = function () { return false; };
 		awrapper.className = 'tooltip';
-		var new_comment = document.createElement('textarea');
+		new_comment = document.createElement('textarea');
 		new_comment.className = 'comment';
 		new_comment.style.marginLeft = '0pt';
-		new_comment.style.minHeight = '13pt';
-		var comment_text = document.createTextNode('New comment text');
+		new_comment.style.backgroundColor = 'yellow';
+		comment_text = document.createTextNode('New comment text');
 		new_comment.appendChild(comment_text);
 		awrapper.appendChild(span_target.cloneNode(true));
 		awrapper.appendChild(new_comment);
 		span_target.parentNode.replaceChild(awrapper, span_target);
+		return false;
 	}
 	window.onload = function () {
-		document.getElementById('thecode').ondblclick = addComment;
+		document.getElementById('olCode').ondblclick = addComment;
 	};
 </script>
 """
 
+COMMENTS_TBLHEAD = \
+"""
+<div id="divComments" class="inpage">
+<table id="tblComments"> 
+	<tr><th>Line</th><th>The Comment</th><tr>
+"""
+COMMENTS_TBLROW = \
+"""
+	<tr><td class="nos"><a href="#" onclick="gotoLine(%(line_adj)s);return false;">%(line_no)s</a></td>
+	<td class="cmts">%(comment)s</td></tr>
+"""
+COMMENTS_TBLEND = \
+"""
+	<tr id="bottom_row"><td colspan="2" style=\"font-size:smaller; text-align:right;\"><a href="#top">Top</a>&nbsp;&nbsp;
+	<a href="#" onclick="listComments();return false;">Close</a>&nbsp;&nbsp;
+	Position: bottom-left <input type="checkbox" name="ckbBottom" id="ckbBottom" value="1" onclick="tableToBottom()"></td>
+	</tr>
+</table>
+</div>
+"""
+
 class CommentHtmlCommand(sublime_plugin.TextCommand):
 	sensible_word = re.compile(r"""[a-zA-Z_]{1}[a-zA-Z_0-9]+""")
+
 	def get_metrics(self, view):				# return word and point(s) at cursor position
 		try:
 			curr_id = view.id()
@@ -173,17 +241,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			return {}
 		return locals()
 
-	def check_word(self, the_word):			# suitable to attach a comment to?
-		unsuitable = 0; error_msg = ''
-		if len(the_word) < 2:
-			return (1, "Cursor should be within a word (2 characters min).")
-		elif not re.match(self.sensible_word, the_word):
-			return (2, "Cursor needs to be within a \'sensible\' word, " \
-				+ "and cannot start with a number: " + the_word)
-		else:
-			return (unsuitable, error_msg)		# word is okay
-
-	def get_comment(self):					# return comment at cursor, or False
+	def get_comment(self):					# return comment-text at cursor, or False
 		if not hasattr(self.view, 'vcomments'): return ''
 		metrics = self.get_metrics(self.view)
 		if not len(metrics): return ''
@@ -234,6 +292,49 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		if not len(self.view.vcomments):
 			sublime.status_message('Comments no longer in original positions - deleted.')
 
+	def select_next(self, direction = 'down'):
+		if not len(self.view.vcomments):
+			sublime.status_message('No comments to select.')
+			return
+		sels = self.view.sel()
+		curr_pt = sels[0].begin()
+		if direction == 'down':
+			sorted_pts = (key_pt for key_pt in sorted(self.view.vcomments.iterkeys()) if key_pt > curr_pt)
+		else:
+			sorted_pts = (key_pt for key_pt in reversed(sorted(self.view.vcomments.iterkeys())) if key_pt < curr_pt)
+		try:
+			next_pt = sorted_pts.next()
+		except StopIteration:
+			next_pt = None
+		if next_pt:
+			next_wd, next_comment, next_line = self.view.vcomments[next_pt]
+			if next_pt >= self.view.size():						# next comment is beyond the view-size
+				sublime.status_message("Comment is past end-of-view - use \'recover\' command: %s (was line %d)" \
+					% (next_comment, next_line))
+				print "Comment past end-of-view: %s (was line %d)" % (next_comment, next_line)
+				return
+			sels.clear()
+			next_wd_region = self.view.word(next_pt)
+			curr_wd = self.view.substr(next_wd_region)
+			if curr_wd != next_wd: 
+				next_wd_begin = next_wd_region.begin()
+				sublime.status_message('The word has changed - was \'%s\'' % next_wd)
+				curr_line, _ = self.view.rowcol(next_pt)
+				print "Commented word was \'%s\' on line %d now \'%s\' on line %d comment: %s" \
+					% (next_wd, next_line, curr_wd, curr_line, next_comment)
+				# re-position the comment anyway, as the begin-point for the current word may be different,
+				# but remember the previous word so that they can move it
+				if not self.view.vcomments.has_key(next_wd_begin):
+					self.view.vcomments[next_wd_begin] = (next_wd, next_comment, curr_line)
+					if next_wd_region.begin() != next_pt:
+						del self.view.vcomments[next_pt]		# delete comment from its previous position
+			sels.add(next_wd_region)
+			self.view.show(next_wd_region)
+			return
+		else:
+			sublime.status_message('No next comment.')
+			return
+
 	def highlight_comments(self):			# highlight all comments, including mis-positioned ones
 		try:
 			self.view.erase_regions("comments")
@@ -242,44 +343,46 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			pass
 		if not len(self.view.vcomments):
 			sublime.status_message('No comments to highlight.')
-		else:
-			beyond_eov = False				# are their any comments beyond the view-size?
-			sels = self.view.sel()
-			sels.clear()
-			comment_regions = []
-			comment_errors = []
-			eov = self.view.size()
-			for key_pt in sorted(self.view.vcomments.iterkeys()):
-				prev_wd, prev_comment, prev_line = self.view.vcomments[key_pt]
-				if key_pt >= eov:							# comment is beyond the view-size
-					print "Comment is past end-of-view - use \'recover\' command: %s (was line %d)" \
-						% (prev_comment, prev_line)
-					beyond_eov = True
-					continue
-				curr_wd_region = self.view.word(key_pt)
-				curr_wd = self.view.substr(curr_wd_region)
-				if curr_wd == prev_wd:
-					if not len(comment_regions) and not len(comment_errors):
-						self.view.show(curr_wd_region)					# show the 1st highlighted region
-					comment_regions.append(curr_wd_region)
-				else:
-					curr_line, _ = self.view.rowcol(curr_wd_region.begin())
-					print "Commented word was \'%s\' on line %d now \'%s\' on line %d comment: %s" \
-						% (prev_wd, prev_line, curr_wd, curr_line, prev_comment)
-					# re-position the comment anyway, as the begin-point for the current word may be different,
-					# but remember the previous word so that they can move it
-					if not self.view.vcomments.has_key(curr_wd_region.begin()):
-						self.view.vcomments[curr_wd_region.begin()] = (prev_wd, prev_comment, prev_line)
-						del self.view.vcomments[key_pt]			# delete the comment from its previous position
-					if not len(comment_regions) and not len(comment_errors):
-						self.view.show(curr_wd_region)					# show the 1st highlighted region
-					comment_errors.append(curr_wd_region)
-			if len(comment_regions):
-				self.view.add_regions("comments", comment_regions, "comment", "")
-			if len(comment_errors):
-				self.view.add_regions("comment_errs", comment_errors, "invalid", "")
-			if beyond_eov:
-				sublime.status_message('There are comment(s) beyond the view-size - use \'recover\' command.')
+			return
+
+		beyond_eov = False				# are their any comments beyond the view-size?
+		sels = self.view.sel()
+		sels.clear()
+		comment_regions = []
+		comment_errors = []
+		eov = self.view.size()
+		for key_pt in sorted(self.view.vcomments.iterkeys()):
+			prev_wd, prev_comment, prev_line = self.view.vcomments[key_pt]
+			if key_pt >= eov:							# comment is beyond the view-size
+				print "Comment is past end-of-view - use \'recover\' command: %s (was line %d)" \
+					% (prev_comment, prev_line)
+				beyond_eov = True
+				continue
+			curr_wd_region = self.view.word(key_pt)
+			curr_wd = self.view.substr(curr_wd_region)
+			if curr_wd == prev_wd:
+				if not len(comment_regions) and not len(comment_errors):
+					self.view.show(curr_wd_region)					# show the 1st highlighted region
+				comment_regions.append(curr_wd_region)
+			else:
+				curr_wd_begin = curr_wd_region.begin()
+				curr_line, _ = self.view.rowcol(curr_wd_begin)
+				print "Commented word was \'%s\' on line %d now \'%s\' on line %d comment: %s" \
+					% (prev_wd, prev_line, curr_wd, curr_line, prev_comment)
+				# re-position the comment anyway, as the begin-point for the current word may be different,
+				# but remember the previous word so that they can move it
+				if not self.view.vcomments.has_key(curr_wd_begin):
+					self.view.vcomments[curr_wd_begin] = (prev_wd, prev_comment, prev_line)
+					del self.view.vcomments[key_pt]					# delete the comment from its previous position
+				if not len(comment_regions) and not len(comment_errors):
+					self.view.show(curr_wd_region)					# show the 1st highlighted region
+				comment_errors.append(curr_wd_region)
+		if len(comment_regions):
+			self.view.add_regions("comments", comment_regions, "comment", "")
+		if len(comment_errors):
+			self.view.add_regions("comment_errs", comment_errors, "invalid", "")
+		if beyond_eov:
+			sublime.status_message('There are comment(s) beyond the view-size - use \'recover\' command.')
 
 	def remove_highlights(self):
 		if not len(self.view.vcomments):
@@ -296,14 +399,16 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		if not len(metrics):
 			sublime.status_message('Unable to read word at cursor.')
 			return
-		unsuitable, error_msg = self.check_word(metrics['curr_word'])
-		if unsuitable:
-			sublime.status_message(error_msg)
-		else:									# add the comment to the dictionary
+		elif len(metrics['curr_word']) < 2:
+			sublime.status_message('Cursor should be within a word (2 characters min).')
+		elif not re.match(self.sensible_word, metrics['curr_word']):
+			sublime.status_message("Cursor needs to be within a \'sensible\' word, " \
+				+ "and cannot start with a number: " + metrics['curr_word'])
+		else:										# add the comment to the dictionary
 			comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-			comment = comment.replace('\t', '&nbsp;' * 4).strip()
+			comment = comment.replace('\t', ' ' * 4).strip()
 			self.view.vcomments[metrics['word_pt']] = (metrics['curr_word'], comment, metrics['word_line'])
-			self.just_added = True				# don't re-display the comment text
+			self.just_added = True					# don't re-display the comment text
 
 	def delete_comment(self):						# at cursor position
 		if not len(self.view.vcomments):
@@ -332,138 +437,66 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		except:
 			pass
 
-	def move_to_next(self, direction = 'down'):
+	def push_comments(self, direction = 'down'):				# move selected comment(s) down or up
+																# or recover ones beyond the view-size
 		if not len(self.view.vcomments):
-			sublime.status_message('No comments exist to move to.')
+			sublime.status_message('There are no comments for the current view.')
 			return
 		sels = self.view.sel()
-		curr_pt = sels[0].begin()
-		if direction == 'down':
-			sorted_pts = (key_pt for key_pt in sorted(self.view.vcomments.iterkeys()) if key_pt > curr_pt)
-		else:
-			sorted_pts = (key_pt for key_pt in reversed(sorted(self.view.vcomments.iterkeys())) if key_pt < curr_pt)
-		try:
-			next_pt = sorted_pts.next()
-		except StopIteration:
-			next_pt = None
-		if next_pt:
-			next_wd, next_comment, next_line = self.view.vcomments[next_pt]
-			if next_pt >= self.view.size():						# next comment is beyond the view-size
-				sublime.status_message("Comment is past end-of-view - use \'recover\' command: %s (was line %d)" \
-					% (next_comment, next_line))
-				print "Comment past end-of-view: %s (was line %d)" % (next_comment, next_line)
+		curr_sel = sels[0]
+		
+		if curr_sel.empty() and direction != 'recover':
+			metrics = self.get_metrics(self.view)
+			if not len(metrics):
+				sublime.status_message('Unable to read word at cursor.')
 				return
-			sels.clear()
-			next_wd_region = self.view.word(next_pt)
-			curr_wd = self.view.substr(next_wd_region)
-			if curr_wd != next_wd: 
-				sublime.status_message('The word has changed - was \'%s\'' % next_wd)
-				curr_line, _ = self.view.rowcol(next_pt)
-				print "Commented word was \'%s\' on line %d now \'%s\' on line %d comment: %s" \
-					% (next_wd, next_line, curr_wd, curr_line, next_comment)
-				# re-position the comment anyway, as the begin-point for the current word may be different,
-				# but remember the previous word so that they can move it
-				if not self.view.vcomments.has_key(next_wd_region.begin()):
-					self.view.vcomments[next_wd_region.begin()] = (next_wd, next_comment, curr_line)
-					if next_wd_region.begin() != next_pt:
-						del self.view.vcomments[next_pt]		# delete comment from its previous position
-			sels.add(next_wd_region)
-			self.view.show(next_wd_region)
-			return
-		else:
-			sublime.status_message('No next comment.')
-			return
-
-	def push_comment(self, direction = 'down'):			# move the current comment down or up
-		if not len(self.view.vcomments):
-			sublime.status_message('There are no comments for the current view.')
-			return
-		metrics = self.get_metrics(self.view)
-		if not len(metrics):
-			sublime.status_message('Unable to read word at cursor.')
-			return
-		else:									# push this comment down or up
-			prev_pt = metrics['word_pt']
-			if self.view.vcomments.has_key(prev_pt):
-				prev_wd, prev_comment, prev_line = self.view.vcomments[prev_pt]
-				if direction == 'down':
-					new_region = self.view.find(prev_wd, prev_pt + 1, sublime.LITERAL)
-				else:
-					new_regions = (r for r in reversed(self.view.find_all(prev_wd, sublime.LITERAL)) if r.begin() < prev_pt)
-					try:
-						new_region = new_regions.next()
-					except StopIteration:
-						new_region = None
-				if new_region:							# the same word has been found to attach the comment to
-					new_comment_line, _ = self.view.rowcol(new_region.begin())
-					self.view.vcomments[new_region.begin()] = (prev_wd, prev_comment, new_comment_line)
-					if new_region.begin() != prev_pt:		# delete the comment from its previous position
-						del self.view.vcomments[prev_pt]
-					sublime.status_message('Comment pushed %swards to line %d' % (direction, (new_comment_line + 1)))
-					sels = self.view.sel()
-					sels.clear()
-					self.view.sel().add(new_region)
-					self.view.show(new_region)
-					return
-				else:
-					sublime.status_message('The current text does not occur further %s.' % direction)
 			else:
-				sublime.status_message('No comment found at cursor.')
-		return
-
-	def push_all_comments(self, direction = 'down'):	# move all comments down or up (from the cursor position)
-		if not len(self.view.vcomments):
-			sublime.status_message('There are no comments for the current view.')
-			return
-		sels = self.view.sel()
-		curr_pt = sels[0].begin()
-		sels.clear()
-		if direction == 'down':
-			sorted_pts = (key_pt for key_pt in sorted(self.view.vcomments.iterkeys()) if key_pt > curr_pt)
+				pt_begin = pt_end = metrics['word_pt']
+		elif direction == 'recover':
+			pt_begin = self.view.size()
+			pt_end = max(self.view.vcomments.iterkeys())
+			if pt_end < pt_begin:
+				sublime.status_message('There are no comments beyond the view-size.')
+				return
 		else:
-			sorted_pts = (key_pt for key_pt in reversed(sorted(self.view.vcomments.iterkeys())) if key_pt < curr_pt)
+			pt_begin = curr_sel.begin(); pt_end = curr_sel.end()
+		sels.clear()
+
+		if direction == 'down':		# push comment(s) down, starting with the last one in the selection
+			sorted_pts = (key_pt for key_pt in reversed(sorted(self.view.vcomments.iterkeys())) \
+				if pt_begin <= key_pt <= pt_end)
+		else:
+			sorted_pts = (key_pt for key_pt in sorted(self.view.vcomments.iterkeys()) \
+				if pt_begin <= key_pt <= pt_end)
+		moved_comment = False				# were we able to move any comment(s)?
 		for next_pt in sorted_pts:
 			prev_wd, prev_comment, prev_line = self.view.vcomments[next_pt]
 			if direction == 'down':
 				new_region = self.view.find(prev_wd, next_pt + 1, sublime.LITERAL)
 			else:
-				new_regions = (r for r in reversed(self.view.find_all(prev_wd, sublime.LITERAL)) if r.begin() < next_pt)
+				new_regions = (r for r in reversed(self.view.find_all(prev_wd, sublime.LITERAL)) \
+					if r.begin() < next_pt)
 				try:
 					new_region = new_regions.next()
 				except StopIteration:
 					new_region = None
 			if new_region:
-				new_comment_line, _ = self.view.rowcol(new_region.begin())
-				self.view.vcomments[new_region.begin()] = (prev_wd, prev_comment, new_comment_line)
-				if new_region.begin() != next_pt:		# delete the comment from its previous position
+				new_region_begin = new_region.begin()
+				new_comment_line, _ = self.view.rowcol(new_region_begin)
+				if self.view.vcomments.has_key(new_region_begin):
+					_, old_comment, old_line = self.view.vcomments[new_region_begin]
+					print "A comment has been over-written at line %d comment: %s" % (old_line, old_comment)
+				self.view.vcomments[new_region_begin] = (prev_wd, prev_comment, new_comment_line)
+				if new_region_begin != next_pt:		# delete the comment from its previous position
 					del self.view.vcomments[next_pt]
 				sels.add(new_region)
-				if len(sels) == 1: self.view.show(new_region)
+				if len(sels) == 1:
+					self.view.show(new_region)			# show the first new region
+					moved_comment = True				# found at least one comment to move
+		if not moved_comment:
+			sublime.status_message('Was unable to move any comment(s).')
 
-	def recover_comments(self):				# re-position comments that are beyond the view-size
-		if not len(self.view.vcomments):
-			sublime.status_message('There are no comments for the current view.')
-			return
-		end_pt = self.view.size()
-		sels = self.view.sel()
-		sels.clear()
-		sorted_pts = (key_pt for key_pt in reversed(sorted(self.view.vcomments.iterkeys())) if key_pt >= end_pt)
-		for next_pt in sorted_pts:
-			prev_wd, prev_comment, prev_line = self.view.vcomments[next_pt]
-			new_regions = (r for r in reversed(self.view.find_all(prev_wd, sublime.LITERAL)) if r.begin() < next_pt)
-			try:
-				new_region = new_regions.next()
-			except StopIteration:
-				new_region = None
-			if new_region:
-				new_comment_line, _ = self.view.rowcol(new_region.begin())
-				self.view.vcomments[new_region.begin()] = (prev_wd, prev_comment, new_comment_line)
-				if new_region.begin() != next_pt:		# delete the comment from its previous position
-					del self.view.vcomments[next_pt]
-				sels.add(new_region)
-				if len(sels) == 1: self.view.show(new_region)		# show the first new region
-
-	def process_commentry(self, text, caller_id):					# on_done for comments panel
+	def process_commentary(self, text, caller_id):					# on_done for comments panel
 		self.more_comments = False					# assume there is a problem with commentary
 		window = sublime.active_window()
 		view = window.active_view() if window != None else None
@@ -482,41 +515,36 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 
 		self.more_comments = True					# okay to continue displaying the panel
 		comment_command = text.strip().upper()
-		if comment_command in ('SEL', 'SELECT'):						# select commented words
+		if comment_command in ('SELECT', 'SEL', 'SEL ALL', 'SELECT ALL'):	# select commented words
 			self.select_comments()
-		elif comment_command in ('HIGH', 'HIGHLIGHT'):					# highlight all comments
+		elif comment_command in ('NEXT', 'NXT', 'DOWN', 'DWN'):				# select the next comment
+			self.select_next('down')
+		elif comment_command in ('PREV', 'PREVIOUS', 'UP'):					# select the previous comment
+			self.select_next('up')
+		elif comment_command in ('HIGH', 'HIGHLIGHT'):						# highlight all comments
 			self.highlight_comments()
 		elif comment_command in ('REMOVE', 'REMOVE HIGHLIGHT', 'REMOVE HIGHLIGHTS'):	# remove highlights
 			self.remove_highlights()
-		elif comment_command in ('DEL', 'DELETE'):						# delete comment at cursor
+		elif comment_command in ('DEL', 'DELETE'):							# delete comment at cursor
 			self.delete_comment()
 		elif comment_command in ('DEL ALL', 'DELALL', 'DELETE ALL', 'DELETEALL'):	# delete all comments
 			self.delete_all_comments()
-		elif comment_command in ('NEXT', 'DN', 'DWN', 'DOWN', 'MOVE DOWN',
-				'MOVE DWN', 'MOVEDOWN'):								# move to the next comment
-			self.move_to_next('down')
-		elif comment_command in ('PREV', 'PREVIOUS', 'UP', 'MOVE UP', 'MOVEUP'):	# move to the previous comment
-			self.move_to_next('up')
-		elif comment_command in ('PUSH', 'PUSH D', 'PUSH DOWN', 'PUSHDOWN', 'PUSHDWN'):	# push this comment downwards
-			self.push_comment('down')
-		elif comment_command in ('PUSH U', 'PUSH UP', 'PUSHUP'):		# push this comment upwards
-			self.push_comment('up')
-		elif comment_command in ('PUSH ALL', 'PUSH ALL DOWN', 'PUSHALLDOWN'):	# push all comments (after the cursor)
-			self.push_all_comments('down')
-		elif comment_command in ('PUSH ALL UP', 'PUSHALLUP'):		# push all comments up (before the cursor)
-			self.push_all_comments('up')
+		elif comment_command in ('PUSH', 'PUSH DOWN', 'PUSH D', 'PUSH DWN', 'PUSHDOWN'):	# push comment(s) downwards
+			self.push_comments('down')
+		elif comment_command in ('PUSH UP', 'PUSH U', 'PUSHUP'):			# push comment(s) upwards
+			self.push_comments('up')
 		elif comment_command in ('RECOVER', 'RECOVER COMMENTS', 'RECOVER COMMENT'):
-			self.recover_comments()									# recover comments that are beyond the view-size
-		else:															# add new comment at cursor
-			self.add_comment(text)
+			self.push_comments('recover')					# recover comments that are beyond the view-size
+		else:
+			self.add_comment(text)							# add new comment at cursor
 		self.show_again()									# the "commments panel"
 
 	def show_comment_panel(self, existing_comment):
 		caller_id = self.view.id()
 		self.view.window().show_input_panel('Comment>', existing_comment, \
-			lambda txt: self.process_commentry(txt, caller_id), None, self.hide_it)
+			lambda txt: self.process_commentary(txt, caller_id), None, self.hide_it)
 
-	def show_again(self):								# the input panel
+	def show_again(self):									# the input panel
 		if self.more_comments:
 			if self.just_added:				# don't show comment text if it has just been added
 				self.just_added = False
@@ -525,7 +553,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				curr_comment = self.get_comment()
 			self.show_comment_panel(curr_comment)
 
-	def hide_it(self):									# the input panel
+	def hide_it(self):										# the input panel
 		self.more_comments = False
 
 class QuickCommentsCommand(sublime_plugin.TextCommand):
@@ -545,14 +573,15 @@ class QuickCommentsCommand(sublime_plugin.TextCommand):
 		window.show_quick_panel(the_comments, self.on_chosen)
 
 	def on_chosen(self, index):
+		if index == -1: return
 		sorted_keys = (k for (i, k) in enumerate(sorted(self.view.vcomments.iterkeys())) if i == index)
 		try:
 			the_key = sorted_keys.next()
 		except StopIteration:
-			sublime.status_message('Comment point not found.')
+			sublime.status_message('Comment-point not found.')
 			return
 		if the_key > self.view.size():
-			sublime.status_message('The commented word is no longer within the view-size - use \'recover\' command.')
+			sublime.status_message('Commented word is no longer within the view-size - use \'recover\' command.')
 			return
 		sels = self.view.sel()
 		sels.clear()
@@ -569,12 +598,9 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		path_packages = sublime.packages_path()
 		if not hasattr(self.view, 'vcomments'):
 			self.view.vcomments = {}				# create empty dictionary anyway
-		# else:
-		# 	comments_file = open('test_comments.tmp', 'wb')
-		# 	pickle.dump(self.view.vcomments, comments_file)
-		# 	comments_file.close()
-
-		self.has_comments = (len(self.view.vcomments) > 0)
+			self.has_comments = False
+		else:
+			self.has_comments = (len(self.view.vcomments) > 0)
 
 		fname = self.view.file_name()
 		if fname == None or not path.exists(fname):
@@ -604,7 +630,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
 		# Determine start and end points and whether to parse whole file or selection
 		curr_sel = self.view.sel()[0]
-		if curr_sel.empty() or abs(curr_sel.end() - curr_sel.begin()) < 4:
+		if curr_sel.empty() or len(self.view.lines(curr_sel)) < 2:	# don't print just 1 line
 			self.size = self.view.size()
 			self.pt = 0
 			self.end = 1
@@ -642,63 +668,56 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		return the_colour or self.fground
 
 	def add_comments_table(self, the_html):
-		the_html.write('<div id=\"divComments\" class=\"inpage\">\n<table id=\"tblComments\">\n')
-		the_html.write('\t<th>Line</th><th>The Comment</th>\n')
+		the_html.write((COMMENTS_TBLHEAD).encode('utf-8', 'xmlcharrefreplace'))
+
 		for (line_no, comment) in self.comments_list:
-			the_html.write(('\t<tr><td class=\"nos\"><a href=\"#\" onclick=\"gotoLine(' + str(line_no - self.curr_row) + 
-				');return false;\">' + str(line_no + 1) + '</a></td>').encode('utf-8', 'xmlcharrefreplace'))
-			the_html.write(('<td class=\"cmts\">' + comment + '</td><tr>\n').encode('utf-8', 'xmlcharrefreplace'))
-		
-		the_html.write(('<tr id=\"bottom_row\"><td id=\"bottoml\" colspan=\"2\"><a href=\"#top\">Top</a>&nbsp;&nbsp;')
-			.encode('utf-8', 'xmlcharrefreplace'))
-		the_html.write(('<a href=\"#\" onclick=\"listComments();return false;\">Close</a>').encode('utf8', 'xmlcharrefreplace'))
-		the_html.write(('&nbsp;&nbsp;Position at bottom-left <input type=\"checkbox\" name=\"ckbBottom\" id=\"ckbBottom\"' +
-			' value=\"1\" onclick=\"tableToBottom()\"></td></tr>\n').encode('utf-8', 'xmlcharrefreplace'))
-		the_html.write('</table></div>\n')
+			the_html.write((COMMENTS_TBLROW % {"line_adj": str(line_no - self.curr_row), \
+				"line_no": str(line_no + 1), "comment": comment}).encode('utf-8', 'xmlcharrefreplace'))
+
+		the_html.write((COMMENTS_TBLEND).encode('utf-8', 'xmlcharrefreplace'))
 
 	def write_header(self, the_html):
-		the_html.write('<!DOCTYPE html>\n')
-		the_html.write('<html>\n<head>\n<meta charset=\"UTF-8\">\n')
-		the_html.write('<title>' + self.file_name + '</title>\n')
+		the_html.write((HEADER % {"fname": self.file_name}).encode('utf-8', 'xmlcharrefreplace'))
 
-		the_html.write('<style type=\"text/css\">\n')
-		if self.has_comments:
-			the_html.write((CSS_COMMENTS % { "dot_colour": self.fground, "fsize": self.font_size }
-				).encode('utf-8', 'xmlcharrefreplace') + '\n')
-
-		the_html.write('span { display: inline; border: 0; margin: 0; padding: 0; }\n')
-
-		if self.numbers:
-			the_html.write('ol#thecode { display: block; list-style-type: decimal; list-style-position: outside; }\n')
-		else:
-			the_html.write('ol#thecode { display: block; list-style-type: none; list-style-position: inside; ' 
-				+ 'margin: 0px; padding: 0px; }\n')
-
-		the_html.write('li { color: ' + self.gfground + '; margin-top: ' +
-			str(self.padd_top) + 'pt; margin-bottom: ' + str(self.padd_bottom) + 'pt; }\n')
-
-		the_html.write((CSS_BODY % {"fcolor": self.fground, "bcolor": self.bground, 
+		the_html.write((CSS_MAIN % {"fcolor": self.fground, "bcolor": self.bground, \
 					"fsize": self.font_size, "fface": self.font_face}).encode('utf-8', 'xmlcharrefreplace'))
 
-		the_html.write('</style>\n')
+		if self.numbers:
+			the_html.write(('\t#olCode { list-style-type: decimal; list-style-position: outside; }\n' \
+				).encode('utf-8', 'xmlcharrefreplace'))
+		else:
+			the_html.write(('\t#olCode { list-style-type: none; list-style-position: inside; ' \
+							+ 'margin: 0px; padding: 0px; }\n').encode('utf-8', 'xmlcharrefreplace'))
+
+		the_html.write(('\tli { color: %s; margin-top: %dpt; margin-bottom: %dpt; }\n' \
+			% (self.gfground, self.padd_top, self.padd_bottom)).encode('utf-8', 'xmlcharrefreplace'))
 
 		if self.has_comments:
-			the_html.write(JS_COMMENTS)			# JavaScript code to display comments
+			the_html.write((CSS_COMMENTS % { "dot_colour": self.fground, "fsize": self.font_size } \
+				).encode('utf-8', 'xmlcharrefreplace'))
 
-		the_html.write('</head>\n')
+		the_html.write(('\t</style>\n').encode('utf-8', 'xmlcharrefreplace'))
+
+		the_html.write(JS_TIDYSPACES)
+
+		if self.has_comments:
+			the_html.write((JS_COMMENTS).encode('utf-8', 'xmlcharrefreplace'))	# JavaScript code to display comments
+
+		the_html.write(('</head>\n').encode('utf-8', 'xmlcharrefreplace'))
 
 	def convert_view_to_html(self, the_html):
 		first_line = True
 		if self.has_comments:
-			self.comments_list = []
+			self.comments_list = []		# (line number, comment) for the commments-table
+			sorted_keys = sorted(self.view.vcomments.keys())			# temporary list of comment-points
 		for line in self.view.split_by_newlines(sublime.Region(self.pt, self.size)):
 			self.pt = line.begin(); self.end = self.pt + 1
 			if line.empty():
 				if first_line:
-					the_html.write('<br/></li>\n')
+					the_html.write(('\n</li>').encode('utf-8', 'xmlcharrefreplace'))
 					first_line = False
 				else:
-					the_html.write('<li><br/></li>\n')
+					the_html.write(('<li>\n</li>').encode('utf-8', 'xmlcharrefreplace'))
 				continue
 			self.line_end = line.end()
 			temp_line = []
@@ -716,76 +735,70 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 					continue
 
 				tidied_text = self.view.substr(region)
-				text_len = len(tidied_text)
 				the_colour = self.guess_colour(scope_name.strip())
 				the_comment = None
 
-				if text_len and self.has_comments:
-					for x in range(self.pt, self.end):
-						if x in self.view.vcomments:
-							the_word, the_comment, the_line = self.view.vcomments[x]
-							# has the pt moved since the comment was created?
-							if self.view.substr(self.view.word(x)) != the_word:
-								the_comment = None				# no longer pts at the same word
-								del self.view.vcomments[x]		# delete the comment/ dict entry
-							break
+				if len(tidied_text) and self.has_comments:
+					comment_keys = (k for k in sorted_keys if self.pt <= k < self.end)
+					try:
+						comment_key = comment_keys.next()	# is there a comment in the region?
+					except StopIteration:
+						comment_key = None
+					if comment_key:
+						sorted_keys.remove(comment_key)		# remove from the temporary list
+						the_word, the_comment, the_line = self.view.vcomments[comment_key]
+						# has the pt moved since the comment was created?
+						if self.view.substr(self.view.word(comment_key)) != the_word:
+							the_comment = None				# no longer pts at the same word
+							del self.view.vcomments[comment_key]		# delete the comment/ dict entry
 
-				tidied_text = tidied_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-				tidied_text = tidied_text.replace('\t', '&nbsp;' * self.tab_size).strip('\r\n')
-				text_len = len(tidied_text)						# re-check the length
-				if text_len:
-					init_spaces = text_len - len(tidied_text.lstrip(' '))
-					if init_spaces:
-						tidied_text = (init_spaces * '&nbsp;') + tidied_text.lstrip(' ')
+				if len(tidied_text):			# re-check the length
+					tidied_text = tidied_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+					tidied_text = tidied_text.replace('\t', ' ' * self.tab_size).strip('\r\n')
 					temp_line.append((the_colour, tidied_text, the_comment))
+
 				self.pt = self.end
 				self.end = self.pt + 1
 
 			if len(temp_line):
 				if first_line:
-					html_line = ''; first_line = False
+					html_line = ''; first_line = False			# 1st opening-li is already in place
 				else:
 					html_line = '<li>'
 				for (the_colour, tidied_text, the_comment) in temp_line:
-					the_span = '<span style=\"color:' + the_colour + '\">' + tidied_text + '</span>'
+					if the_colour == self.fground:
+						the_span = (SCOPED % { "t_text": tidied_text })
+					else:
+						the_span = ( SCOPEDCOLOR % { "colour": the_colour, "t_text": tidied_text })
 					if the_comment is not None:
-						the_span = '<a class=\"tooltip\" href=\"#\" onclick=\"return false;\">' + the_span
-						the_span += '<span class=\"comment\">' + the_comment + '</span></a>'
+						the_span = ( SCOPEDCOMMENT % { "scoped": the_span, "comment": the_comment })
 						line_no, _ = self.view.rowcol(self.pt - 1)
-						self.comments_list.append((line_no, the_comment))	# used to create the comments table
+						self.comments_list.append((line_no, the_comment))		# used to create the comments table
 					html_line += the_span
-				html_line += '</li>\n'
-				the_html.write(html_line.encode('utf-8', 'xmlcharrefreplace'))
+				the_html.write((html_line + '</li>').encode('utf-8', 'xmlcharrefreplace'))
 				temp_line[:] = []
 			elif first_line:
-				the_html.write('<br/></li>')
+				the_html.write(('\n</li>').encode('utf-8', 'xmlcharrefreplace'))
 			first_line = False
 
 	def write_body(self, the_html):
-		the_html.write('<body>\n')
-		the_html.write('<p id=\"top\" style=\"color:' + self.fground + '\">' + self.file_name + '</p>\n')
+		temp_body = '<body>\n'
+		temp_body += '<p id=\"top\" style=\"color:%s\">%s</p>\n' % (self.fground, self.file_name)
+		temp_body += '<p>Tidy spaces: <input type=\"checkbox\" name=\"ckbTidy\" id=\"ckbTidy\" value=\"1\"' \
+			+ 'onclick=\"tidySpaces()\"></p>'
+
 		if self.has_comments:
-			the_html.write('<p>Show table of comments:')
-			the_html.write('<input type=\"checkbox\" name=\"ckbComments\" id=\"ckbComments\" value=\"1\" onclick=\"listComments()\">\n')
-			the_html.write('&nbsp;Overlay table of comments:')
-			the_html.write('<input type=\"checkbox\" name=\"ckbOverlay\" value=\"1\" onclick=\"overlayComments()\">\n')
-			the_html.write('&nbsp;Show/hide comments:')
-			the_html.write('<input type=\"checkbox\" name=\"ckbToggle\" value=\"1\" onclick=\"toggleComments() \">\n')
-			the_html.write('(disables hover effect)</p>\n')
-		if self.numbers:
-			the_html.write('<ol id=\"thecode\">\n<li value="%d">' % self.curr_row)  # use code's line numbering
-		else:
-			the_html.write('<ol id=\"thecode\">\n')
+			temp_body += CKBs_COMMENTS				# the checkbox options
+
+		temp_body += '<pre id=\"preCode\"><ol id=\"olCode\"><li value="%d">' % (self.curr_row)	# use code's line numbering
+		
+		the_html.write((temp_body).encode('utf-8', 'xmlcharrefreplace'))
 
 		# Convert view to HTML
 		self.convert_view_to_html(the_html)
 
-		the_html.write('\n</ol>\n<br/>\n')
+		the_html.write(('</ol>\n</pre>\n<br/>\n').encode('utf-8', 'xmlcharrefreplace'))
 		# included empty line (br) to allow copying of last line without issue
-		if self.has_comments and len(self.view.vcomments):			# check if all comments were deleted
-			self.add_comments_table(the_html)						# initially, display: none
-
-		the_html.write('</body>\n</html>')
 
 	def run(self, edit, numbers):
 		window = sublime.active_window()
@@ -797,6 +810,10 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
 			self.write_header(the_html)
 			self.write_body(the_html)
+			if self.has_comments and len(self.view.vcomments):			# check if all comments were deleted
+				self.add_comments_table(the_html)						# initially, display: none
 
-		# Open in web browser
-		desktop.open(the_html.name)
+			the_html.write(('</body>\n</html>').encode('utf-8', 'xmlcharrefreplace'))
+
+			# Open in web browser
+			desktop.open(the_html.name)
