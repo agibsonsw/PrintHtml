@@ -97,8 +97,17 @@ JS_TIDYSPACES = \
 <script type="text/javascript">
 	function tidySpaces() {
 		var olCode, spans, i, span_textnode, span_text, span_next, offLeft, newLeft;
-		var olCode = document.getElementById('olCode');
-		var spans = olCode.getElementsByTagName('span');
+		if (document.getElementsByClassName) {
+			spans = document.getElementsByClassName('tidy');
+			if (spans != 'undefined' && spans.length) {
+				for ( i = 0; i < spans.length; i++ )
+					spans[i].style.paddingLeft = (spans[i].style.paddingLeft == '0px') ? 
+						spans[i].prevValue : '0px';
+				return;
+			}
+		}
+		olCode = document.getElementById('olCode');
+		spans = olCode.getElementsByTagName('span');
 		for (i = 0; i < spans.length; i++) {
 			if ( spans[i].previousSibling ) {
 				if ( spans[i].className && spans[i].className == 'comment')
@@ -115,13 +124,14 @@ JS_TIDYSPACES = \
 						if ( span_next ) {
 							offLeft = span_next.offsetLeft;
 							newLeft = (parseInt(offLeft / 60)) * 60 + 60;
-							spans[i].nextSibling.style.paddingLeft = (newLeft - offLeft) + 'px';
+							span_next.style.paddingLeft = (newLeft - offLeft) + 'px';
+							span_next.className = 'tidy';
+							span_next.prevValue = span_next.style.paddingLeft;
 						}
 					}
 				}
 			}
 		}
-		document.getElementById('pTidy').style.display = 'none';	// refresh page to reset
 	}
 </script>
 """
@@ -147,7 +157,8 @@ JS_COMMENTS = \
 
 		document.getElementById('preCode').style.display = 'block';
 		if (document.getElementById('ckbOverlay').checked) {
-			comments_div.className = (document.getElementById('ckbBottom').checked) ? 'overlay_bl' : 'overlay';
+			comments_div.className = (document.getElementById('ckbBottom').checked) ? 
+				'overlay_bl' : 'overlay';
 		}
 		else {
 			comments_div.className = 'inpage';
@@ -249,7 +260,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			return {}
 		return locals()
 
-	def get_comment(self):					# return comment-text at cursor, or False
+	def get_comment(self):						# return comment-text at cursor, or False
 		if not hasattr(self.view, 'vcomments'): return ''
 		metrics = self.get_metrics(self.view)
 		if not len(metrics): return ''
@@ -281,7 +292,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		sels = self.view.sel()
 		sels.clear()
 		eov = self.view.size()
-		for key_pt in sorted(self.view.vcomments.iterkeys()):
+		for key_pt in sorted(self.view.vcomments):
 			prev_wd, prev_comment, prev_line = self.view.vcomments[key_pt]
 			if key_pt >= eov:						# delete comments past end of the view
 				del self.view.vcomments[key_pt]
@@ -294,8 +305,8 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				if len(sels) == 1: self.view.show(curr_wd_region)
 			else:
 				curr_line, _ = self.view.rowcol(curr_wd_region.begin())
-				print "DELETED: Commented word was \'%s\' on line %d now \'%s\' on line %d comment: %s" \
-					% (prev_wd, prev_line, curr_wd, curr_line, prev_comment)
+				print "DELETED: Commented word was \'%s\' on line %d comment: %s" \
+					% (prev_wd, prev_line, prev_comment)
 				del self.view.vcomments[key_pt]				# delete mis-positioned comment
 		if not len(self.view.vcomments):
 			sublime.status_message('Comments no longer in original positions - deleted.')
@@ -307,9 +318,9 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		sels = self.view.sel()
 		curr_pt = sels[0].begin()
 		if direction == 'down':
-			sorted_pts = (key_pt for key_pt in sorted(self.view.vcomments.iterkeys()) if key_pt > curr_pt)
+			sorted_pts = (key_pt for key_pt in sorted(self.view.vcomments) if key_pt > curr_pt)
 		else:
-			sorted_pts = (key_pt for key_pt in reversed(sorted(self.view.vcomments.iterkeys())) if key_pt < curr_pt)
+			sorted_pts = (key_pt for key_pt in reversed(sorted(self.view.vcomments)) if key_pt < curr_pt)
 		try:
 			next_pt = sorted_pts.next()
 		except StopIteration:
@@ -321,7 +332,6 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 					% (next_comment, next_line))
 				print "Comment past end-of-view: %s (was line %d)" % (next_comment, next_line)
 				return
-			sels.clear()
 			next_wd_region = self.view.word(next_pt)
 			curr_wd = self.view.substr(next_wd_region)
 			if curr_wd != next_wd: 
@@ -336,6 +346,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 					self.view.vcomments[next_wd_begin] = (next_wd, next_comment, curr_line)
 					if next_wd_region.begin() != next_pt:
 						del self.view.vcomments[next_pt]		# delete comment from its previous position
+			sels.clear()
 			sels.add(next_wd_region)
 			self.view.show(next_wd_region)
 			return
@@ -352,14 +363,12 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		if not len(self.view.vcomments):
 			sublime.status_message('No comments to highlight.')
 			return
-
-		beyond_eov = False				# are their any comments beyond the view-size?
-		sels = self.view.sel()
-		sels.clear()
 		comment_regions = []
 		comment_errors = []
 		eov = self.view.size()
-		for key_pt in sorted(self.view.vcomments.iterkeys()):
+		beyond_eov = False							# are their any comments beyond the view-size?
+
+		for key_pt in sorted(self.view.vcomments):
 			prev_wd, prev_comment, prev_line = self.view.vcomments[key_pt]
 			if key_pt >= eov:							# comment is beyond the view-size
 				print "Comment is past end-of-view - use \'recover\' command: %s (was line %d)" \
@@ -370,6 +379,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			curr_wd = self.view.substr(curr_wd_region)
 			if curr_wd == prev_wd:
 				if not len(comment_regions) and not len(comment_errors):
+					self.view.sel().clear()
 					self.view.show(curr_wd_region)					# show the 1st highlighted region
 				comment_regions.append(curr_wd_region)
 			else:
@@ -383,6 +393,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 					self.view.vcomments[curr_wd_begin] = (prev_wd, prev_comment, prev_line)
 					del self.view.vcomments[key_pt]					# delete the comment from its previous position
 				if not len(comment_regions) and not len(comment_errors):
+					self.view.sel().clear()
 					self.view.show(curr_wd_region)					# show the 1st highlighted region
 				comment_errors.append(curr_wd_region)
 		if len(comment_regions):
@@ -458,25 +469,27 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			if not len(metrics):
 				sublime.status_message('Unable to read word at cursor.')
 				return
+			elif self.view.vcomments.has_key(metrics['word_pt']):
+					pt_begin = pt_end = metrics['word_pt']
 			else:
-				pt_begin = pt_end = metrics['word_pt']
+				sublime.status_message('No comment found at cursor.')
+				return
 		elif direction == 'recover':
 			pt_begin = self.view.size()
-			pt_end = max(self.view.vcomments.iterkeys())
+			pt_end = max(self.view.vcomments)
 			if pt_end < pt_begin:
 				sublime.status_message('There are no comments beyond the view-size.')
 				return
 		else:
 			pt_begin = curr_sel.begin(); pt_end = curr_sel.end()
+		
+		sorted_pts = [key_pt for key_pt in sorted(self.view.vcomments) if pt_begin <= key_pt <= pt_end]
+		if direction == 'down':
+			sorted_pts = reversed(sorted_pts)
+
+		moved_comment = False				# were we able to move any comment(s)?
 		sels.clear()
 
-		if direction == 'down':		# push comment(s) down, starting with the last one in the selection
-			sorted_pts = (key_pt for key_pt in reversed(sorted(self.view.vcomments.iterkeys())) \
-				if pt_begin <= key_pt <= pt_end)
-		else:
-			sorted_pts = (key_pt for key_pt in sorted(self.view.vcomments.iterkeys()) \
-				if pt_begin <= key_pt <= pt_end)
-		moved_comment = False				# were we able to move any comment(s)?
 		for next_pt in sorted_pts:
 			prev_wd, prev_comment, prev_line = self.view.vcomments[next_pt]
 			if direction == 'down':
@@ -493,9 +506,12 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				new_comment_line, _ = self.view.rowcol(new_region_begin)
 				if self.view.vcomments.has_key(new_region_begin):
 					_, old_comment, old_line = self.view.vcomments[new_region_begin]
-					print "A comment has been over-written at line %d comment: %s" % (old_line, old_comment)
+					sublime.status_message("Already a comment at line %d comment: %s" % (old_line, old_comment))
+					sels.add(new_region)
+					self.view.show(new_region)
+					return
 				self.view.vcomments[new_region_begin] = (prev_wd, prev_comment, new_comment_line)
-				if new_region_begin != next_pt:		# delete the comment from its previous position
+				if new_region_begin != next_pt:			# delete the comment from its previous position
 					del self.view.vcomments[next_pt]
 				sels.add(new_region)
 				if len(sels) == 1:
@@ -793,7 +809,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		temp_body = '<body>\n'
 		temp_body += '<p id=\"top\" style=\"color:%s\">%s</p>\n' % (self.fground, self.file_name)
 		temp_body += '<p id=\"pTidy\">Attempt to tidy spaces:<input type=\"checkbox\" name=\"ckbTidy\"' \
-			+ 'id=\"ckbTidy\" value=\"1\" onclick=\"tidySpaces()\">(refresh page to reset)</p>'
+			+ 'id=\"ckbTidy\" value=\"1\" onclick=\"tidySpaces()\"></p>'
 
 		if self.has_comments:
 			temp_body += CKBs_COMMENTS				# the checkbox options
