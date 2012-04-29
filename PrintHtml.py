@@ -607,15 +607,13 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		comment_errors = []
 		for pt, area in zip(sorted(self.view.vcomments), high_cs):
 			prev_wd, prev_comment, _ = self.view.vcomments[pt]
-			curr_wd_pt = area.begin()
-			curr_wd_region = self.view.word(curr_wd_pt)
-			curr_wd = self.view.substr(curr_wd_region)
-			if curr_wd == prev_wd:
-				if pt != curr_wd_pt:
-					curr_line, _ = self.view.rowcol(curr_wd_pt)
-					self.view.vcomments[curr_wd_pt] = (curr_wd, prev_comment, curr_line)
+			highlighted = self.get_metrics(area.begin())
+			if not len(highlighted): continue				# unable to read metrics at highlight
+			if highlighted['word'] == prev_wd:
+				if pt != highlighted['word_pt']:
+					self.view.vcomments[highlighted['word_pt']] = (prev_wd, prev_comment, highlighted['line'])
 					del self.view.vcomments[pt]
-				comment_regions.append(curr_wd_region)
+				comment_regions.append(highlighted['word_region'])
 			else:
 				comment_errors.append(self.view.word(pt))
 		if len (comment_regions):
