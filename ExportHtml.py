@@ -5,6 +5,7 @@ import tempfile
 import sys
 import datetime
 import webbrowser
+import re
 from HtmlAnnotations import get_annotations
 import ExportHtmlLib.desktop as desktop
 
@@ -26,7 +27,7 @@ CSS = \
 <title>%(title)s</title>
 <style type="text/css">
     pre { border: 0; margin: 0; padding: 0; }
-    td { display: %(display_mode)s; padding: 0; }
+    td { padding: 0; }
     table { border: 0; margin: 0; padding: 0; }
     td div {
         float:left;
@@ -41,7 +42,7 @@ CSS = \
     }
     .code_text { font: %(font_size)dpt "%(font_face)s", Consolas, Monospace; }
     .code_page { background-color: %(page_bg)s; }
-    .code_gutter { background-color: %(gutter_bg)s; }
+    .code_gutter { display: %(display_mode)s; background-color: %(gutter_bg)s; }
     .code_line { padding-left: 10px; }
     span { border: 0; margin: 0; padding: 0; }
     span.bold { font-weight: bold; }
@@ -517,12 +518,12 @@ class ExportHtml(object):
         colour_settings = plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
-        self.bground = colour_settings.get("background", '#FFFFFF')
-        self.fground = colour_settings.get("foreground", '#000000')
-        self.sbground = colour_settings.get("selection", self.fground)
-        self.sfground = colour_settings.get("selectionForeground", self.bground)
-        self.gbground = colour_settings.get("gutter", self.bground) if style_gutter else self.bground
-        self.gfground = colour_settings.get("gutterForeground", self.fground) if style_gutter else self.fground
+        self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'))
+        self.fground = self.strip_transparency(colour_settings.get("foreground", '#000000'))
+        self.sbground = self.strip_transparency(colour_settings.get("selection", self.fground))
+        self.sfground = self.strip_transparency(colour_settings.get("selectionForeground", self.bground))
+        self.gbground = self.strip_transparency(colour_settings.get("gutter", self.bground)) if style_gutter else self.bground
+        self.gfground = self.strip_transparency(colour_settings.get("gutterForeground", self.fground)) if style_gutter else self.fground
 
         self.highlights = []
         if self.highlight_selections:
@@ -549,7 +550,13 @@ class ExportHtml(object):
                 style.append('normal')
 
             if scope != None and colour != None:
-                self.colours[scope] = {"color": colour, "style": ' '.join(style)}
+                self.colours[scope] = {"color": self.strip_transparency(colour), "style": ' '.join(style)}
+
+    def strip_transparency(self, color):
+        m = re.match("^(#[A-Fa-f\d]{6})([A-Fa-f\d]{2})", color)
+        if m != None:
+            color = m.group(1)
+        return color
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
@@ -611,7 +618,7 @@ class ExportHtml(object):
             "page_bg":   self.bground,
             "gutter_bg": self.gbground,
             "body_fg":   self.fground,
-            "display_mode": 'table-cell' if self.numbers else 'none',
+            "display_mode": ('table-cell' if self.numbers else 'none'),
             "annotations": (CSS_ANNOTATIONS % {"dot_colour": self.fground})
         }
         the_html.write(header)
@@ -845,7 +852,7 @@ class ExportHtml(object):
         if len(self.annot_tbl):
             self.add_comments_table(the_html)
             js_options.append(POSITION)
-            js_options.append(SHOW_COMMENTS)
+            js_options.append(TOGGLE_COMMENTS)
             js_options.append(SCROLL_TO_LINE)
 
         # Write javascript snippets

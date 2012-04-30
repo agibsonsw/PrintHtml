@@ -103,8 +103,8 @@ class ExportBbcode(object):
         colour_settings = plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
-        self.bground = colour_settings.get("background", '#FFFFFF')
-        self.fground = colour_settings.get("foreground", '#000000')
+        self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'))
+        self.fground = self.strip_transparency(colour_settings.get("foreground", '#000000'))
         self.gbground = self.bground
         self.gfground = self.fground
 
@@ -124,7 +124,13 @@ class ExportBbcode(object):
                             style.append(s)
 
             if scope != None and colour != None:
-                self.colours[scope] = {"color": colour, "style": style}
+                self.colours[scope] = {"color": self.strip_transparency(colour), "style": style}
+
+    def strip_transparency(self, color):
+        m = re.match("^(#[A-Fa-f\d]{6})([A-Fa-f\d]{2})", color)
+        if m != None:
+            color = m.group(1)
+        return color
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
