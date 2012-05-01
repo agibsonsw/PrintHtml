@@ -1,16 +1,15 @@
 import sublime, sublime_plugin
 from os import path
 import tempfile, desktop, re, sys, pickle
+from plistlib import readPlist
 
 PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
 
 if sublime.platform() == "linux":
 	# Try and load Linux Python2.6 lib.  Default path is for Ubuntu.
-	linux_lib = sublime.load_settings(PACKAGE_SETTINGS).get("linux_python2.6_lib", 
-		"/usr/lib/python2.6/lib-dynload")
+	linux_lib = sublime.load_settings(PACKAGE_SETTINGS).get("linux_python2.6_lib", "/usr/lib/python2.6/lib-dynload")
 	if not linux_lib in sys.path and path.exists(linux_lib):
 		sys.path.append(linux_lib)
-from plistlib import readPlist
 
 HEADER = \
 """<!DOCTYPE html>
@@ -99,8 +98,7 @@ JS_TIDYSPACES = \
 			spans = document.getElementsByClassName('tidy');
 			if (spans != 'undefined' && spans.length) {
 				for ( i = 0; i < spans.length; i++ )
-					spans[i].style.paddingLeft = (spans[i].style.paddingLeft == '0px') ? 
-						spans[i].prevValue : '0px';
+					spans[i].style.paddingLeft = (spans[i].style.paddingLeft == '0px') ? spans[i].prevValue : '0px';
 				return;
 			}
 		}
@@ -152,7 +150,6 @@ JS_COMMENTS = \
 	}
 	function overlayComments() {
 		var comments_div = document.getElementById('divComments');
-
 		document.getElementById('preCode').style.display = 'block';
 		if (document.getElementById('ckbOverlay').checked) {
 			comments_div.className = (document.getElementById('ckbBottom').checked) ? 
@@ -168,7 +165,6 @@ JS_COMMENTS = \
 	}
 	function toggleComments() {
 		var comments, newMargin, i;
-
 		if (document.getElementsByClassName) {
 			comments = document.getElementsByClassName('comment');
 		}
@@ -186,7 +182,6 @@ JS_COMMENTS = \
 	function gotoLine(line_no) {
 		var code_list = document.getElementById('olCode');
 		var code_lines = code_list.getElementsByTagName('li');
-
 		// scroll the line(-5) into view (so it's not right at the top)
 		line_no = (line_no - 5 + 1) * (line_no - 5 + 1 > 0);
 		code_lines[line_no].scrollIntoView();
@@ -194,7 +189,6 @@ JS_COMMENTS = \
 	}
 	function addComment(e) {
 		var span_target, awrapper, new_comment, comment_text;
-
 		if (!e) e = window.event;
 		span_target = e.target || e.srcElement;
 		if (span_target.nodeName != 'SPAN' || span_target.className == 'comment') {
@@ -431,7 +425,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			self.view.add_regions("comment_errs", comment_errors, "invalid", sublime.DRAW_OUTLINED)
 
 	def add_highlight(self, new_region, error = False):		# utility fn - not called as a 'command'
-		if error:
+		if error:											# error = True: add error region
 			highs = self.view.get_regions("comment_errs") or []
 			highs.append(new_region)
 			self.view.erase_regions("comment_errs")
@@ -526,12 +520,12 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 					if not moved_comment:				# select the first (new) highlighted region
 						sels.add(new_region)
 						self.view.show(new_region)
-						moved_comment = True
+						moved_comment = True			# found at least one comment to move
 				else:
 					sels.add(new_region)
 					if not moved_comment:
 						self.view.show(new_region)			# show the first new region
-						moved_comment = True				# found at least one comment to move
+						moved_comment = True
 		if not moved_comment:
 			return 'Was unable to move any comment(s).'
 
@@ -635,12 +629,14 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 	def save_comments(self):
 		fname = self.view.file_name()
 		if fname == None or not path.exists(fname):
-			return 'The file has not been saved previously, so comments cannot be saved.'
-		root, ext = path.splitext(fname)		# split at .extension
-		fname_dict = open(root + '.cmts', 'wb')
+			fname = "Untitled."
+		fname_dict = open(fname + 'cmts', 'wb')
 		pickle.dump(self.view.vcomments, fname_dict)
 		fname_dict.close()
-		return "Saved as %s" % fname_dict
+		print "Saved as %s" % (fname + 'cmts')
+		if fname == "Untitled":
+			return "File not saved, so comments save as 'Untitled.cmts'."
+		return "Saved as %s" % (fname + 'cmts')
 
 	def load_comments(self):
 		fname = self.view.file_name()
@@ -759,15 +755,14 @@ class QuickCommentsCommand(sublime_plugin.TextCommand):
 		view = window.active_view() if window != None else None
 		if view is None or view.id() != self.view.id():
 			sublime.status_message('Click into the view/tab first.')
-			return
-		if not hasattr(self.view, 'vcomments'):
+		elif not hasattr(self.view, 'vcomments'):
 			sublime.status_message('No comments for this view.')
-			return
-		the_comments = []
-		for key_pt in sorted(self.view.vcomments):
-			the_comments.append("Line no %5d %s" % (self.view.vcomments[key_pt][2] + 1, 
-				self.view.vcomments[key_pt][1]))
-		window.show_quick_panel(the_comments, self.on_chosen)
+		else:
+			the_comments = []
+			for key_pt in sorted(self.view.vcomments):
+				the_comments.append("Line no %5d %s" % (self.view.vcomments[key_pt][2] + 1, 
+					self.view.vcomments[key_pt][1]))
+			window.show_quick_panel(the_comments, self.on_chosen)
 
 	def on_chosen(self, index):
 		if index == -1: return
@@ -969,8 +964,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 			first_line = False
 
 	def write_body(self, the_html):
-		temp_body = '<body>\n'
-		temp_body += '<p id=\"top\" style=\"color:%s\">%s</p>\n' % (self.fground, self.file_name)
+		temp_body = '<body>\n<p id=\"top\" style=\"color:%s\">%s</p>\n' % (self.fground, self.file_name)
 		temp_body += '<p id=\"pTidy\">Attempt to tidy spaces:<input type=\"checkbox\" name=\"ckbTidy\"' \
 			+ 'id=\"ckbTidy\" value=\"1\" onclick=\"tidySpaces()\"></p>'
 
@@ -981,8 +975,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		
 		the_html.write((temp_body).encode('utf-8', 'xmlcharrefreplace'))
 
-		# Convert view to HTML
-		self.convert_view_to_html(the_html)
+		self.convert_view_to_html(the_html)			# convert view to HTML
 
 		the_html.write(('</ol></pre>\n<br/>').encode('utf-8', 'xmlcharrefreplace'))
 		# included empty line (br) to allow copying of last line without issue
