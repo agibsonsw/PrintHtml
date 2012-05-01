@@ -1,6 +1,6 @@
 import sublime, sublime_plugin
 from os import path
-import tempfile, desktop, re, sys
+import tempfile, desktop, re, sys, pickle
 
 PACKAGE_SETTINGS = "PrintHtml.sublime-settings"
 
@@ -47,10 +47,10 @@ CSS_COMMENTS = \
 
 		position: absolute; z-index: 99;
 		width: 250px; left: 1em; top: 2em;
+		padding: 0.8em 1em;
 
 		margin-left: -999em;
 
-		padding: 0.8em 1em;
 		color: blue; background: #FFFFAA; border: 1px solid #FFAD33;
 		font-family: Calibri, Tahoma, Geneva, sans-serif;
 		font-size: %(fsize)dpt; font-weight: bold;
@@ -322,12 +322,15 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		if not len(self.view.vcomments):
 			return 'Comments no longer in original positions - deleted.'
 
-	def select_next(self, direction = 'down'):
+	def select_next(self, direction = 'down', start_at = -1):	# start at a certain pt in view
 		message = None
-		selection = self.get_metrics()
-		if not len(selection):
-			return 'Ensure the cursor is somewhere in the view.'
-		curr_pt = selection['pt']
+		if start_at > -1:
+			curr_pt = start_at
+		else:
+			selection = self.get_metrics()
+			if not len(selection):
+				return 'Ensure the cursor is somewhere in the view.'
+			curr_pt = selection['pt']
 		sels = self.view.sel()
 		if direction == 'down':
 			sorted_pts = (key_pt for key_pt in sorted(self.view.vcomments) if key_pt > curr_pt)
@@ -374,7 +377,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				beyond_eov = True
 				continue
 			current = self.get_metrics(key_pt)
-			if not len(current) or current['word'] == '':			# problem reading points' word, etc.
+			if not len(current):			# problem reading points' word, etc.
 				print "DELETED: Could not find a location for comment: %s" % (prev_comment)
 				del self.view.vcomments[key_pt]
 				continue
@@ -390,10 +393,10 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 					self.view.show(current['word_region'])					# show the 1st highlighted region
 				comment_errors.append(current['word_region'])
 		if len(comment_regions):
-			self.view.add_regions("comments", comment_regions, "comment", "")
+			self.view.add_regions("comments", comment_regions, "comment", sublime.DRAW_OUTLINED)
 			self.view.highlighted = True
 		if len(comment_errors):
-			self.view.add_regions("comment_errs", comment_errors, "invalid", "")
+			self.view.add_regions("comment_errs", comment_errors, "invalid", sublime.DRAW_OUTLINED)
 			self.view.highlighted = True
 		if beyond_eov:
 			return "There are comment(s) beyond the view-size - use 'recover' command."
@@ -418,54 +421,40 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				comment_regions.append(r)
 		self.view.erase_regions("comments")
 		if len(comment_regions):
-			self.view.add_regions("comments", comment_regions, "comment", "")
+			self.view.add_regions("comments", comment_regions, "comment", sublime.DRAW_OUTLINED)
 		comment_errors = []
 		for r in high_errs:
 			if not r.contains(pt):
 				comment_errors.append(r)
 		self.view.erase_regions("comment_errs")
 		if len(comment_errors):
-			self.view.add_regions("comment_errs", comment_errors, "invalid", "")
-
-		if not len(self.view.get_regions("comments")) and not len(self.view.get_regions("comment_errs")):
-			self.view.highlighted = False
+			self.view.add_regions("comment_errs", comment_errors, "invalid", sublime.DRAW_OUTLINED)
 
 	def add_highlight(self, new_region, error = False):		# utility fn - not called as a 'command'
 		if error:
 			highs = self.view.get_regions("comment_errs") or []
 			highs.append(new_region)
 			self.view.erase_regions("comment_errs")
-			self.view.add_regions("comment_errs", highs, "invalid", "")
+			self.view.add_regions("comment_errs", highs, "invalid", sublime.DRAW_OUTLINED)
 		else:
 			highs = self.view.get_regions("comments") or []
 			highs.append(new_region)
 			self.view.erase_regions("comments")
-			self.view.add_regions("comments", highs, "comment", "")
-		if not len(self.view.get_regions("comments")) and not len(self.view.get_regions("comment_errs")):
-			self.view.highlighted = False
+			self.view.add_regions("comments", highs, "comment", sublime.DRAW_OUTLINED)
 
-	def add_comment(self, text):					# at cursor position
-		selection = self.get_metrics()
-		if not len(selection):
-			return 'Unable to read word at cursor.'
-		elif len(selection['word']) < 2:
-			return 'Cursor should be within a word (2 characters min).'
-		elif not re.match(self.sensible_word, selection['word']):
-			return "Cursor needs to be within a 'sensible' word, " \
-				+ "and cannot start with a number: " + selection['word']
-		else:										# add the comment to the dictionary
-			comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-			comment = comment.replace('\t', ' ' * 4).strip()
-			self.view.vcomments[selection['word_pt']] = (selection['word'], comment, selection['line'])
+	def delete_comments(self, begin, end):			# between begin and end (called by delete_comment)
+		for cmt in [pt for pt in self.view.vcomments if begin <= pt <= end]:
+			del self.view.vcomments[cmt]
 			if self.view.highlighted:
-				self.add_highlight(selection['word_region'], False)		# False == not an error region
-			self.just_added = True					# don't re-display the comment text
+				self.remove_highlight(cmt)
 
-
-	def delete_comment(self):						# at cursor position
+	def delete_comment(self):						# at cursor position (or selection)
 		selection = self.get_metrics()
 		if not len(selection):
 			return 'Unable to read word at cursor.'
+		elif not selection['sel'].empty():
+			self.delete_comments(selection['sel'].begin(), selection['sel'].end())
+			return 'Comments deleted from selected area.'
 		else:										# delete the comment from the dictionary
 			if selection['word_pt'] in self.view.vcomments:
 				del self.view.vcomments[selection['word_pt']]
@@ -557,8 +546,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		if len(curr_wd) < 2:
 			return 'Cursor should be within a word (2 characters min).'
 		elif not re.match(self.sensible_word, curr_wd):
-			return "Cursor needs to be within a 'sensible' word, " \
-				+ "and cannot start with a number: " + curr_wd
+			return "Cursor needs to be within a 'sensible' word, and cannot start with a number: " + curr_wd
 		curr_pt = selection['word_pt']
 		if curr_pt in self.view.vcomments:
 			return 'There is already a comment at the cursor.'
@@ -613,12 +601,63 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				del self.view.vcomments[pt]
 
 		if len (comment_regions):
-			self.view.add_regions("comments", comment_regions, "comment", "")
+			self.view.add_regions("comments", comment_regions, "comment", sublime.DRAW_OUTLINED)
 			self.view.highlighted = True
 		if len(comment_errors):
-			self.view.add_regions("comment_errs", comment_errors, "invalid", "")
+			self.view.add_regions("comment_errs", comment_errors, "invalid", sublime.DRAW_OUTLINED)
 			self.view.highlighted = True
 			return 'Some comments are in the wrong position.'
+
+	def add_comment(self, text):					# at cursor position
+		selection = self.get_metrics()
+		if not len(selection):
+			return 'Unable to read word at cursor.'
+		elif len(selection['word']) < 2:
+			return 'Cursor should be within a word (2 characters min).'
+		elif not re.match(self.sensible_word, selection['word']):
+			return "Cursor needs to be within a 'sensible' word, " \
+				+ "and cannot start with a number: " + selection['word']
+		else:										# add the comment to the dictionary
+			comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+			comment = comment.replace('\t', ' ' * 4).strip()
+			if selection['word_pt'] in self.view.vcomments and \
+				self.view.vcomments[selection['word_pt']][1] == comment:		# it's the same comment
+				select_msg = self.select_next('down')
+				if select_msg is not None and select_msg.startswith('No comment'):
+					select_msg = self.select_next('down', 0)					# loop to top of view
+				return select_msg
+			else:
+				self.view.vcomments[selection['word_pt']] = (selection['word'], comment, selection['line'])
+				if self.view.highlighted:
+					self.add_highlight(selection['word_region'], False)		# False == not an error region
+				self.just_added = True					# don't re-display the comment text
+
+	def save_comments(self):
+		fname = self.view.file_name()
+		if fname == None or not path.exists(fname):
+			return 'The file has not been saved previously, so comments cannot be saved.'
+		root, ext = path.splitext(fname)		# split at .extension
+		fname_dict = open(root + '.cmts', 'wb')
+		pickle.dump(self.view.vcomments, fname_dict)
+		fname_dict.close()
+		return "Saved as %s" % fname_dict
+
+	def load_comments(self):
+		fname = self.view.file_name()
+		if fname == None or not path.exists(fname):
+			return "The file has not been saved previously, so comments cannot be loaded."
+		root, ext = path.splitext(fname)		# split at .extension
+		try:
+			fname_dict = open(root + '.cmts', 'rb')
+		except:
+			return "Could not find or read comments file: %s" % (root + '.cmts')
+		the_comments = pickle.load(fname_dict)
+		fname_dict.close()
+		if not len(the_comments):
+			return "No comments found in %s" % (root + '.cmts')
+		_ = self.remove_highlights()	
+		self.view.vcomments = the_comments
+		return "Comments loaded - use 'Select' or 'Highlight' command."	
 
 	def process_commentary(self, text, caller_id):					# on_done for comments panel
 		self.more_comments = False						# assume there is a problem with commentary
@@ -637,55 +676,59 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				self.more_comments = True
 				self.show_again()
 			return
-
 		self.more_comments = True					# okay to continue displaying the panel
 
 		comment_command = text.strip().upper()
 		has_comments = hasattr(self.view, 'vcomments') and (len(self.view.vcomments) > 0)
 		message = None								# possible message to display in the status bar
 
-		if comment_command in ('SELECT', 'SEL', 'SEL ALL', 'SELECT ALL'):		# select commented words
+		if comment_command in "SELECT,SEL,SEL ALL,SELECT ALL":		# select commented words
 			_ = self.remove_highlights()
 			message = self.select_comments() if has_comments else 'There are no comments to select.'
 
-		elif comment_command in ('NEXT', 'NXT', 'DOWN', 'DWN', 'SELECT NEXT'):	# select the next comment
+		elif comment_command in "NEXT,NXT,DOWN,DWN,SELECT NEXT":	# select the next comment
 			message = self.select_next('down') if has_comments else 'There are no comments to select.'
 
-		elif comment_command in ('PREV', 'PREVIOUS', 'UP', 'SELECT PREV'):		# select the previous comment
+		elif comment_command in "PREV,PREVIOUS,UP,SELECT PREV":		# select the previous comment
 			message = self.select_next('up') if has_comments else 'There are no comments to select.'
 
-		elif comment_command in ('HIGH', 'HIGHLIGHT'):							# highlight all comments
+		elif comment_command in "HIGH,HIGHLIGHT":					# highlight all comments
 			_ = self.remove_highlights()
 			message = self.highlight_comments() if has_comments else 'There are no comments to highlight.'
 
-		elif comment_command in ('REMOVE', 'REMOVE HIGHLIGHT', 'REMOVE HIGHLIGHTS'):	# remove highlights
+		elif comment_command in "REMOVE,REMOVE HIGHLIGHT,REMOVE HIGHLIGHTS":	# remove highlights
 			message = self.remove_highlights()
 
-		elif comment_command in ('DEL', 'DELETE'):								# delete comment at cursor
+		elif comment_command in "DEL,DELETE":								# delete comment at cursor
 			message = self.delete_comment() if has_comments else 'There are no comments to delete.'
 
-		elif comment_command in ('DEL ALL', 'DELALL', 'DELETE ALL', 'DELETEALL'):		# delete all comments
+		elif comment_command in "DEL ALL,DELALL,DELETE ALL,DELETEALL":		# delete all comments
 			_ = self.remove_highlights()
 			message = self.delete_all_comments() if has_comments else 'There are no comments to delete.'
 
-		elif comment_command in ('PUSH', 'PUSH DOWN', 'PUSH D', 'PUSH DWN', 'PUSHDOWN'):	# push comment(s) downwards
+		elif comment_command in "PUSH,PUSH DOWN,PUSH D,PUSH DWN,PUSHDOWN":	# push comment(s) downwards
 			message = self.push_comments('down') if has_comments else 'No comments to push down.'
 
-		elif comment_command in ('PUSH UP', 'PUSH U', 'PUSHUP'):			# push comment(s) upwards
+		elif comment_command in "PUSH UP,PUSH U,PUSHUP":			# push comment(s) upwards
 			message = self.push_comments('up') if has_comments else 'No comments to push up.'
 
-		elif comment_command in ('PULL', 'PULL DOWN', 'PULL D', 'PULLDOWN'):		# pull comment down to cursor
+		elif comment_command in "PULL,PULL DOWN,PULL D,PULLDOWN":		# pull comment down to cursor
 			message = self.pull_comment('down') if has_comments else 'No comments to pull down.'
 
-		elif comment_command in ('PULL UP', 'PULL U', 'PULLUP'):					# pull comment up to cursor
+		elif comment_command in "PULL UP,PULL U,PULLUP":				# pull comment up to cursor
 			message = self.pull_comment('up') if has_comments else 'No comments to pull up.'
 
-		elif comment_command in ('RECOVER', 'RECOVER COMMENTS', 'RECOVER COMMENT'):	# recover comments beyond view
+		elif comment_command in "RECOVER,RECOVER COMMENTS,RECOVER COMMENT":	# recover comments beyond view
 			message = self.push_comments('recover') if has_comments else 'No comments in the current view.'
 
-		elif comment_command in ('FOLLOW', 'FOLLOW HIGHLIGHTS'):		# move/adjust comments to highlighted regions
+		elif comment_command in "FOLLOW,FOLLOW HIGHLIGHTS":		# move/adjust comments to highlighted regions
 			message = self.follow_highlights() if has_comments else 'There are no comments for the current view.'
 
+		elif comment_command in "SAVE,SAVE COMMENTS,SAVECOMMENTS":
+			message = self.save_comments() if has_comments else 'No comments to save.'
+
+		elif comment_command in "LOAD,LOAD COMMENTS,LOAD COMMENT":
+			message = self.load_comments()
 		else:
 			message = self.add_comment(text)							# add new comment at cursor
 			
@@ -756,10 +799,9 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		else:
 			self.has_comments = (len(self.view.vcomments) > 0)
 
-		fname = self.view.file_name()
-		if fname == None or not path.exists(fname):
-			fname = "Untitled"
-		self.file_name = fname
+		self.file_name = self.view.file_name()
+		if self.file_name == None or not path.exists(self.file_name):
+			self.file_name = "Untitled"
 
 		# Get general document preferences from sublime preferences
 		settings = sublime.load_settings('Preferences.sublime-settings')
@@ -853,7 +895,6 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		the_html.write(('\t</style>\n').encode('utf-8', 'xmlcharrefreplace'))
 
 		the_html.write(JS_TIDYSPACES)
-
 		if self.has_comments:
 			the_html.write((JS_COMMENTS).encode('utf-8', 'xmlcharrefreplace'))	# JavaScript code to display comments
 
@@ -943,7 +984,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		# Convert view to HTML
 		self.convert_view_to_html(the_html)
 
-		the_html.write(('</ol></pre>\n<br/>\n').encode('utf-8', 'xmlcharrefreplace'))
+		the_html.write(('</ol></pre>\n<br/>').encode('utf-8', 'xmlcharrefreplace'))
 		# included empty line (br) to allow copying of last line without issue
 
 	def run(self, edit, numbers):
