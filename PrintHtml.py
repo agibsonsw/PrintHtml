@@ -257,8 +257,8 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		return locals()
 
 	def same_word(self, key_pt):					# is the comment-point still on the same word?
-		try:
-			word_region = self.view.word(key_pt)
+		try:										# key_pt should be/ will be pointing to the beginning 
+			word_region = self.view.word(key_pt)	# of the comment's word.
 			curr_word = self.view.substr(word_region)
 		except:
 			return False
@@ -420,7 +420,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 
 	def remove_highlight(self, pt):							# utility fn - not called as a 'command'
 		high_cs = self.view.get_regions("comments")
-		high_errs = self.view.get_regions("comment_errs")
+		high_errs = self.view.get_regions("comment_errs")	# the highlight might be an error-region
 		if not len(high_cs) and not len(high_errs):
 			return
 		comment_regions = []
@@ -585,12 +585,12 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 					self.view.show(new_region)
 					return "Already a comment at line %d comment: %s" % (new_comment_line + 1, old_comment)
 				self.view.vcomments[new_region_begin] = (prev_wd, prev_comment, new_comment_line)
+				self.add_hidden(new_region)
 				if new_region_begin != next_pt:			# delete the comment from its previous position
 					del self.view.vcomments[next_pt]
 					self.remove_hidden(next_pt)
 					if self.view.highlighted:
 						self.remove_highlight(next_pt)
-				self.add_hidden(new_region)
 				if self.view.highlighted:
 					self.add_highlight(new_region, False)
 					if not moved_comment:				# select the first (new) highlighted region
@@ -632,15 +632,14 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			self.view.vcomments[curr_pt] = (curr_wd, next_comment, selection['line'])
 			del self.view.vcomments[next_pt]
 			self.remove_hidden(next_pt)
+			self.add_hidden(selection['word_region'])
 			if self.view.highlighted:
 				self.remove_highlight(next_pt)		# that is, from its 'previous' position
+				self.add_highlight(selection['word_region'], False)
 			sels = self.view.sel()
 			sels.clear()
 			sels.add(selection['word_region'])
-			self.view.show(selection['word_region'])
-			self.add_hidden(selection['word_region'])
-			if self.view.highlighted:
-				self.add_highlight(selection['word_region'], False)
+			self.view.show(selection['word_region'])				
 		else:
 			return 'There is no comment to pull %s to the cursor position.' % (direction)
 
@@ -665,7 +664,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 						self.remove_highlight(selection['word_pt'])
 						self.add_highlight(selection['word_region'], False)		# False == not an error region
 					return 'Comment corrected to current word.'	
-				select_msg = self.select_next('down')							# so move to the next one
+				select_msg = self.select_next('down')							# ..so move to the next one
 				if select_msg is not None and select_msg.startswith('No comment'):
 					select_msg = self.select_next('down', -1)					# loop to top of view
 				return select_msg
