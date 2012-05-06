@@ -23,8 +23,7 @@ CSS_MAIN = \
 """
 	<style type="text/css">
 	body { color: %(fcolor)s; background-color: %(bcolor)s; font: %(fsize)dpt '%(fface)s', Consolas, Monospace; }
-	p { margin-top: 8px; margin-bottom: 4px; }
-	#preCode { border: 0; margin: 0; padding: 0; font: %(fsize)dpt '%(fface)s', Consolas, Monospace; }
+	#preCode { border: 0; margin: 0; margin-top: 1em; padding: 0; font: %(fsize)dpt '%(fface)s', Consolas, Monospace; }
 	span { color: %(fcolor)s; background-color: %(bcolor)s; display: inline; border: 0; margin: 0; padding: 0; }
 	* html a:hover { background: transparent; }
 """
@@ -53,8 +52,7 @@ CSS_COMMENTS = \
         word-wrap: break-word; /* IE */
 
 		position: absolute; z-index: 99;
-		width: 250px;
-		left: 1em; top: 2em; padding: 0.8em 1em;
+		width: 250px; left: 1em; top: 2em; padding: 0.8em 1em;
 
 		margin-left: -999em;
 
@@ -101,8 +99,12 @@ SCOPEDCOLOR = \
 SCOPEDCOMMENT = \
 """<a class="tooltip" href="#" onclick="return false;">%(scoped)s<span class="comment"><span class="stamp">%(stamp)s</span>%(comment)s</span></a>"""
 
-JS_TIDYSPACES = \
-"""	function tidySpaces() {
+JS_STANDARD = \
+"""	function dismissChecks() {
+		var chks = document.getElementById("dChecks");
+		chks.style.display = "none";
+	}
+	function tidySpaces() {
 		var olCode, spans, i, span_textnode, span_text, span_next, offLeft, newLeft;
 		if (document.getElementsByClassName) {
 			spans = document.getElementsByClassName('tidy');
@@ -242,6 +244,8 @@ COMMENTS_TBLEND = \
 </div>
 """
 
+WORD, CMT, LINE, STAMP = range(4)					# indices for the vcomments dictionary
+
 def dt_stamp():
 	return datetime.datetime.now().strftime("%d/%m %H:%M")
 
@@ -276,7 +280,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			curr_word = self.view.substr(word_region)
 		except:
 			return False
-		return (self.view.vcomments[key_pt][0] == curr_word)
+		return (self.view.vcomments[key_pt][WORD] == curr_word)
 
 	def adjust_comments(self):				# utility fn - move all comment-pts to beginning of their current
 		eov = self.view.size()				# word, but remember the previous word (so it can be moved)
@@ -293,10 +297,10 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		self.adjust_comments()				# first, position all comments at beginning of their 'word'
 		selection = self.get_metrics()
 		if len(selection) and selection['word_pt'] in self.view.vcomments:
-			prev_word = self.view.vcomments[selection['word_pt']][0]
+			prev_word = self.view.vcomments[selection['word_pt']][WORD]
 			if selection['word'] != prev_word:
 				sublime.status_message("The comment-word has changed: %s" % prev_word)
-			return self.view.vcomments[selection['word_pt']][1]		# the comment text
+			return self.view.vcomments[selection['word_pt']][CMT]		# the comment text
 		else:
 			return ''
 
@@ -686,8 +690,8 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 			comment = comment.replace('\t', ' ' * 4).strip()
 			if selection['word_pt'] in self.view.vcomments and \
-				self.view.vcomments[selection['word_pt']][1] == comment:		# it's the same comment..
-				if self.view.vcomments[selection['word_pt']][0] != selection['word']:
+				self.view.vcomments[selection['word_pt']][CMT] == comment:		# it's the same comment..
+				if self.view.vcomments[selection['word_pt']][WORD] != selection['word']:
 					# .. but it's a different word, so they are correcting the comment
 					self.view.vcomments[selection['word_pt']] = \
 						(selection['word'], comment, selection['line'], dt_stamp())
@@ -738,7 +742,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		_ = self.remove_highlights()
 		self.remove_all_hidden()
 		self.view.vcomments = the_comments
-		return "Comments loaded - use 'Select' or 'Highlight' command."	
+		return "Comments loaded - use 'Select' or 'Highlight' command."
 
 	def process_commentary(self, text, caller_id):					# on_done for comments panel
 		self.more_comments = False						# assume there is a problem with commentary
@@ -851,8 +855,8 @@ class QuickCommentsCommand(sublime_plugin.TextCommand):
 		else:
 			the_comments = []
 			for key_pt in sorted(self.view.vcomments.keys()):
-				the_comments.append("Line no %5d %s" % (self.view.vcomments[key_pt][2] + 1, 
-					self.view.vcomments[key_pt][1]))
+				the_comments.append("Line no %5d %s" % (self.view.vcomments[key_pt][LINE] + 1, 
+					self.view.vcomments[key_pt][CMT]))
 			window.show_quick_panel(the_comments, self.on_chosen)
 
 	def on_chosen(self, index):
@@ -871,10 +875,10 @@ class QuickCommentsCommand(sublime_plugin.TextCommand):
 		sels.clear()
 		sels.add(comment_region)
 		self.view.show(comment_region)
-		if self.view.substr(comment_region) != self.view.vcomments[the_key][0]:
+		if self.view.substr(comment_region) != self.view.vcomments[the_key][WORD]:
 			sublime.status_message("The comment is no longer on its original word.")
 		else:
-			sublime.status_message("Comment: %s" % (self.view.vcomments[the_key][1]))
+			sublime.status_message("Comment: %s" % (self.view.vcomments[the_key][CMT]))
 
 class PrintHtmlCommand(sublime_plugin.TextCommand):
 	def setup(self, numbers):
@@ -924,6 +928,14 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 			self.end = self.pt + 1
 			self.curr_row = self.view.rowcol(self.pt)[0] + 1
 			self.partial = True				# printing selection
+			if self.has_comments:			# are there any comments within the selection?
+				within_sel = (pt for pt in self.view.vcomments.keys() if self.pt <= pt <= self.size)
+				try:
+					any_pt = within_sel.next()
+				except StopIteration:
+					any_pt = None
+				if any_pt is None:
+					self.has_comments = False		# that is, none within selection
 
 		# Create scope colour-mapping from colour-scheme file
 		self.colours = { self.view.scope_name(self.end).split(' ')[0]: self.fground }
@@ -981,7 +993,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 		the_html.write(('\t</style>\n').encode('utf-8', 'xmlcharrefreplace'))
 
 		the_html.write(('\t<script type="text/javascript">\n').encode('utf-8', 'xmlcharrefreplace'))
-		the_html.write((JS_TIDYSPACES).encode('utf-8', 'xmlcharrefreplace'))
+		the_html.write((JS_STANDARD).encode('utf-8', 'xmlcharrefreplace'))
 		if self.has_comments:
 			the_html.write((JS_COMMENTS).encode('utf-8', 'xmlcharrefreplace'))	# JS code to display comments
 		the_html.write(('\t</script>\n').encode('utf-8', 'xmlcharrefreplace'))
@@ -1061,13 +1073,15 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
 	def write_body(self, the_html):
 		temp_body = '<body>\n<p id="top" style="color:%s">%s - %s</p>\n' % (self.fground, self.file_name, dt_stamp())
-		temp_body += '<p id="pTidy">Attempt to tidy spaces:<input type="checkbox" name="ckbTidy" ' \
-			+ 'id="ckbTidy" value="1" onclick="tidySpaces()"></p>\n'
+		temp_body += '<div id="dChecks"><p>Attempt to tidy spaces:<input type="checkbox" name="ckbTidy" ' \
+			+ 'id="ckbTidy" value="1" onclick="tidySpaces()">&nbsp;\n'
+		temp_body += 'Remove these check-boxes:<input type="checkbox" name="ckbDismiss" ' \
+			+ 'id="ckbDismiss" value="1" onclick="dismissChecks()"></p>\n'
 
 		if self.has_comments:
 			temp_body += CKBs_COMMENTS				# the checkbox options
 
-		temp_body += '<pre id="preCode"><ol id="olCode"><li value="%d">' % (self.curr_row)	# use code's line numbering
+		temp_body += '</div><pre id="preCode"><ol id="olCode"><li value="%d">' % (self.curr_row)	# use code's line numbering
 		
 		the_html.write((temp_body).encode('utf-8', 'xmlcharrefreplace'))
 
