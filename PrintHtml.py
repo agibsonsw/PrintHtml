@@ -1107,3 +1107,44 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
 			# Open in web browser
 			desktop.open(the_html.name)
+
+class SaveWithCommentsCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		if not hasattr(self.view, 'vcomments'):
+			print "No comments found to save."
+			self.view.run_command('save')
+			return
+		fname = self.view.file_name()
+		if fname == None or not path.exists(fname):
+			fname = "Untitled."
+		try:
+			fname_dict = open(fname + 'cmts', 'wb')
+			pickle.dump(self.view.vcomments, fname_dict)
+		except IOError:
+			print "Could not create comments file: %s" % (fname + 'cmts')
+			self.view.run_command('save')
+			return
+		fname_dict.close()
+		if fname == "Untitled.":					# getcwd() - 'current working directory'
+			print "File not saved, so comments saved as: %s%sUntitled.cmts" \
+				% (os.getcwd(), os.path.sep)
+		else:
+			print "Comments saved as %s" % (fname + 'cmts')
+
+		self.view.run_command('save')
+
+		if fname == None or not path.exists(fname):
+			print "The filename is not available, so comments cannot be loaded."
+			return
+		try:
+			fname_dict = open(fname + 'cmts', 'rb')
+			the_comments = pickle.load(fname_dict)
+		except IOError:
+			print "Could not find or read comments file: %s" % (fname + 'cmts')
+			return
+		fname_dict.close()
+		if not len(the_comments):
+			print "No comments found in %s" % (fname + 'cmts')
+		else:
+			self.view.vcomments = the_comments
+			print 'Comments re-loaded.'
