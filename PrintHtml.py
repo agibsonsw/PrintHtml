@@ -288,8 +288,8 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			current = self.get_metrics(key_pt)
 			if not len(current) or current['word_pt'] in self.view.vcomments:
 				continue								# there is already a comment at the word's begin-point
-			existing_wd, existing_comment, _line, _stamp = self.view.vcomments[key_pt]
-			self.view.vcomments[current['word_pt']] = (existing_wd, existing_comment, current['line'], dt_stamp)
+			existing_wd, comment, _line, _stamp = self.view.vcomments[key_pt]
+			self.view.vcomments[current['word_pt']] = (existing_wd, comment, current['line'], dt_stamp())
 			del self.view.vcomments[key_pt]				# delete comment from its previous position
 
 	def get_comment(self):								# return comment-text at cursor, or ''
@@ -542,7 +542,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			message = 'Some comments are in the wrong position.'
 		return message
 
-	def correct_to_hidden(self):		# ..if there are the same number of comments as hidden regions
+	def correct_to_hidden(self):		# if there are the same number of comments as hidden regions
 		hidden = self.view.get_regions("hidden_cmts")
 		if not len(hidden) or (len(hidden) != len(self.view.vcomments)):
 			return	'The number of comments and hidden regions differ.'
@@ -681,33 +681,33 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			return 'There is no comment to pull %s to the cursor position.' % (direction)
 
 	def add_comment(self, text):					# at cursor position
-		selection = self.get_metrics()
-		if not len(selection):
+		curr = self.get_metrics()
+		if not len(curr):
 			return 'Unable to read word at cursor.'
-		if selection['unsuitable']:					# not a suitable word to attach a comment to
-			return selection['unsuitable_err']
+		if curr['unsuitable']:					# not a suitable word to attach a comment to
+			return curr['unsuitable_err']
 		else:										# add the comment to the dictionary
 			comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 			comment = comment.replace('\t', ' ' * 4).strip()
-			if selection['word_pt'] in self.view.vcomments and \
-				self.view.vcomments[selection['word_pt']][CMT] == comment:		# it's the same comment..
-				if self.view.vcomments[selection['word_pt']][WORD] != selection['word']:
+			if curr['word_pt'] in self.view.vcomments and \
+				self.view.vcomments[curr['word_pt']][CMT] == comment:		# it's the same comment..
+				if self.view.vcomments[curr['word_pt']][WORD] != curr['word']:
 					# .. but it's a different word, so they are correcting the comment
-					self.view.vcomments[selection['word_pt']] = \
-						(selection['word'], comment, selection['line'], dt_stamp())
-					print "Comment-word corrected at line %d: %s" % (selection['line'] + 1, comment)
-					self.remove_highlight(selection['word_pt'])
-					self.add_highlight(selection['word_region'], False)		# False == not an error region
+					self.view.vcomments[curr['word_pt']] = \
+						(curr['word'], comment, curr['line'], dt_stamp())
+					print "Comment-word corrected at line %d: %s" % (curr['line'] + 1, comment)
+					self.remove_highlight(curr['word_pt'])
+					self.add_highlight(curr['word_region'], False)		# False == not an error region
 					return 'Comment corrected to current word.'	
 				select_msg = self.select_next('down')			# ..otherwise, move to the next comment..
 				if select_msg is not None and select_msg.startswith('No comment'):
 					select_msg = self.select_next('down', -1)				# ..loop to top of view
 				return select_msg
 			else:						# create a new comment at the cursor
-				self.view.vcomments[selection['word_pt']] = \
-					(selection['word'], comment, selection['line'], dt_stamp())
-				print "New comment at line %d: %s" % (selection['line'] + 1, comment)
-				self.add_highlight(selection['word_region'], False)		# False == not an error region
+				self.view.vcomments[curr['word_pt']] = \
+					(curr['word'], comment, curr['line'], dt_stamp())
+				print "New comment at line %d: %s" % (curr['line'] + 1, comment)
+				self.add_highlight(curr['word_region'], False)			# False == not an error region
 				self.just_added = True									# don't re-display the comment text
 
 	def save_comments(self):				# the same filename/location, with 'cmts' added at end
