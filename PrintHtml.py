@@ -855,8 +855,8 @@ class QuickCommentsCommand(sublime_plugin.TextCommand):
 		else:
 			the_comments = []
 			for key_pt in sorted(self.view.vcomments.keys()):
-				the_comments.append("Line no %5d %s" % (self.view.vcomments[key_pt][LINE] + 1, 
-					self.view.vcomments[key_pt][CMT]))
+				the_comments.append("%s Line: %03d %s" % ( self.view.vcomments[key_pt][STAMP],
+					self.view.vcomments[key_pt][LINE] + 1, self.view.vcomments[key_pt][CMT]))
 			window.show_quick_panel(the_comments, self.on_chosen)
 
 	def on_chosen(self, index):
