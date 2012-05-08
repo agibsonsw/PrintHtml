@@ -1,4 +1,6 @@
 {
     "alternate_scheme": false,
-    "linux_python2.6_lib": "/usr/lib/python2.6/lib-dynload"
+    "linux_python2.6_lib": "/usr/lib/python2.6/lib-dynload",
+    "use_outline": true, 		// when highlighting comments - defaults to true
+    "use_icon": true			// a small icon appearing in the gutter: default true
 }

@@ -11,6 +11,10 @@ if sublime.platform() == "linux":
 	if not linux_lib in sys.path and path.exists(linux_lib):
 		sys.path.append(linux_lib)
 
+OUTLINED = sublime.DRAW_OUTLINED if sublime.load_settings(PACKAGE_SETTINGS).get("use_outline", True) else 0
+# whether to use an outline, or block, when highlighting comments: defaults to True == use an outline
+ICON = "../PrintHtml/icon" if sublime.load_settings(PACKAGE_SETTINGS).get("use_icon", True) else ""
+
 HEADER = \
 """<!DOCTYPE html>
 <html>
@@ -433,10 +437,10 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 					self.view.show(current['word_region'])					# show the 1st highlighted region
 				comment_errors.append(current['word_region'])
 		if len(comment_regions):
-			self.view.add_regions("comments", comment_regions, "comment", sublime.DRAW_OUTLINED)
+			self.view.add_regions("comments", comment_regions, "comment", OUTLINED)
 			self.view.highlighted = True
 		if len(comment_errors):
-			self.view.add_regions("comment_errs", comment_errors, "invalid", sublime.DRAW_OUTLINED)
+			self.view.add_regions("comment_errs", comment_errors, "invalid", OUTLINED)
 			self.view.highlighted = True
 		if beyond_eov:
 			return "There are comment(s) beyond the view-size - use 'recover' command."
@@ -469,13 +473,13 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				comment_regions.append(reg)					# add regions other than the current one
 		self.view.erase_regions("comments")
 		if len(comment_regions):
-			self.view.add_regions("comments", comment_regions, "comment", sublime.DRAW_OUTLINED)
+			self.view.add_regions("comments", comment_regions, "comment", OUTLINED)
 		comment_errors = []
 		for reg in [r for r in high_errs if not r.contains(pt)]:
 			comment_errors.append(reg)
 		self.view.erase_regions("comment_errs")
 		if len(comment_errors):
-			self.view.add_regions("comment_errs", comment_errors, "invalid", sublime.DRAW_OUTLINED)
+			self.view.add_regions("comment_errs", comment_errors, "invalid", OUTLINED)
 
 	def remove_hidden(self, pt):							# utility fn - not called as a 'command'
 		hidden = self.view.get_regions("hidden_cmts")
@@ -486,7 +490,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				hidden_temp.append(reg)
 		self.view.erase_regions("hidden_cmts")
 		if len(hidden_temp):
-			self.view.add_regions("hidden_cmts", hidden_temp, "comment", sublime.HIDDEN)
+			self.view.add_regions("hidden_cmts", hidden_temp, "comment", ICON, sublime.HIDDEN)
 
 	def add_highlight(self, new_region, error = False):		# utility fn - not called as a 'command'
 		self.add_hidden(new_region)
@@ -498,12 +502,12 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			high_reg, high_scope = ("comments", "comment")
 		highs = self.view.get_regions(high_reg) or []
 		highs.append(new_region)
-		self.view.add_regions(high_reg, highs, high_scope, sublime.DRAW_OUTLINED)
+		self.view.add_regions(high_reg, highs, high_scope, OUTLINED)
 
 	def add_hidden(self, new_region):
 		hidden = self.view.get_regions("hidden_cmts") or []
 		hidden.append(new_region)
-		self.view.add_regions("hidden_cmts", hidden, "comment", sublime.HIDDEN)
+		self.view.add_regions("hidden_cmts", hidden, "comment", ICON, sublime.HIDDEN)
 
 	def follow_highlights(self):			# attempt to re-position comments to highlighted regions
 		if not self.view.highlighted:		# (if there are the same number of comments as highlights)
@@ -535,11 +539,11 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 
 		message = 'Unable to re-position comments.'
 		if len(comment_regions):
-			self.view.add_regions("comments", comment_regions, "comment", sublime.DRAW_OUTLINED)
+			self.view.add_regions("comments", comment_regions, "comment", OUTLINED)
 			self.view.highlighted = True
 			message = 'Comments re-positioned to highlights.'
 		if len(comment_errors):
-			self.view.add_regions("comment_errs", comment_errors, "invalid", sublime.DRAW_OUTLINED)
+			self.view.add_regions("comment_errs", comment_errors, "invalid", OUTLINED)
 			self.view.highlighted = True
 			message = 'Some comments are in the wrong position.'
 		return message
