@@ -293,7 +293,8 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			del self.view.vcomments[key_pt]				# delete comment from its previous position
 
 	def get_comment(self):								# return comment-text at cursor, or ''
-		if not hasattr(self.view, 'vcomments'): return ''
+		if not hasattr(self.view, 'vcomments') or not len(self.view.vcomments):
+			return ''
 		self.adjust_comments()				# first, position all comments at beginning of their 'word'
 		selection = self.get_metrics()
 		if len(selection) and selection['word_pt'] in self.view.vcomments:
@@ -333,7 +334,8 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 			self.view.highlighted = False
 		self.more_comments = True					# panel will continue to be displayed
 		self.just_added = False						# haven't just added a new comment
-		self.show_comment_panel(curr_comment)		# show panel and comment at cursor (or '')
+		self.show_comment_panel(curr_comment.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&'))
+		# show panel and comment at cursor (or '')
 
 	def select_comments(self):						# clears current selection and highlights, and deletes
 		sels = self.view.sel()						# any comments that are no longer on the same word
@@ -680,35 +682,37 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		else:
 			return 'There is no comment to pull %s to the cursor position.' % (direction)
 
-	def add_comment(self, text):					# at cursor position
+	def add_comment(self, text, code = False):					# at cursor position
 		curr = self.get_metrics()
 		if not len(curr):
 			return 'Unable to read word at cursor.'
 		if curr['unsuitable']:					# not a suitable word to attach a comment to
 			return curr['unsuitable_err']
-		else:										# add the comment to the dictionary
-			comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-			comment = comment.replace('\t', ' ' * 4).strip()
-			if curr['word_pt'] in self.view.vcomments and \
-				self.view.vcomments[curr['word_pt']][CMT] == comment:		# it's the same comment..
-				if self.view.vcomments[curr['word_pt']][WORD] != curr['word']:
-					# .. but it's a different word, so they are correcting the comment
-					self.view.vcomments[curr['word_pt']] = \
-						(curr['word'], comment, curr['line'], dt_stamp())
-					print "Comment-word corrected at line %d: %s" % (curr['line'] + 1, comment)
-					self.remove_highlight(curr['word_pt'])
-					self.add_highlight(curr['word_region'], False)		# False == not an error region
-					return 'Comment corrected to current word.'	
-				select_msg = self.select_next('down')			# ..otherwise, move to the next comment..
-				if select_msg is not None and select_msg.startswith('No comment'):
-					select_msg = self.select_next('down', -1)				# ..loop to top of view
-				return select_msg
-			else:						# create a new comment at the cursor
+												# add the comment to the dictionary
+		if code:								# use the line's code as the comment-text
+			text = self.view.substr(self.view.line(curr['word_pt'])).strip()[0:60]
+		comment = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+		comment = comment.replace('\t', ' ' * 4).strip()
+		if curr['word_pt'] in self.view.vcomments and \
+			self.view.vcomments[curr['word_pt']][CMT] == comment:		# it's the same comment..
+			if self.view.vcomments[curr['word_pt']][WORD] != curr['word']:
+				# .. but it's a different word, so they are correcting the comment
 				self.view.vcomments[curr['word_pt']] = \
 					(curr['word'], comment, curr['line'], dt_stamp())
-				print "New comment at line %d: %s" % (curr['line'] + 1, comment)
-				self.add_highlight(curr['word_region'], False)			# False == not an error region
-				self.just_added = True									# don't re-display the comment text
+				print "Comment-word corrected at line %d: %s" % (curr['line'] + 1, comment)
+				self.remove_highlight(curr['word_pt'])
+				self.add_highlight(curr['word_region'], False)		# False == not an error region
+				return 'Comment corrected to current word.'	
+			select_msg = self.select_next('down')			# ..otherwise, move to the next comment..
+			if select_msg is not None and select_msg.startswith('No comment'):
+				select_msg = self.select_next('down', -1)				# ..loop to top of view
+			return select_msg
+		else:						# create a new comment at the cursor
+			self.view.vcomments[curr['word_pt']] = \
+				(curr['word'], comment, curr['line'], dt_stamp())
+			print "New comment at line %d: %s" % (curr['line'] + 1, comment)
+			self.add_highlight(curr['word_region'], False)			# False == not an error region
+			self.just_added = True									# don't re-display the comment text
 
 	def save_comments(self):				# the same filename/location, with 'cmts' added at end
 		fname = self.view.file_name()
@@ -766,60 +770,69 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		has_comments = hasattr(self.view, 'vcomments') and (len(self.view.vcomments) > 0)
 		message = None								# possible message to display in the status bar
 
-		if comment_command in "SELECT,SEL,SEL ALL,SELECT ALL":		# select commented words
+		if comment_command in ('SELECT','SEL','SEL ALL','SELECT ALL'):		# select commented words
 			message = self.select_comments() if has_comments else 'There are no comments to select.'
 
-		elif comment_command in "NEXT,NXT,DOWN,DWN,SELECT NEXT":	# select the next comment
+		elif comment_command in ('NEXT','NXT','DOWN','DWN','SELECT NEXT'):	# select the next comment
 			message = self.select_next('down') if has_comments else 'There are no comments to select.'
 
-		elif comment_command in "PREV,PREVIOUS,UP,SELECT PREV":		# select the previous comment
+		elif comment_command in ('PREV','PREVIOUS','UP','SELECT' 'PREV'):		# select the previous comment
 			message = self.select_next('up') if has_comments else 'There are no comments to select.'
 
-		elif comment_command in "FIRST":							# select the first comment
+		elif comment_command == 'FIRST':							# select the first comment
 			message = self.select_next('down', -1) if has_comments else 'There are no comments to select.'
 
-		elif comment_command in "LAST":								# select the last comment
+		elif comment_command == 'LAST':								# select the last comment
 			message = self.select_next('up', max(self.view.vcomments) + 1) if has_comments \
 				else 'There are no comments to select.'
 
-		elif comment_command in "HIGH,HIGHLIGHT":					# highlight all comments
+		elif comment_command in ('HIGH','HIGHLIGHT'):					# highlight all comments
 			message = self.highlight_comments() if has_comments else 'There are no comments to highlight.'
 
-		elif comment_command in "REMOVE,REMOVE HIGHLIGHT,REMOVE HIGHLIGHTS":	# remove highlights
+		elif comment_command in ('REMOVE','REMOVE HIGHLIGHT','REMOVE HIGHLIGHTS'):	# remove highlights
 			message = self.remove_highlights()
 
-		elif comment_command in "FOLLOW,FOLLOW HIGHLIGHTS":		# move/adjust comments to highlighted regions
+		elif comment_command in ('FOLLOW','FOLLOW HIGHLIGHTS'):		# move/adjust comments to highlighted regions
 			message = self.follow_highlights() if has_comments else 'There are no comments for the current view.'
 
-		elif comment_command in "CORRECT":						# attempt to align comments at hidden regions
+		elif comment_command == 'CORRECT':						# attempt to align comments at hidden regions
 			message = self.correct_to_hidden() if has_comments else 'There are no comments for the current view.'
 
-		elif comment_command in "DEL,DELETE":								# delete comment at cursor
+		elif comment_command in ('DEL','DELETE'):								# delete comment at cursor
 			message = self.delete_comment() if has_comments else 'There are no comments to delete.'
 
-		elif comment_command in "DEL ALL,DELALL,DELETE ALL,DELETEALL":		# delete all comments
+		elif comment_command in ('DEL ALL','DELALL','DELETE ALL','DELETEALL'):		# delete all comments
 			message = self.delete_all_comments() if has_comments else 'There are no comments to delete.'
 
-		elif comment_command in "PUSH,PUSH DOWN,PUSH D,PUSH DWN,PUSHDOWN":	# push comment(s) downwards
+		elif comment_command in ('PUSH','PUSH DOWN','PUSH D','PUSH DWN','PUSHDOWN'):	# push comment(s) downwards
 			message = self.push_comments('down') if has_comments else 'No comments to push down.'
 
-		elif comment_command in "PUSH UP,PUSH U,PUSHUP":			# push comment(s) upwards
+		elif comment_command in ('PUSH UP','PUSH U','PUSHUP'):			# push comment(s) upwards
 			message = self.push_comments('up') if has_comments else 'No comments to push up.'
 
-		elif comment_command in "PULL,PULL DOWN,PULL D,PULLDOWN":		# pull comment down to cursor
+		elif comment_command in ('PULL','PULL DOWN','PULL D','PULLDOWN'):		# pull comment down to cursor
 			message = self.pull_comment('down') if has_comments else 'No comments to pull down.'
 
-		elif comment_command in "PULL UP,PULL U,PULLUP":				# pull comment up to cursor
+		elif comment_command in ('PULL UP','PULL U','PULLUP'):				# pull comment up to cursor
 			message = self.pull_comment('up') if has_comments else 'No comments to pull up.'
 
-		elif comment_command in "RECOVER,RECOVER COMMENTS,RECOVER COMMENT":	# recover comments beyond view
+		elif comment_command in ('RECOVER','RECOVER COMMENTS','RECOVER COMMENT'):	# recover comments beyond view
 			message = self.push_comments('recover') if has_comments else 'No comments in the current view.'
 
-		elif comment_command in "SAVE,SAVE COMMENTS,SAVECOMMENTS":
+		elif comment_command in ('SAVE','SAVE COMMENTS','SAVECOMMENTS'):
 			message = self.save_comments() if has_comments else 'No comments to save.'
 
-		elif comment_command in "LOAD,LOAD COMMENTS,LOAD COMMENT":
+		elif comment_command in ('LOAD','LOAD COMMENTS','LOAD COMMENT'):
 			message = self.load_comments()
+
+		elif comment_command.isdigit() or (comment_command[0] == '-' and comment_command[1:-1].isdigit()):
+			try:
+				line = int(comment_command)
+				self.view.run_command("goto_line", {"line": line} )
+			except:
+				pass
+		elif comment_command in "CODE,USE CODE":
+			message = self.add_comment(text, True)			# use the code's text for the comment
 		else:
 			message = self.add_comment(text)				# add new (or correct) comment at cursor
 			
@@ -839,7 +852,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				curr_comment = ''
 			else:
 				curr_comment = self.get_comment()
-			self.show_comment_panel(curr_comment)
+			self.show_comment_panel(curr_comment.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&'))
 
 	def hide_it(self):										# the input panel
 		self.more_comments = False
@@ -850,13 +863,14 @@ class QuickCommentsCommand(sublime_plugin.TextCommand):
 		view = window.active_view() if window != None else None
 		if view is None or view.id() != self.view.id():
 			sublime.status_message('Click into the view/tab first.')
-		elif not hasattr(self.view, 'vcomments'):
+		elif not hasattr(self.view, 'vcomments') or not len(self.view.vcomments):
 			sublime.status_message('No comments for this view.')
 		else:
 			the_comments = []
 			for key_pt in sorted(self.view.vcomments.keys()):
 				the_comments.append("%s Line: %03d %s" % ( self.view.vcomments[key_pt][STAMP],
-					self.view.vcomments[key_pt][LINE] + 1, self.view.vcomments[key_pt][CMT]))
+					self.view.vcomments[key_pt][LINE] + 1,
+					(self.view.vcomments[key_pt][CMT]).replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')))
 			window.show_quick_panel(the_comments, self.on_chosen)
 
 	def on_chosen(self, index):
@@ -878,7 +892,8 @@ class QuickCommentsCommand(sublime_plugin.TextCommand):
 		if self.view.substr(comment_region) != self.view.vcomments[the_key][WORD]:
 			sublime.status_message("The comment is no longer on its original word.")
 		else:
-			sublime.status_message("Comment: %s" % (self.view.vcomments[the_key][CMT]))
+			sublime.status_message("Comment: %s" % ((self.view.vcomments[the_key][CMT])
+				.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')))
 
 class PrintHtmlCommand(sublime_plugin.TextCommand):
 	def setup(self, numbers):
@@ -1110,7 +1125,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
 class SaveWithCommentsCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		if not hasattr(self.view, 'vcomments'):
+		if not hasattr(self.view, 'vcomments') or not len(self.view.vcomments):
 			print "No comments found to save."
 			self.view.run_command('save')
 			return
