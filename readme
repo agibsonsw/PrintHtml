@@ -1,6 +1,5 @@
 For Sublime Text 2:
-This enables the creation of comments that do not appear in-line in your code. The comments are attached to words in your code using an input-panel. The input-panel can remain open to allow you to navigate between 
-comments, move them around and delete, or modify, them.
+This enables the creation of comments that do not appear in-line in your code. The comments are attached to words in your code using an input-panel. The input-panel can remain open to allow you to navigate between comments, move them around and delete, or modify, them.
 
 The comments can also be shown in a quick-panel; choosing a comment from this takes you to the commented-line. This can be viewed as a bookmarking-feature "with added text/notes".
 
