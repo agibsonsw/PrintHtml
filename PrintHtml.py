@@ -14,6 +14,9 @@ if sublime.platform() == "linux":
 OUTLINED = sublime.DRAW_OUTLINED if sublime.load_settings(PACKAGE_SETTINGS).get("use_outline", True) else 0
 # whether to use an outline, or block, when highlighting comments: defaults to True == use an outline
 ICON = "../PrintHtml/icon" if sublime.load_settings(PACKAGE_SETTINGS).get("use_icon", True) else ""
+# a small icon to appear in the gutter - defaults to true (can interfere with ST-bookmarks)
+ICONSCOPE = sublime.load_settings(PACKAGE_SETTINGS).get("icon_scope", "comment")
+# affects the colour of the gutter icon
 
 HEADER = \
 """<!DOCTYPE html>
@@ -273,7 +276,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				unsuitable_err = "Cursor should be within a word (2 characters min): %s" % word
 			elif not re.match(self.sensible_word, word):
 				unsuitable = True
-				unsuitable_err = "Cursor needs to be within a 'sensible' word (not starting with a number): %s" % word
+				unsuitable_err = "Place cursor within a 'sensible' word (not starting with a number): %s" % word
 		except:
 			return {}
 		return locals()
@@ -474,7 +477,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 		self.view.erase_regions("comments")
 		if len(comment_regions):
 			self.view.add_regions("comments", comment_regions, "comment", OUTLINED)
-		comment_errors = []
+		comment_errors = []									# repeat sequence for error regions
 		for reg in [r for r in high_errs if not r.contains(pt)]:
 			comment_errors.append(reg)
 		self.view.erase_regions("comment_errs")
@@ -490,7 +493,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				hidden_temp.append(reg)
 		self.view.erase_regions("hidden_cmts")
 		if len(hidden_temp):
-			self.view.add_regions("hidden_cmts", hidden_temp, "comment", ICON, sublime.HIDDEN)
+			self.view.add_regions("hidden_cmts", hidden_temp, ICONSCOPE, ICON, sublime.HIDDEN)
 
 	def add_highlight(self, new_region, error = False):		# utility fn - not called as a 'command'
 		self.add_hidden(new_region)
@@ -507,7 +510,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 	def add_hidden(self, new_region):
 		hidden = self.view.get_regions("hidden_cmts") or []
 		hidden.append(new_region)
-		self.view.add_regions("hidden_cmts", hidden, "comment", ICON, sublime.HIDDEN)
+		self.view.add_regions("hidden_cmts", hidden, ICONSCOPE, ICON, sublime.HIDDEN)
 
 	def follow_highlights(self):			# attempt to re-position comments to highlighted regions
 		if not self.view.highlighted:		# (if there are the same number of comments as highlights)
@@ -874,7 +877,7 @@ class QuickCommentsCommand(sublime_plugin.TextCommand):
 			for key_pt in sorted(self.view.vcomments.keys()):
 				the_comments.append("%s Line: %03d %s" % ( self.view.vcomments[key_pt][STAMP],
 					self.view.vcomments[key_pt][LINE] + 1,
-					(self.view.vcomments[key_pt][CMT]).replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')))
+					(self.view.vcomments[key_pt][CMT]).replace('&lt;','<').replace('&gt;','>').replace('&amp;','&')))
 			window.show_quick_panel(the_comments, self.on_chosen)
 
 	def on_chosen(self, index):
@@ -1125,7 +1128,10 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 			the_html.write(('</body>\n</html>').encode('utf-8', 'xmlcharrefreplace'))
 
 			# Open in web browser
-			desktop.open(the_html.name)
+			try:
+				desktop.open(the_html.name)						# try to open in browser
+			except:												# .. otherwise, open in ST tab
+				self.view.window().open_file(the_html.name)
 
 class SaveWithCommentsCommand(sublime_plugin.TextCommand):
 	def run(self, edit):

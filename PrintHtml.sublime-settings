@@ -2,5 +2,8 @@
     "alternate_scheme": false,
     "linux_python2.6_lib": "/usr/lib/python2.6/lib-dynload",
     "use_outline": true, 		// when highlighting comments - defaults to true
-    "use_icon": true			// a small icon appearing in the gutter: default true
+    "use_icon": true,			// a small icon appearing in the gutter: default true
+    							// icon acknowledged: Mark James,
+								// http://www.famfamfam.com/lab/icons/silk/
+    "icon_scope": "keyword"		// will affect the colour of the icon; default 'comment'
 }
