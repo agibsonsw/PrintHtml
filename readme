@@ -1,21 +1,17 @@
 For Sublime Text 2:
-This enables the creation of comments that do not appear in-line in your code. The comments are attached to 
-words in your code using an input-panel. The input-panel can remain open to allow you to navigate between 
+This enables the creation of comments that do not appear in-line in your code. The comments are attached to words in your code using an input-panel. The input-panel can remain open to allow you to navigate between 
 comments, move them around and delete, or modify, them.
 
-The comments can also be shown in a quick-panel; choosing a comment from this takes you to the commented-line.
-This can be viewed as a bookmarking-feature "with added text/notes".
+The comments can also be shown in a quick-panel; choosing a comment from this takes you to the commented-line. This can be viewed as a bookmarking-feature "with added text/notes".
 
-There is also a TextCommand to produce an HTML document from your code, which uses your themes font, colours, etc. 
-Any commments that you've added will appear as pop-up tooltips on hovering over their attached word.
+There is also a TextCommand to produce an HTML document from your code, which uses your themes font, colours, etc. Any commments that you've added will appear as pop-up tooltips on hovering over their attached word.
 
-Another TextCommand - SaveWithComments - will save the comments, using the file-name with 'cmts' added to the end.
-They can subsequently be re-loaded for your document.
+Another TextCommand - SaveWithComments - will save the comments, using the file-name with 'cmts' added to the end. They can subsequently be re-loaded for your document.
 
 My key-bindings:
 
-    { "keys": ["ctrl+alt+k"], "command": "comment_html" },
-  { "keys": ["ctrl+alt+q"], "command": "quick_comments" },
+	{ "keys": ["ctrl+alt+k"], "command": "comment_html" },
+	{ "keys": ["ctrl+alt+q"], "command": "quick_comments" },
 	{ "keys": ["ctrl+alt+m"], "command": "print_html", "args": { "numbers": false } },
 	{ "keys": ["ctrl+alt+n"], "command": "print_html", "args": { "numbers": true } },
 	{ "keys": ["ctrl+s"], "command": "save_with_comments" }
