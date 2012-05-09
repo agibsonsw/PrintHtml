@@ -9,13 +9,14 @@ Another TextCommand - SaveWithComments - will save the comments, using the file-
 
 My key-bindings:
 
-	{ "keys": ["ctrl+alt+k"], "command": "comment_html" },
-	{ "keys": ["ctrl+alt+q"], "command": "quick_comments" },
-	{ "keys": ["ctrl+alt+m"], "command": "print_html", "args": { "numbers": false } },
-	{ "keys": ["ctrl+alt+n"], "command": "print_html", "args": { "numbers": true } },
-	{ "keys": ["ctrl+s"], "command": "save_with_comments" }
+{ "keys": ["ctrl+alt+k"], "command": "comment_html" },
+{ "keys": ["ctrl+alt+q"], "command": "quick_comments" },
+{ "keys": ["ctrl+alt+m"], "command": "print_html", "args": { "numbers": false } },
+{ "keys": ["ctrl+alt+n"], "command": "print_html", "args": { "numbers": true } },
+{ "keys": ["ctrl+s"], "command": "save_with_comments" }
 
 CommentHtml is the main TextCommand that produces the comments' input-panel.
+The 'numbers' arguments specifies whether or not to show the line-numbers in the HTML output.
 You may prefer to use something other than Ctrl-S for the save-with-comments option.
 
 The document PrintHtmlFullest.rtf provides the fullest, and up-to-date, details.
