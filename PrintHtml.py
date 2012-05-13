@@ -18,6 +18,8 @@ ICON = "../PrintHtml/icon" if sublime.load_settings(PACKAGE_SETTINGS).get("use_i
 ICONSCOPE = sublime.load_settings(PACKAGE_SETTINGS).get("icon_scope", "comment")
 # affects the colour of the gutter icon
 
+WORD, CMT, LINE, STAMP = range(4)					# indices for the vcomments dictionary
+
 HEADER = \
 """<!DOCTYPE html>
 <html>
@@ -250,8 +252,6 @@ COMMENTS_TBLEND = \
 </table>
 </div>
 """
-
-WORD, CMT, LINE, STAMP = range(4)					# indices for the vcomments dictionary
 
 def dt_stamp():
 	return datetime.datetime.now().strftime("%d/%m %H:%M")
@@ -635,9 +635,9 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				new_comment_line, _ = self.view.rowcol(new_region_begin)
 				if new_region_begin in self.view.vcomments:
 					_, old_comment, old_line, _stamp = self.view.vcomments[new_region_begin]
-					print "Already a comment at line %d comment: %s" % (new_comment_line + 1, old_comment)
 					sels.add(new_region)
 					self.view.show(new_region)
+					print "Already a comment at line %d comment: %s" % (new_comment_line + 1, old_comment)
 					return "Already a comment at line %d comment: %s" % (new_comment_line + 1, old_comment)
 				self.view.vcomments[new_region_begin] = (prev_wd, prev_comment, new_comment_line, dt_stamp())
 				self.add_highlight(new_region, False)
@@ -652,7 +652,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 						moved_comment = True			# found at least one comment to move
 		if not moved_comment:
 			return 'Was unable to move any comment(s).'
-			if not len(sels):							# ..so re-instate original (1st) selection
+			if not len(sels) and curr_sel is not None:				# ..so re-instate original (1st) selection
 				sels.add(curr_sel)
 
 	def pull_comment(self, direction = 'down'):			# pull next or previous comment to cursor position
@@ -838,7 +838,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 				self.view.run_command("goto_line", {"line": line} )
 			except:
 				pass
-		elif comment_command in "CODE,USE CODE":
+		elif comment_command in ("CODE","USE CODE", ";"):
 			message = self.add_comment(text, True)			# use the code's text for the comment
 		else:
 			message = self.add_comment(text)				# add new (or correct) comment at cursor
