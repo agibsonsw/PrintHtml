@@ -282,8 +282,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
                 pt = sel.begin()
             word_region = self.view.word(pt)
             word = self.view.substr(word_region)
-            word_pt = word_region.begin()
-            word_end = word_region.end()
+            word_pt, word_end = (word_region.begin(), word_region.end())
             line, col = self.view.rowcol(word_pt)
         except Exception:
             return {}
@@ -301,18 +300,18 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
         eov = self.view.size()              # word, but remember the previous word (so it can be moved)
         for key_pt in [ pt for pt in self.view.vcomments.keys() if pt < eov ]:
             current = self.get_metrics(key_pt)
-            if not len(current) or current['word_pt'] in self.view.vcomments:
+            if not current or current['word_pt'] in self.view.vcomments:
                 continue                                # there is already a comment at the word's begin-point
             existing_wd, comment, _line, _stamp = self.view.vcomments[key_pt]
             self.view.vcomments[current['word_pt']] = (existing_wd, comment, current['line'], dt_stamp())
             del self.view.vcomments[key_pt]             # delete comment from its previous position
 
     def get_comment(self):                              # return comment-text at cursor, or ''
-        if not hasattr(self.view, 'vcomments') or not len(self.view.vcomments):
+        if not hasattr(self.view, 'vcomments') or not self.view.vcomments:
             return ''
         self.adjust_comments()              # first, position all comments at beginning of their 'word'
         selection = self.get_metrics()
-        if len(selection) and selection['word_pt'] in self.view.vcomments:
+        if selection and selection['word_pt'] in self.view.vcomments:
             prev_word = self.view.vcomments[selection['word_pt']][WORD]
             if selection['word'] != prev_word:
                 sublime.status_message("The comment-word has changed: %s" % prev_word)
@@ -353,7 +352,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 
     def select_comments(self):                      # clears current selection and highlights, and deletes
         sels = self.view.sel()                      # any comments that are no longer on the same word
-        if len(sels):
+        if sels:
             sel_orig = sels[0]
             sels.clear()
         else:
@@ -367,7 +366,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
                 print "Comment past end-of-view deleted: %s (was line %d)" % (prev_comment, prev_line + 1)
                 continue
             current = self.get_metrics(key_pt)
-            if len(current) and self.same_word(key_pt):
+            if current and self.same_word(key_pt):
                 sels.add(current['word_region'])
                 if len(sels) == 1:                          # show 1st comment region
                     self.view.show(current['word_region'])
@@ -375,9 +374,9 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
                 print "DELETED: Commented word was '%s' on line %d comment: %s" \
                     % (prev_wd, prev_line + 1, prev_comment)
                 del self.view.vcomments[key_pt]             # delete mis-positioned comment
-        if not len(sels):               # nothing selected, so re-instate original (1st) selection
-            sels.add(sel_orig)          # (or beginning of view)
-        if not len(self.view.vcomments):
+        if not sels:                    # nothing selected, so re-instate original (1st) selection,
+            sels.add(sel_orig)          # or beginning of view
+        if not self.view.vcomments:
             return 'Comments no longer in original positions - deleted.'
 
     def select_next(self, direction = 'down', start_at = -99):  # start at a certain pt in view
@@ -386,7 +385,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
             curr_pt = start_at
         else:
             selection = self.get_metrics()
-            if not len(selection):
+            if not selection:
                 return 'Ensure the cursor is somewhere in the view.'
             curr_pt = selection['pt']
         if direction == 'down':
@@ -404,7 +403,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
                 return "Comment is past end-of-view - use 'recover' command: %s (was line %d)" \
                     % (next_comment, next_line + 1)
             current = self.get_metrics(next_pt)
-            if not len(current):                                # problem reading points' word, etc.
+            if not current:                                # problem reading points' word, etc.
                 return "Unable to read details at next comment point."
             if not self.same_word(next_pt):
                 message = "The word has changed - was '%s'" % next_wd
@@ -431,28 +430,32 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
                 beyond_eov = True
                 continue
             current = self.get_metrics(key_pt)
-            if not len(current):                        # problem reading points' word, etc.
+            if not current:                        # problem reading points' word, etc.
                 print "DELETED: Could not find a location for comment: %s" % (prev_comment)
                 del self.view.vcomments[key_pt]
                 continue
             if self.same_word(key_pt):
-                if not len(comment_regions) and not len(comment_errors):
+                if not comment_regions and not comment_errors:
                     self.view.show(current['word_region'])                  # show the 1st highlighted region
                 comment_regions.append(current['word_region'])
             else:
                 print "Commented word was '%s' now '%s' on line %d comment: %s" \
                     % (prev_wd, current['word'], current['line'] + 1, prev_comment)
-                if not len(comment_regions) and not len(comment_errors):
+                if not comment_regions and not comment_errors:
                     self.view.show(current['word_region'])                  # show the 1st highlighted region
                 comment_errors.append(current['word_region'])
-        if len(comment_regions):
+        if comment_regions:
             self.view.add_regions("comments", comment_regions, "comment", OUTLINED)
             self.view.highlighted = True
-        if len(comment_errors):
+        if comment_errors:
             self.view.add_regions("comment_errs", comment_errors, "invalid", OUTLINED)
             self.view.highlighted = True
         if beyond_eov:
             return "There are comment(s) beyond the view-size - use 'recover' command."
+        elif self.view.highlighted:
+            return 'Highlights updated.'
+        else:
+            return 'No commment-highlights found.'
 
     def remove_highlights(self):
         try:
@@ -475,30 +478,30 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
             return
         high_cs = self.view.get_regions("comments")
         high_errs = self.view.get_regions("comment_errs")   # the highlight might be an error-region
-        if not len(high_cs) and not len(high_errs):         # nothing to remove
+        if not high_cs and not high_errs:                   # nothing to remove
             return
         comment_regions = []
         for reg in [r for r in high_cs if not r.contains(pt)]:
                 comment_regions.append(reg)                 # add regions other than the current one
         self.view.erase_regions("comments")
-        if len(comment_regions):
+        if comment_regions:
             self.view.add_regions("comments", comment_regions, "comment", OUTLINED)
         comment_errors = []                                 # repeat sequence for error regions
         for reg in [r for r in high_errs if not r.contains(pt)]:
             comment_errors.append(reg)
         self.view.erase_regions("comment_errs")
-        if len(comment_errors):
+        if comment_errors:
             self.view.add_regions("comment_errs", comment_errors, "invalid", OUTLINED)
 
     def remove_hidden(self, pt):                            # utility fn - not called as a 'command'
         hidden = self.view.get_regions("hidden_cmts")
-        if not len(hidden):
+        if not hidden:
             return
         hidden_temp = []
         for reg in [r for r in hidden if not r.contains(pt)]:
                 hidden_temp.append(reg)
         self.view.erase_regions("hidden_cmts")
-        if len(hidden_temp):
+        if hidden_temp:
             self.view.add_regions("hidden_cmts", hidden_temp, ICONSCOPE, ICON, sublime.HIDDEN)
 
     def add_highlight(self, new_region, error = False):     # utility fn - not called as a 'command'
@@ -523,9 +526,9 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
             return 'View comments are not currently highlighted.'
         high_cs = self.view.get_regions("comments")
         high_errs = self.view.get_regions("comment_errs")
-        if not len(high_cs) and not len(high_errs):
+        if not high_cs and not high_errs:
             return 'There are no highlighted regions to follow.'
-        if len(high_errs):
+        if high_errs:
             return 'There are errors highlighted which need to be corrected.'
         if len(high_cs) != len(self.view.vcomments):
             return 'There are not the same number of comments as highlights.'
@@ -535,7 +538,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
         for pt, area in zip(sorted(self.view.vcomments.keys()), high_cs):
             prev_wd, prev_comment, _line, _stamp = self.view.vcomments[pt]
             c_highlight = self.get_metrics(area.begin())
-            if not len(c_highlight):
+            if not c_highlight:
                 continue                                # unable to read metrics at highlight
             if c_highlight['word'] == prev_wd:
                 comment_regions.append(c_highlight['word_region'])
@@ -547,11 +550,11 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
                 del self.view.vcomments[pt]
 
         message = 'Unable to re-position comments.'
-        if len(comment_regions):
+        if comment_regions:
             self.view.add_regions("comments", comment_regions, "comment", OUTLINED)
             self.view.highlighted = True
             message = 'Comments re-positioned to highlights.'
-        if len(comment_errors):
+        if comment_errors:
             self.view.add_regions("comment_errs", comment_errors, "invalid", OUTLINED)
             self.view.highlighted = True
             message = 'Some comments are in the wrong position.'
@@ -559,26 +562,25 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 
     def correct_to_hidden(self):        # if there are the same number of comments as hidden regions
         hidden = self.view.get_regions("hidden_cmts")
-        if not len(hidden) or (len(hidden) != len(self.view.vcomments)):
+        if not hidden or (len(hidden) != len(self.view.vcomments)):
             return  'The number of comments and hidden regions differ.'
         for pt, area in zip(sorted(self.view.vcomments.keys()), hidden):
             prev_wd, prev_comment, _line, _stamp = self.view.vcomments[pt]
             c_hidden = self.get_metrics(area.begin())
-            if not len(c_hidden):
+            if not c_hidden:
                 continue                                # unable to read metrics at hidden region
             if c_hidden['word_pt'] != pt:               # if not already there, move comment
                 self.view.vcomments[c_hidden['word_pt']] = \
                     (prev_wd, prev_comment, c_hidden['line'], dt_stamp())
                 del self.view.vcomments[pt]
         if self.view.highlighted:
-            self.highlight_comments()
-            return 'Highlights updated.'
+            return self.highlight_comments()
         else:
             return "Use 'highlight' command to check comment' positions."
 
     def delete_comment(self):                       # at cursor position (or within selection)
         selection = self.get_metrics()
-        if not len(selection):
+        if not selection:
             return 'Unable to read details at cursor.'
         if selection['sel'].empty():                # delete any comment(s) within the current word
             begin = selection['word_pt']; end = selection['word_end']
@@ -599,10 +601,9 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
 
     def push_comments(self, direction = 'down'):                # move selected comment(s) down or up
         selection = self.get_metrics()                          # or recover ones beyond the view-size
-        if not len(selection):
-            return 'Ensure the cursor is in a word in the view.'
-        sels = selection['sels']
-        curr_sel = selection['sel']
+        if not selection:
+            return 'Ensure the cursor is somewhere in the view.'
+        sels, curr_sel = (selection['sels'], selection['sel'])
         if curr_sel.empty() and direction != 'recover':         # deleting a single comment
             if selection['word_pt'] in self.view.vcomments:
                 pt_begin = pt_end = selection['word_pt']
@@ -614,7 +615,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
             if pt_end < pt_begin:
                 return 'There are no comments beyond the view-size.'
         else:
-            pt_begin = curr_sel.begin(); pt_end = curr_sel.end()    # pushing comments within selection
+            pt_begin, pt_end = (curr_sel.begin(), curr_sel.end())    # pushing comments within selection
         if pt_begin == pt_end:
             sorted_pts = [pt_begin]             # just the current comment to move (use single list-item)
         else:
@@ -623,7 +624,6 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
                 sorted_pts = reversed(sorted_pts)
 
         sels.clear()
-        moved_comment = False               # were we able to move any comment(s)?
 
         for next_pt in sorted_pts:
             prev_wd, prev_comment, _line, _stamp = self.view.vcomments[next_pt]
@@ -635,7 +635,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
                 try:
                     new_region = new_regions.next()
                 except StopIteration:
-                    new_region = None
+                    continue
             if new_region:                              # was the comment-word found further up/down?
                 new_region_begin = new_region.begin()
                 new_comment_line, _ = self.view.rowcol(new_region_begin)
@@ -647,25 +647,23 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
                     return "Already a comment at line %d comment: %s" % (new_comment_line + 1, old_comment)
                 self.view.vcomments[new_region_begin] = (prev_wd, prev_comment, new_comment_line, dt_stamp())
                 self.add_highlight(new_region, False)
-                if new_region_begin != next_pt:         # delete the comment from its previous position
-                    del self.view.vcomments[next_pt]
-                    self.remove_highlight(next_pt)
-
-                if not self.view.highlighted or not moved_comment:  # select the first (new) highlighted region
+                del self.view.vcomments[next_pt]        # delete the comment from its previous position
+                self.remove_highlight(next_pt)
+                if not sels:                            # show the 1st region (highlighted or not)
                     sels.add(new_region)
-                    if not moved_comment:
-                        self.view.show(new_region)      # show the first region (highlighted or not)
-                        moved_comment = True            # found at least one comment to move
-        if not moved_comment:
-            return 'Was unable to move any comment(s).'
-            if not len(sels) and curr_sel is not None:              # ..so re-instate original (1st) selection
+                    self.view.show(new_region)
+                elif not self.view.highlighted:
+                    sels.add(new_region)
+        if not sels:
+            if curr_sel is not None:                    # re-instate original (1st) selection
                 sels.add(curr_sel)
+            return 'Was unable to move any comment(s).'
 
     def pull_comment(self, direction = 'down'):         # pull next or previous comment to cursor position
         selection = self.get_metrics()
-        if not len(selection):
+        if not selection:
             return 'Ensure the cursor is in a word in the view.'
-        if len(self.view.sel()) > 1:
+        if len(selection['sels']) > 1:
             return "'Pull' doesn't work with multi-selection."
         unsuitable, unsuitable_err = self.check_suitability(selection['word'])
         if unsuitable:                                  # not a suitable word to attach a comment to
@@ -682,28 +680,27 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
         try:
             next_pt = sorted_pts.next()
         except StopIteration:
-            next_pt = None
-        if next_pt:                                 # did we locate the next, or previous, comment?
-            next_wd, next_comment, _line, _stamp = self.view.vcomments[next_pt]
-            self.view.vcomments[curr_pt] = (selection['word'], next_comment, selection['line'], dt_stamp())
-            del self.view.vcomments[next_pt]
-            self.remove_highlight(next_pt)          # that is, from its 'previous' position
-            self.add_highlight(selection['word_region'], False)
-            sels = selection['sels']
-            sels.clear()
-            sels.add(selection['word_region'])      # select the 'pulled' comments' region
-            self.view.show(selection['word_region'])
-        else:
-            return 'There is no comment to pull %s to the cursor position.' % (direction)
+            return "There is no comment to pull %s to the cursor position." % (direction)
+        # The comment we are moving may not be in it's correctly highlighted position. So, 
+        discard_message = self.correct_to_hidden()
+        next_wd, next_comment, _line, _stamp = self.view.vcomments[next_pt]
+        self.view.vcomments[curr_pt] = (selection['word'], next_comment, selection['line'], dt_stamp())
+        del self.view.vcomments[next_pt]
+        self.remove_highlight(next_pt)          # that is, from its 'previous' position
+        self.add_highlight(selection['word_region'], False)
+        sels = selection['sels']
+        sels.clear()
+        sels.add(selection['word_region'])      # select the 'pulled' comments' region
+        self.view.show(selection['word_region'])
+        return "Comment pulled %s to cursor position." % (direction)
 
     def add_comment(self, text, code = False):                  # at cursor position
         curr = self.get_metrics()
-        if not len(curr):
+        if not curr:
             return 'Unable to read word at cursor.'
         unsuitable, unsuitable_err = self.check_suitability(curr['word'])
         if unsuitable:                                  # not a suitable word to attach a comment to
             return unsuitable_err
-                                                # add the comment to the dictionary
         if code:                                # use the line's code as the comment-text
             text = self.view.substr(self.view.line(curr['word_pt'])).strip()[:60]
         comment = entity_ref(text)
@@ -757,7 +754,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
         except IOError:
             return "Could not find or read comments file: %s" % (fname + 'cmts')
         fname_dict.close()
-        if not len(the_comments):
+        if not the_comments:
             return "No comments found in %s" % (fname + 'cmts')
         _ = self.remove_highlights()
         self.remove_all_hidden()
@@ -775,7 +772,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
             sublime.status_message('Not the same view - cancelled.')
             return
         text = text.strip()
-        if not len(text):                   # They pressed Enter, attempt to display comment at cursor
+        if not text:                   # They pressed Enter, attempt to display comment at cursor
             if self.get_comment() != '':
                 self.more_comments = True
                 self.show_again()
@@ -783,7 +780,7 @@ class CommentHtmlCommand(sublime_plugin.TextCommand):
         self.more_comments = True                   # okay to continue displaying the panel
 
         comment_command = text.strip().upper()
-        has_comments = hasattr(self.view, 'vcomments') and (len(self.view.vcomments) > 0)
+        has_comments = hasattr(self.view, 'vcomments') and self.view.vcomments
         message = None                              # possible message to display in the status bar
 
         if comment_command in ('SELECT','SEL','SEL ALL','SELECT ALL'):      # select commented words
@@ -879,7 +876,7 @@ class QuickCommentsCommand(sublime_plugin.TextCommand):
         view = window.active_view() if window != None else None
         if view is None or view.id() != self.view.id():
             sublime.status_message('Click into the view/tab first.')
-        elif not hasattr(self.view, 'vcomments') or not len(self.view.vcomments):
+        elif not hasattr(self.view, 'vcomments') or not self.view.vcomments:
             sublime.status_message('No comments for this view.')
         else:
             the_comments = []
@@ -946,25 +943,20 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
         # Determine start and end points and whether to parse whole file or selection
         curr_sel = self.view.sel()[0]
-        if curr_sel.empty() or len(self.view.lines(curr_sel)) < 2:  # don't print just 1 line
+        if curr_sel.empty() or len(self.view.lines(curr_sel)) < 2:              # don't print just 1 line
             self.size = self.view.size()
-            self.pt = 0
-            self.end = 1
-            self.curr_row = 1
-            self.partial = False            # print entire view
+            self.pt, self.end, self.curr_row, self.partial = (0, 1, 1, False)   # partial = False: print entire view
         else:
             self.size = curr_sel.end()
             self.pt = curr_sel.begin()
             self.end = self.pt + 1
             self.curr_row = self.view.rowcol(self.pt)[0] + 1
-            self.partial = True             # printing selection
-            if self.has_comments:           # are there any comments within the selection?
+            self.partial = True                     # printing selection
+            if self.has_comments:                   # are there any comments within the selection?
                 within_sel = (pt for pt in self.view.vcomments.keys() if self.pt <= pt <= self.size)
                 try:
                     any_pt = within_sel.next()
                 except StopIteration:
-                    any_pt = None
-                if any_pt is None:
                     self.has_comments = False       # that is, none within selection
 
         # Create scope colour-mapping from colour-scheme file
@@ -1063,7 +1055,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
                 the_colour = self.guess_colour(scope_name.strip())
                 the_comment = None; the_stamp = None
 
-                if len(tidied_text) and self.has_comments:
+                if tidied_text and self.has_comments:
                     for x in [x for x in range(self.pt, self.end) if x in self.view.vcomments]:
                         the_word, the_comment, the_line, the_stamp = self.view.vcomments[x]
                         break
@@ -1075,7 +1067,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
                 self.pt = self.end
                 self.end = self.pt + 1
 
-            if len(temp_line):
+            if temp_line:
                 html_line = '' if first_line else '<li>'        # 1st opening-li is already in place
                 for (the_colour, tidied_text, the_comment, the_stamp) in temp_line:
                     if the_colour == self.fground:
@@ -1122,7 +1114,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
             self.write_header(the_html)
             self.write_body(the_html)
-            if self.has_comments and len(self.view.vcomments):          # check if all comments were deleted
+            if self.has_comments and self.view.vcomments:               # check if all comments were deleted
                 self.add_comments_table(the_html)                       # initially, display: none
 
             the_html.write(('</body>\n</html>').encode(*UTF8))
@@ -1134,7 +1126,7 @@ class PrintHtmlCommand(sublime_plugin.TextCommand):
 
 class SaveWithCommentsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        if not hasattr(self.view, 'vcomments') or not len(self.view.vcomments):
+        if not hasattr(self.view, 'vcomments') or not self.view.vcomments:
             print "No comments found to save."
             self.view.run_command('save')
             return
@@ -1167,7 +1159,7 @@ class SaveWithCommentsCommand(sublime_plugin.TextCommand):
             print "Could not find or read comments file: %s" % (fname + 'cmts')
             return
         fname_dict.close()
-        if not len(the_comments):
+        if not the_comments:
             print "No comments found in %s" % (fname + 'cmts')
         else:
             self.view.vcomments = the_comments
