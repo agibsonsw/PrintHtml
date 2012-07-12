@@ -1,3 +1,5 @@
+NB I intend to move this over to my Commentary repo. All the documentation is still in this repo for the moment though.
+
 For Sublime Text 2:
 This enables the creation of comments that do not appear in-line in your code. The comments are attached to words in your code using an input-panel. The input-panel can remain open to allow you to navigate between comments, move them around and delete, or modify, them.
 
