@@ -3,7 +3,7 @@ import sublime_plugin
 from os import path
 import tempfile
 import sys
-import datetime
+import time
 import webbrowser
 import re
 from HtmlAnnotations import get_annotations
@@ -461,7 +461,7 @@ class ExportHtml(object):
     def setup(
             self, numbers, highlight_selections, browser_print,
             color_scheme, wrap, multi_select, style_gutter,
-            no_header
+            no_header, date_time_format, show_full_path
         ):
         path_packages = sublime.packages_path()
 
@@ -483,6 +483,8 @@ class ExportHtml(object):
         self.sbground = ''
         self.sfground = ''
         self.numbers = numbers
+        self.date_time_format = date_time_format
+        self.show_full_path = show_full_path
         self.highlight_selections = highlight_selections
         self.browser_print = browser_print
         self.wrap = int(wrap) if wrap != None and int(wrap) > 0 else False
@@ -812,8 +814,14 @@ class ExportHtml(object):
         the_html.write(TABLE_START)
         if not self.no_header:
             # Write file name
-            date_time = datetime.datetime.now().strftime("%m/%d/%y %I:%M:%S")
-            the_html.write(FILE_INFO % {"color": self.fground, "date_time": date_time, "file": self.file_name})
+            date_time = time.strftime(self.date_time_format, time.localtime())
+            the_html.write(
+                FILE_INFO % {
+                    "color": self.fground,
+                    "date_time": date_time,
+                    "file": self.file_name if self.show_full_path else path.basename(self.file_name)
+                }
+            )
 
         the_html.write(ROW_START)
         the_html.write(TABLE_START)
@@ -886,23 +894,23 @@ class ExportHtml(object):
         self, numbers=False, highlight_selections=False,
         clipboard_copy=False, browser_print=False, color_scheme=None,
         wrap=None, view_open=False, multi_select=False, style_gutter=True,
-        no_header=False
+        no_header=False, date_time_format="%m/%d/%y %I:%M:%S", show_full_path=True
     ):
         self.setup(
-            numbers, highlight_selections, browser_print,
-            color_scheme, wrap, multi_select, style_gutter,
-            no_header
+            bool(numbers), bool(highlight_selections), bool(browser_print),
+            color_scheme, wrap, bool(multi_select), bool(style_gutter),
+            bool(no_header), date_time_format, bool(show_full_path)
         )
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
             self.write_header(the_html)
             self.write_body(the_html)
-            if clipboard_copy:
+            if bool(clipboard_copy):
                 the_html.seek(0)
                 sublime.set_clipboard(the_html.read())
                 sublime.status_message("Export to HTML: copied to clipboard")
 
-        if view_open:
+        if bool(view_open):
             self.view.window().open_file(the_html.name)
         else:
             # Open in web browser; check return code, if failed try webbrowser
