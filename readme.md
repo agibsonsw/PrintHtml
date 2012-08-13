@@ -50,6 +50,8 @@ The name of the command is the key value, and then you add the parameters you wi
 - browser_print (boolean): When opening in the web browser, also open the brower's print dialog. This will be ignored if ```view_open``` is ```true```.  Default is ```false```.
 - view_open (boolean): Open HTML in a Sublime Text tab instead of the web browser.  Default is ```false```.
 - no_header (boolean): Do not display file name, date, and time at the top of the HTML document. Default is ```false```.
+- date_time_format (string): String denoting the format for date and time when displaying header.  Please see Python's documentation on ```time.strftime``` for detailed info on formatting syntax.  Default is ```"%m/%d/%y %I:%M:%S"```
+- show_full_path (boolean): Show full path for filename when displaying header. Default is ```true```
 
 If you wish to bind a command to a key combination etc., the same settings as above can be used.
 
@@ -146,6 +148,10 @@ You can navigate the annotations in the generate HTML by using a jump table.  Yo
 - agibsonsw: Original idea and algorithm for the plugin
 - Paul Boddie: Desktop module for open files in web browser cross platform
 - Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright
+
+# Version 0.4.1
+- Add date_time_format and show_full_path options
+- Some internal adjustments
 
 # Version 0.4.0
 - Fix regression with option numbers = false
