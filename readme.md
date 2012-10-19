@@ -21,22 +21,22 @@ ExportHtml comes with a number of default commands available, but these can be o
 
 If adding a command to the settings file, it goes under the ```html_panel``` setting.  These configurations will appear under the ```Export to HTML: Show Export Menu``` command palette command.
 
-
-    // Define configurations for the drop down export menu
-    "html_panel": [
-        // Browser print color (selections and multi-selections allowed)
-        {
-            "Browser Print - Color": {
-                "numbers": true,
-                "wrap": 900,
-                "browser_print": true,
-                "multi_select": true,
-                "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Color.tmTheme",
-                "style_gutter": false
-            }
+```javascript
+// Define configurations for the drop down export menu
+"html_panel": [
+    // Browser print color (selections and multi-selections allowed)
+    {
+        "Browser Print - Color": {
+            "numbers": true,
+            "wrap": 900,
+            "browser_print": true,
+            "multi_select": true,
+            "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Color.tmTheme",
+            "style_gutter": false
         }
-     ]
-
+    }
+ ]
+```
 
 The name of the command is the key value, and then you add the parameters you wish to specify.  You can use any combination of settings below.
 
