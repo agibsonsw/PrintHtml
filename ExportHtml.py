@@ -132,7 +132,7 @@ CSS_ANNOTATIONS = \
     * html a:hover { background: transparent; }
 '''
 
-ANNOTATE_OPEN = '''<a class="tooltip" href="javascript:void(0)">%(code)s'''
+ANNOTATE_OPEN = '''<a class="tooltip" href="javascript:toggle_comments();return false;">%(code)s'''
 
 ANNOTATE_CLOSE = '''<div class="annotation">%(comment)s</div></a>'''
 
