@@ -414,7 +414,7 @@ function scroll_to_line(value) {
         pos += el.offsetTop;
         el = el.offsetParent;
     }
-    pos -= win_attr.get('y');
+    pos -= win_attr.get_center('y');
     if (pos < 0) {
         pos = 0;
     }
