@@ -524,7 +524,7 @@ class ExportHtml(object):
         self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'))
         self.fground = self.strip_transparency(colour_settings.get("foreground", '#000000'))
         self.sbground = self.strip_transparency(colour_settings.get("selection", self.fground))
-        self.sfground = self.strip_transparency(colour_settings.get("selectionForeground", self.bground))
+        self.sfground = self.strip_transparency(colour_settings.get("selectionForeground", None))
         self.gbground = self.strip_transparency(colour_settings.get("gutter", self.bground)) if style_gutter else self.bground
         self.gfground = self.strip_transparency(colour_settings.get("gutterForeground", self.fground)) if style_gutter else self.fground
 
@@ -556,6 +556,8 @@ class ExportHtml(object):
                 self.colours[scope] = {"color": self.strip_transparency(colour), "style": ' '.join(style)}
 
     def strip_transparency(self, color):
+        if color is None:
+            return color
         m = re.match("^(#[A-Fa-f\d]{6})([A-Fa-f\d]{2})", color)
         if m != None:
             color = m.group(1)
@@ -736,6 +738,7 @@ class ExportHtml(object):
     def convert_line_to_html(self, the_html):
         line = []
         hl_found = False
+        hl_done = False
 
         # Continue highlight form last line
         if self.hl_continue != None:
@@ -749,15 +752,25 @@ class ExportHtml(object):
 
             # See if we are starting a highlight region
             if self.curr_hl != None and self.pt == self.curr_hl.begin():
+                # Get text of like scope up to a highlight
                 hl_found = True
-                if self.curr_hl.end() <= self.size:
-                    self.end = self.curr_hl.end()
+                scope_name = self.view.scope_name(self.pt)
+                while self.view.scope_name(self.end) == scope_name and self.end < self.size:
+                    # Kick out if we hit a highlight region
+                    if self.end == self.curr_hl.end():
+                        break
+                    self.end += 1
+                if self.end < self.curr_hl.end():
+                    if self.end >= self.size:
+                        self.hl_continue = sublime.Region(self.end, self.curr_hl.end())
+                    else:
+                        self.curr_hl = sublime.Region(self.end, self.curr_hl.end())
                 else:
-                    # Highlight is bigger than line, mark for continuation
-                    self.end = self.size
-                    self.hl_continue = sublime.Region(self.size + 1, self.curr_hl.end())
-                the_colour = self.sfground
-                the_style = "normal"
+                    hl_done = True
+                if self.sfground is None:
+                    the_colour, the_style = self.guess_colour(scope_name)
+                else:
+                    the_colour, the_style = self.sfground, "normal"
             else:
                 # Get text of like scope up to a highlight
                 scope_name = self.view.scope_name(self.pt)
@@ -791,8 +804,9 @@ class ExportHtml(object):
                 tidied_text = self.html_encode(self.view.substr(region))
                 self.format_text(line, tidied_text, the_colour, the_style, highlight=hl_found)
 
-            if hl_found:
+            if hl_done:
                 # Clear highlight flags and variables
+                hl_done = False
                 hl_found = False
                 self.curr_hl = None
 
