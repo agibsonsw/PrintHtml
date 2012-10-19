@@ -910,7 +910,7 @@ class ExportHtml(object):
         clipboard_copy=False, browser_print=False, color_scheme=None,
         wrap=None, view_open=False, multi_select=False, style_gutter=True,
         no_header=False, date_time_format="%m/%d/%y %I:%M:%S", show_full_path=True,
-        save_location=None
+        save_location=None, time_stamp="_%m%d%y%H%M%S"
     ):
         self.setup(
             bool(numbers), bool(highlight_selections), bool(browser_print),
@@ -928,11 +928,11 @@ class ExportHtml(object):
                 html_file = ".html"
                 save_location = None
             elif save_location == ".":
-                html_file = "%s_%s.html" % (fname, time.strftime("%m%d%y%H%M%S", self.time))
+                html_file = "%s%s.html" % (fname, time.strftime(time_stamp, self.time))
             elif not path.exists(fname):
-                html_file = path.join(save_location, "Untitled_%s.html" % time.strftime("%m%d%y%H%M%S", self.time))
+                html_file = path.join(save_location, "Untitled%s.html" % time.strftime(time_stamp, self.time))
             else:
-                html_file = path.join(save_location, "%s_%s.html" % (path.basename(fname), time.strftime("%m%d%y%H%M%S", self.time)))
+                html_file = path.join(save_location, "%s%s.html" % (path.basename(fname), time.strftime(time_stamp, self.time)))
         else:
             html_file = ".html"
 
