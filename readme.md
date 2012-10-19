@@ -135,7 +135,7 @@ The commands are as follows:
 - Delete All Annotations: Delete all annotation regions.
 - Show Annotation Comment: Show the annotation comment of the region under the cursor.
 
-You can navigate the annotations in the generate HTML by using a jump table.  You can show the jump table at any time wiht ```alt+double_mouse_click```.  If it gets in the way, you can dock in the bottom right.
+You can navigate the annotations in the generate HTML by using a jump table.  You can show the jump table at any time wiht ```alt+double_mouse_click``` or simply by clicking an existing annotation.  If it gets in the way, you can dock in the bottom right.
 
 <img src="http://dl.dropbox.com/u/342698/ExportHtml/annotation_table_preview.png" border="0"/>
 
