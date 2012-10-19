@@ -105,7 +105,7 @@ If you wish to bind a command to a key combination etc., the same settings as ab
 
 Example:
 
-'''javascript
+```javascript
 {
     "keys": ["ctrl+alt+n"],
     "command": "export_bbcode",
