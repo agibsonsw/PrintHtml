@@ -52,24 +52,26 @@ The name of the command is the key value, and then you add the parameters you wi
 - no_header (boolean): Do not display file name, date, and time at the top of the HTML document. Default is ```false```.
 - date_time_format (string): String denoting the format for date and time when displaying header.  Please see Python's documentation on ```time.strftime``` for detailed info on formatting syntax.  Default is ```"%m/%d/%y %I:%M:%S"```
 - show_full_path (boolean): Show full path for filename when displaying header. Default is ```true```
+- save_location (string): Path to save html file.  If the file is wanted in the same file as the original, use ".".  Otherwise, use the absolute path to where the file is desired.  If there is an issue determining where to save the file, or the path does not exist, the OS temp folder will be used. Default is ```None``` (use temp folder).
 
 If you wish to bind a command to a key combination etc., the same settings as above can be used.
 
 Example:
 
-
-    {
-        "keys": ["ctrl+alt+n"],
-        "command": "export_html",
-        "args": {
-            "numbers": true,
-            "wrap": 900,
-            "browser_print": true,
-            "multi_select": true,
-            "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Color.tmTheme",
-            "style_gutter": false
-        }
+```javascript
+{
+    "keys": ["ctrl+alt+n"],
+    "command": "export_html",
+    "args": {
+        "numbers": true,
+        "wrap": 900,
+        "browser_print": true,
+        "multi_select": true,
+        "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Color.tmTheme",
+        "style_gutter": false
     }
+}
+```
 
 When viewing the HTML in your web browser, regardless of the gutter settings, the gutter can be toggled to show or be hidden using ```shift+double_mouse_click```.
 
@@ -78,16 +80,17 @@ ExportHtml can also export selected code as BBCode for posting in forums. Export
 
 If adding a command to the settings file, it goes under the ```bbcode_panel``` setting.  These configurations will appear under the ```Export to BBCode: Show Export Menu``` command palette command.
 
-
-    // Define configurations for the drop down export menu
-    "bbcode_panel": [
-        {
-            "To Clipboard - Format as BBCode": {
-                "numbers": false,
-                "multi_select": true
-            }
+```javascript
+// Define configurations for the drop down export menu
+"bbcode_panel": [
+    {
+        "To Clipboard - Format as BBCode": {
+            "numbers": false,
+            "multi_select": true
         }
-    ]
+    }
+]
+```
 
 The name of the command is the key value, and then you add the parameters you wish to specify.  You can use any combination of settings below.
 
@@ -102,15 +105,16 @@ If you wish to bind a command to a key combination etc., the same settings as ab
 
 Example:
 
-
-    {
-        "keys": ["ctrl+alt+n"],
-        "command": "export_bbcode",
-        "args": {
-            "numbers": false,
-            "multi_select": true
-        }
+'''javascript
+{
+    "keys": ["ctrl+alt+n"],
+    "command": "export_bbcode",
+    "args": {
+        "numbers": false,
+        "multi_select": true
     }
+}
+```
 
 # Usage: Annotations (HTML only)
 Annotations are comments you can make on selected text.  When the HTML is generated, the selected text will be underlined, and when the mouse hovers over them, a tooltip will appear with your comment.

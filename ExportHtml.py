@@ -20,7 +20,7 @@ from plistlib import readPlist
 
 # HTML Code
 CSS = \
-"""
+'''
 <!DOCTYPE html>
 <html>
 <head>
@@ -53,10 +53,10 @@ CSS = \
     %(annotations)s
 </style>
 </head>
-"""
+'''
 
 CSS_ANNOTATIONS = \
-"""
+'''
     .tooltip {
         border-bottom: 2px dotted %(dot_colour)s;
         outline: none;
@@ -130,17 +130,17 @@ CSS_ANNOTATIONS = \
     div.annotation_comment { float: left; text-align: left; }
 
     * html a:hover { background: transparent; }
-"""
+'''
 
-ANNOTATE_OPEN = """<a class="tooltip" href="javascript:void(0)">%(code)s"""
+ANNOTATE_OPEN = '''<a class="tooltip" href="javascript:void(0)">%(code)s'''
 
-ANNOTATE_CLOSE = """<div class="annotation">%(comment)s</div></a>"""
+ANNOTATE_CLOSE = '''<div class="annotation">%(comment)s</div></a>'''
 
-BODY_START = """<body class="code_page code_text">\n<pre class="code_page">"""
+BODY_START = '''<body class="code_page code_text">\n<pre class="code_page">'''
 
-FILE_INFO = """<tr><td colspan="2"><div id="file_info"><span style="color: %(color)s">%(date_time)s %(file)s\n\n</span></div></td></tr>"""
+FILE_INFO = '''<tr><td colspan="2"><div id="file_info"><span style="color: %(color)s">%(date_time)s %(file)s\n\n</span></div></td></tr>'''
 
-TABLE_START = """<table cellspacing="0" cellpadding="0" class="code_page">"""
+TABLE_START = '''<table cellspacing="0" cellpadding="0" class="code_page">'''
 
 LINE = (
     '<tr>' +
@@ -153,17 +153,17 @@ LINE = (
     '</tr>'
 )
 
-CODE = """<span class="%(class)s" style="color:%(color)s">%(content)s</span>"""
+CODE = '''<span class="%(class)s" style="color:%(color)s">%(content)s</span>'''
 
-HIGHLIGHTED_CODE = """<span class="%(class)s" style="background-color: %(highlight)s; color: %(color)s;">%(content)s</span>"""
+HIGHLIGHTED_CODE = '''<span class="%(class)s" style="background-color: %(highlight)s; color: %(color)s;">%(content)s</span>'''
 
-TABLE_END = """</table>"""
+TABLE_END = '''</table>'''
 
-ROW_START = """<tr><td>"""
+ROW_START = '''<tr><td>'''
 
-ROW_END = """</td></tr>"""
+ROW_END = '''</td></tr>'''
 
-DIVIDER = """<span style="color: %(color)s">\n...\n\n</span>"""
+DIVIDER = '''<span style="color: %(color)s">\n...\n\n</span>'''
 
 ANNOTATION_TBL_START = (
     '<div id="comment_list" style="display:none"><div id="comment_wrapper">' +
@@ -173,7 +173,7 @@ ANNOTATION_TBL_START = (
     '</th></tr>'
 )
 
-ANNOTATION_TBL_END = """</table></div></div>"""
+ANNOTATION_TBL_END = '''</table></div></div>'''
 
 ANNOTATION_ROW = (
     '<tr>' +
@@ -202,10 +202,10 @@ ANNOTATION_FOOTER = (
     '</td></tr>'
 )
 
-BODY_END = """</pre>\n%(js)s\n</body>\n</html>\n"""
+BODY_END = '''</pre>\n%(js)s\n</body>\n</html>\n'''
 
 DOUBLE_CLICK_EVENTS = \
-"""
+'''
 <script type="text/javascript">
 function double_click_events(e) {
     var evt = e ? e : window.event;
@@ -217,10 +217,10 @@ function double_click_events(e) {
 }
 document.getElementsByTagName('body')[0].ondblclick = function (e) { double_click_events(e); };
 </script>
-"""
+'''
 
 TOGGLE_GUTTER = \
-"""
+'''
 <script type="text/javascript">
 function toggle_gutter() {
     var i, j, mode, rows, r, tbls, rows, r,
@@ -250,10 +250,10 @@ function toggle_gutter() {
     }
 }
 </script>
-"""
+'''
 
 PRINT = \
-"""
+'''
 <script type="text/javascript">
 function page_print() {
     if (window.print) {
@@ -262,10 +262,10 @@ function page_print() {
 }
 document.getElementsByTagName('body')[0].onload = function (e) { page_print(); self.onload = null; }
 </script>
-"""
+'''
 
 WRAP = \
-"""
+'''
 <script type="text/javascript">
 function wrap_code(numbered) {
     var start, end, i, j, idx,
@@ -295,10 +295,10 @@ function wrap_code(numbered) {
 }
 wrap_code(%(numbered)s)
 </script>
-"""
+'''
 
 TOGGLE_COMMENTS = \
-"""
+'''
 <script type="text/javascript">
 function toggle_comments() {
     var comments_div = document.getElementById('comment_list'),
@@ -336,10 +336,10 @@ function position_table(el) {
     setTimeout(function () {position_el.set(el, x, y); el.style.visibility = 'visible';}, 300)
 }
 </script>
-"""
+'''
 
 POSITION = \
-"""
+'''
 <script type="text/javascript">
 var position_el = {
     center : function (el, dim) {
@@ -401,10 +401,10 @@ var win_attr = {
     }
 };
 </script>
-"""
+'''
 
 SCROLL_TO_LINE = \
-"""
+'''
 <script type="text/javascript">
 function scroll_to_line(value) {
     var pos = 0,
@@ -421,7 +421,7 @@ function scroll_to_line(value) {
     window.scrollTo(0, pos);
 }
 </script>
-"""
+'''
 
 
 class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
@@ -484,6 +484,7 @@ class ExportHtml(object):
         self.sfground = ''
         self.numbers = numbers
         self.date_time_format = date_time_format
+        self.time = time.localtime()
         self.show_full_path = show_full_path
         self.highlight_selections = highlight_selections
         self.browser_print = browser_print
@@ -814,7 +815,7 @@ class ExportHtml(object):
         the_html.write(TABLE_START)
         if not self.no_header:
             # Write file name
-            date_time = time.strftime(self.date_time_format, time.localtime())
+            date_time = time.strftime(self.date_time_format, self.time)
             the_html.write(
                 FILE_INFO % {
                     "color": self.fground,
@@ -894,7 +895,8 @@ class ExportHtml(object):
         self, numbers=False, highlight_selections=False,
         clipboard_copy=False, browser_print=False, color_scheme=None,
         wrap=None, view_open=False, multi_select=False, style_gutter=True,
-        no_header=False, date_time_format="%m/%d/%y %I:%M:%S", show_full_path=True
+        no_header=False, date_time_format="%m/%d/%y %I:%M:%S", show_full_path=True,
+        save_location=None
     ):
         self.setup(
             bool(numbers), bool(highlight_selections), bool(browser_print),
@@ -902,7 +904,30 @@ class ExportHtml(object):
             bool(no_header), date_time_format, bool(show_full_path)
         )
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as the_html:
+        if save_location is not None:
+            fname = self.view.file_name()
+            if (
+                ((fname == None or not path.exists(fname)) and save_location == ".") or
+                not path.exists(save_location)
+                or not path.isdir(save_location)
+            ):
+                html_file = ".html"
+                save_location = None
+            elif save_location == ".":
+                html_file = "%s_%s.html" % (fname, time.strftime("%m%d%y%H%M%S", self.time))
+            elif not path.exists(fname):
+                html_file = path.join(save_location, "Untitled_%s.html" % time.strftime("%m%d%y%H%M%S", self.time))
+            else:
+                html_file = path.join(save_location, "%s_%s.html" % (path.basename(fname), time.strftime("%m%d%y%H%M%S", self.time)))
+        else:
+            html_file = ".html"
+
+        if save_location is not None:
+            open_html = lambda x: open(x, "w")
+        else:
+            open_html = lambda x: tempfile.NamedTemporaryFile(delete=False, suffix=x)
+
+        with open_html(html_file) as the_html:
             self.write_header(the_html)
             self.write_body(the_html)
             if bool(clipboard_copy):
