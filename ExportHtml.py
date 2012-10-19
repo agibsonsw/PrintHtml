@@ -107,7 +107,7 @@ CSS_ANNOTATIONS = \
     div#comment_wrapper {
         max-height: 200px;
         overflow: auto;
-        border: solid;
+        border: solid black;
         -moz-border-radius: 5px;
         -webkit-border-radius: 5px;
         box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
@@ -132,7 +132,7 @@ CSS_ANNOTATIONS = \
     * html a:hover { background: transparent; }
 '''
 
-ANNOTATE_OPEN = '''<a class="tooltip" href="javascript:toggle_comments();return false;">%(code)s'''
+ANNOTATE_OPEN = '''<a class="tooltip" href="javascript:toggle_comments();">%(code)s'''
 
 ANNOTATE_CLOSE = '''<div class="annotation">%(comment)s</div></a>'''
 
