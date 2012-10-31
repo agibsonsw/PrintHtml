@@ -102,6 +102,7 @@ CSS_ANNOTATIONS = \
         -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
     }
     div#toolbar {
+        visibility: hidden;
         padding-left: 10px;
         padding-right: 10px;
         opacity: 0;
@@ -109,15 +110,8 @@ CSS_ANNOTATIONS = \
         border:1px solid grey;
         color: white;
     }
-    div#toolbarIE {
-        padding-left: 10px;
-        padding-right: 10px;
-        visibility: hidden;
-        background-color:black;
-        border:1px solid grey;
-        color: white;
-    }
     div#toolbarhide:hover div#toolbar {
+        visibility: visible;
         opacity: .8;
         -webkit-transition: all .25s ease-out;
          -moz-transition: all .25s ease-out;
@@ -125,10 +119,7 @@ CSS_ANNOTATIONS = \
            -o-transition: all .25s ease-out;
               transition: all .25s ease-out;
     }
-    div#toolbarhide:hover div#toolbarIE {
-        visibility: visible;
-    }
-    div#toolbar a, div#toolbarIE a {
+    div#toolbar a {
         color:white;
     }
     div#comment_list {
@@ -293,8 +284,7 @@ TOOL_DUMP_THEME = ''' <a href="javascript:dump_theme()" title="Download Theme">T
 TOOLBAR = \
 '''
 <div id="toolbarhide">
-<!--[if gt IE 0]>        <div id="toolbarIE"> <![endif]-->
-<!--[if !IE]><!-->       <div id="toolbar">   <!--<![endif]-->
+    <div id="toolbar">
         %(options)s
     </div>
 </div>
