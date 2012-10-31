@@ -8,6 +8,7 @@ import webbrowser
 import re
 from HtmlAnnotations import get_annotations
 import ExportHtmlLib.desktop as desktop
+import json
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
 
@@ -132,11 +133,120 @@ CSS_ANNOTATIONS = \
     * html a:hover { background: transparent; }
 '''
 
+INCLUDE_THEME = \
+'''
+<script type="text/javascript">
+var plist = {
+    color_scheme: %(theme)s,
+    content: "",
+    indentlevel: 0,
+    isinstance: function(obj, s) {
+        return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase() === s;
+    },
+    get: function(file_name) {
+        this.content = '<?xml version="1.0" encoding="UTF-8"?>\\n' +
+                        '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\\n' +
+                        '<plist version="1.0">\\n' +
+                        '    <!-- ' + file_name + ' -->\\n';
+        this.parsedict(this.color_scheme);
+        this.content += '</plist>\\n';
+        return this.content;
+    },
+    indent: function() {
+        var i;
+        for (i = 0; i < this.indentlevel; i++) {
+            this.content += "    ";
+        }
+    },
+    parsekey: function(k) {
+        this.indent();
+        this.content += '<key>' + k + '</key>\\n';
+    },
+    parseitem: function(obj) {
+        if (this.isinstance(obj, "string")) {
+            this.parsestring(obj);
+        } else if (this.isinstance(obj, "array")) {
+            this.parsearray(obj);
+        } else if (this.isinstance(obj, "object")) {
+            this.parsedict(obj);
+        }
+    },
+    parsearray: function(obj) {
+        var i, len = obj.length;
+        this.indent();
+        this.content += '<array>\\n';
+        this.indentlevel++;
+        for (i = 0; i < len; i++) {
+            this.parseitem(obj[i]);
+        }
+        this.indentlevel--;
+        this.indent();
+        this.content += '</array>\\n';
+    },
+    parsestring: function(s) {
+        this.indent();
+        this.content += '<string>' + s + '</string>\\n';
+    },
+    parsedict: function(obj) {
+        var k, keys = Object.keys(obj);
+        keys.sort();
+        var len = keys.length, i;
+        this.indent();
+        this.content += '<dict>\\n';
+        this.indentlevel++;
+        for (i = 0; i < len; i++)
+        {
+            k = keys[i];
+            this.parsekey(k);
+            this.parseitem(obj[k]);
+        }
+        this.indentlevel--;
+        this.indent();
+        this.content += '</dict>\\n';
+    }
+};
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .replace(/\//g, "&#x2F;");
+}
+
+function dump_theme() {
+    var text, wnd, doc,
+        name = '%(name)s',
+        a = document.createElement('a');
+    window.URL = window.URL || window.webkitURL;
+
+    if (window.Blob != null && a.download != null) {
+        var a  = document.createElement('a');
+        text   = new Blob([plist.get(name)], {'type':'application/octet-stream'});
+        a.href = window.URL.createObjectURL(text);
+        a.download = name;
+        a.click();
+    } else {
+        text = '<pre>' + escapeHtml(plist.get(name)) + '</pre>',
+        wnd  = window.open('', '_blank', "status=1,toolbar=0,scrollbars=1"),
+        doc  = wnd.document;
+        doc.write(text);
+        doc.close();
+        wnd.focus();
+    }
+}
+</script>
+'''
+
 ANNOTATE_OPEN = '''<a class="tooltip" href="javascript:toggle_comments();">%(code)s'''
 
 ANNOTATE_CLOSE = '''<div class="annotation">%(comment)s</div></a>'''
 
 BODY_START = '''<body class="code_page code_text">\n<pre class="code_page">'''
+
+BODY_START_INCLUDE_THEME = '''<body class="code_page code_text">\n<button type="button" onclick="dump_theme();">Download Color Scheme: %(name)s</button><pre class="code_page">'''
 
 FILE_INFO = '''<tr><td colspan="2"><div id="file_info"><span style="color: %(color)s">%(date_time)s %(file)s\n\n</span></div></td></tr>'''
 
@@ -252,6 +362,32 @@ function toggle_gutter() {
 </script>
 '''
 
+PLAIN_TEXT = \
+'''
+<script type="text/javascript">
+function plain_text() {
+    var lines = document.querySelectorAll("td.code_line"),
+        line_len = lines.length,
+        i, text = "", pre,
+        orig_pres = document.querySelectorAll("pre.code_page"),
+        pre_len = orig_pres.length;
+    if (pre_len > 1) {
+        document.body.removeChild(orig_pres[1]);
+        orig_pres[0].style.display = 'block';
+    } else {
+        for (i = 1; i < line_len; i++) {
+            text += lines[i].textContent;
+        }
+        pre = document.createElement('pre');
+        pre.className = "code_page";
+        pre.appendChild(document.createTextNode(text));
+        orig_pres[0].style.display = 'none';
+        document.body.appendChild(pre);
+    }
+}
+</script>
+'''
+
 PRINT = \
 '''
 <script type="text/javascript">
@@ -260,6 +396,12 @@ function page_print() {
         window.print();
     }
 }
+</script>
+'''
+
+AUTO_PRINT = \
+'''
+<script type="text/javascript">
 document.getElementsByTagName('body')[0].onload = function (e) { page_print(); self.onload = null; }
 </script>
 '''
@@ -461,7 +603,8 @@ class ExportHtml(object):
     def setup(
             self, numbers, highlight_selections, browser_print,
             color_scheme, wrap, multi_select, style_gutter,
-            no_header, date_time_format, show_full_path
+            no_header, date_time_format, show_full_path,
+            download_theme
         ):
         path_packages = sublime.packages_path()
 
@@ -504,6 +647,7 @@ class ExportHtml(object):
         self.open_annot = False
         self.no_header = no_header
         self.annot_tbl = []
+        self.download_theme = download_theme
 
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
@@ -517,8 +661,9 @@ class ExportHtml(object):
             alt_scheme = eh_settings.get("alternate_scheme", False)
         scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
         colour_scheme = path.normpath(scheme_file)
-        plist_file = readPlist(path_packages + colour_scheme.replace('Packages', ''))
-        colour_settings = plist_file["settings"][0]["settings"]
+        self.scheme_file = path.basename(colour_scheme)
+        self.plist_file = readPlist(path_packages + colour_scheme.replace('Packages', ''))
+        colour_settings = self.plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
         self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'))
@@ -536,7 +681,7 @@ class ExportHtml(object):
 
         # Create scope colors mapping from color scheme file
         self.colours = {self.view.scope_name(self.end).split(' ')[0]: {"color": self.fground, "style": "normal"}}
-        for item in plist_file["settings"]:
+        for item in self.plist_file["settings"]:
             scope = item.get('scope', None)
             colour = None
             style = []
@@ -625,6 +770,13 @@ class ExportHtml(object):
             "body_fg":   self.fground,
             "display_mode": ('table-cell' if self.numbers else 'none'),
             "annotations": (CSS_ANNOTATIONS % {"dot_colour": self.fground})
+        }
+        the_html.write(header)
+
+        # Place the current theme info in the html so that it can be extracted
+        header = INCLUDE_THEME % {
+            "theme": json.dumps(self.plist_file, sort_keys=True, indent=4, separators=(',', ': ')).decode('raw_unicode_escape'),
+            "name": self.scheme_file,
         }
         the_html.write(header)
 
@@ -824,7 +976,10 @@ class ExportHtml(object):
 
     def write_body(self, the_html):
         processed_rows = ""
-        the_html.write(BODY_START)
+        if self.download_theme:
+            the_html.write(BODY_START_INCLUDE_THEME % {"name": self.scheme_file})
+        else:
+            the_html.write(BODY_START)
 
         the_html.write(TABLE_START)
         if not self.no_header:
@@ -890,8 +1045,11 @@ class ExportHtml(object):
                 }
             )
 
+        js_options.append(PRINT)
+        js_options.append(PLAIN_TEXT)
+
         if self.browser_print:
-            js_options.append(PRINT)
+            js_options.append(AUTO_PRINT)
 
         js_options.append(TOGGLE_GUTTER % {"tables": self.tables})
         js_options.append(DOUBLE_CLICK_EVENTS)
@@ -910,12 +1068,13 @@ class ExportHtml(object):
         clipboard_copy=False, browser_print=False, color_scheme=None,
         wrap=None, view_open=False, multi_select=False, style_gutter=True,
         no_header=False, date_time_format="%m/%d/%y %I:%M:%S", show_full_path=True,
-        save_location=None, time_stamp="_%m%d%y%H%M%S"
+        save_location=None, time_stamp="_%m%d%y%H%M%S", download_theme=False
     ):
         self.setup(
             bool(numbers), bool(highlight_selections), bool(browser_print),
             color_scheme, wrap, bool(multi_select), bool(style_gutter),
-            bool(no_header), date_time_format, bool(show_full_path)
+            bool(no_header), date_time_format, bool(show_full_path),
+            bool(download_theme)
         )
 
         if save_location is not None:
