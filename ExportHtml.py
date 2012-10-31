@@ -94,7 +94,43 @@ CSS_ANNOTATIONS = \
     .tooltip:hover div.annotation {
         margin-left: 0;
     }
-
+    div#toolbarhide {
+        position: fixed;
+        top: 0;
+        right: 0;
+        -webkit-transform: translateZ(0); /* webkit flicker fix */
+        -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
+    }
+    div#toolbar {
+        padding-left: 10px;
+        padding-right: 10px;
+        opacity: 0;
+        background-color:black;
+        border:1px solid grey;
+        color: white;
+    }
+    div#toolbarIE {
+        padding-left: 10px;
+        padding-right: 10px;
+        visibility: hidden;
+        background-color:black;
+        border:1px solid grey;
+        color: white;
+    }
+    div#toolbarhide:hover div#toolbar {
+        opacity: .8;
+        -webkit-transition: all .25s ease-out;
+         -moz-transition: all .25s ease-out;
+          -ms-transition: all .25s ease-out;
+           -o-transition: all .25s ease-out;
+              transition: all .25s ease-out;
+    }
+    div#toolbarhide:hover div#toolbarIE {
+        visibility: visible;
+    }
+    div#toolbar a, div#toolbarIE a {
+        color:white;
+    }
     div#comment_list {
         visibility: hidden;
         display: none;
@@ -137,84 +173,88 @@ INCLUDE_THEME = \
 '''
 <script type="text/javascript">
 var plist = {
-    color_scheme: %(theme)s,
-    content: "",
-    indentlevel: 0,
-    isinstance: function(obj, s) {
-        return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase() === s;
-    },
-    get: function(file_name) {
-        this.content = '<?xml version="1.0" encoding="UTF-8"?>\\n' +
-                        '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\\n' +
-                        '<plist version="1.0">\\n' +
-                        '    <!-- ' + file_name + ' -->\\n';
-        this.parsedict(this.color_scheme);
-        this.content += '</plist>\\n';
-        return this.content;
-    },
-    indent: function() {
-        var i;
-        for (i = 0; i < this.indentlevel; i++) {
-            this.content += "    ";
+        color_scheme: %(theme)s,
+        content: "",
+        indentlevel: 0,
+        isinstance: function(obj, s) {
+            return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase() === s;
+        },
+        get: function(file_name) {
+            this.content = '<?xml version="1.0" encoding="UTF-8"?>\\n' +
+                            '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\\n' +
+                            '<plist version="1.0">\\n' +
+                            '    <!-- ' + file_name + ' -->\\n';
+            this.parsedict(this.color_scheme);
+            this.content += '</plist>\\n';
+            return this.content;
+        },
+        indent: function() {
+            var i;
+            for (i = 0; i < this.indentlevel; i++) {
+                this.content += "    ";
+            }
+        },
+        parsekey: function(k) {
+            this.indent();
+            this.content += '<key>' + k + '</key>\\n';
+        },
+        parseitem: function(obj) {
+            if (this.isinstance(obj, "string")) {
+                this.parsestring(obj);
+            } else if (this.isinstance(obj, "array")) {
+                this.parsearray(obj);
+            } else if (this.isinstance(obj, "object")) {
+                this.parsedict(obj);
+            }
+        },
+        parsearray: function(obj) {
+            var i, len = obj.length;
+            this.indent();
+            this.content += '<array>\\n';
+            this.indentlevel++;
+            for (i = 0; i < len; i++) {
+                this.parseitem(obj[i]);
+            }
+            this.indentlevel--;
+            this.indent();
+            this.content += '</array>\\n';
+        },
+        parsestring: function(s) {
+            this.indent();
+            this.content += '<string>' + s + '</string>\\n';
+        },
+        parsedict: function(obj) {
+            var k, keys = Object.keys(obj);
+            keys.sort();
+            var len = keys.length, i;
+            this.indent();
+            this.content += '<dict>\\n';
+            this.indentlevel++;
+            for (i = 0; i < len; i++)
+            {
+                k = keys[i];
+                this.parsekey(k);
+                this.parseitem(obj[k]);
+            }
+            this.indentlevel--;
+            this.indent();
+            this.content += '</dict>\\n';
         }
     },
-    parsekey: function(k) {
-        this.indent();
-        this.content += '<key>' + k + '</key>\\n';
-    },
-    parseitem: function(obj) {
-        if (this.isinstance(obj, "string")) {
-            this.parsestring(obj);
-        } else if (this.isinstance(obj, "array")) {
-            this.parsearray(obj);
-        } else if (this.isinstance(obj, "object")) {
-            this.parsedict(obj);
-        }
-    },
-    parsearray: function(obj) {
-        var i, len = obj.length;
-        this.indent();
-        this.content += '<array>\\n';
-        this.indentlevel++;
-        for (i = 0; i < len; i++) {
-            this.parseitem(obj[i]);
-        }
-        this.indentlevel--;
-        this.indent();
-        this.content += '</array>\\n';
-    },
-    parsestring: function(s) {
-        this.indent();
-        this.content += '<string>' + s + '</string>\\n';
-    },
-    parsedict: function(obj) {
-        var k, keys = Object.keys(obj);
-        keys.sort();
-        var len = keys.length, i;
-        this.indent();
-        this.content += '<dict>\\n';
-        this.indentlevel++;
-        for (i = 0; i < len; i++)
-        {
-            k = keys[i];
-            this.parsekey(k);
-            this.parseitem(obj[k]);
-        }
-        this.indentlevel--;
-        this.indent();
-        this.content += '</dict>\\n';
-    }
-};
 
-function escapeHtml(str) {
-    return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;")
-        .replace(/\//g, "&#x2F;");
-}
+    escape_html = {
+        safe_chars: {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': '&quot;',
+            "'": '&#39;',
+            "/": '&#x2F;'
+        },
+        escape: function (s) {
+            return String(s).replace(/[&<>"'\/]/g, function (c) {return escape_html.safe_chars[c]})
+        }
+    };
 
 function dump_theme() {
     var text, wnd, doc,
@@ -229,7 +269,7 @@ function dump_theme() {
         a.download = name;
         a.click();
     } else {
-        text = '<pre>' + escapeHtml(plist.get(name)) + '</pre>',
+        text = '<pre>' + escape_html.escape(plist.get(name)) + '</pre>',
         wnd  = window.open('', '_blank', "status=1,toolbar=0,scrollbars=1"),
         doc  = wnd.document;
         doc.write(text);
@@ -240,13 +280,31 @@ function dump_theme() {
 </script>
 '''
 
+TOOL_GUTTER = ''' <a href="javascript:toggle_gutter()" title="Toggle Gutter">Gutter</a> '''
+
+TOOL_PLAIN_TEXT = ''' <a href="javascript:toggle_plain_text()" title="Toggle Plain Text">Text</a> '''
+
+TOOL_PRINT = ''' <a href="javascript:page_print()" title="Print">Print</a> '''
+
+TOOL_ANNOTATION = ''' <a href="javascript:toggle_annotations();" title="Toggle Annotations">Anot</a> '''
+
+TOOL_DUMP_THEME = ''' <a href="javascript:dump_theme()" title="Download Theme">Theme</a> '''
+
+TOOLBAR = \
+'''
+<div id="toolbarhide">
+<!--[if gt IE 0]>        <div id="toolbarIE"> <![endif]-->
+<!--[if !IE]><!-->       <div id="toolbar">   <!--<![endif]-->
+        %(options)s
+    </div>
+</div>
+'''
+
 ANNOTATE_OPEN = '''<a class="tooltip" href="javascript:toggle_annotations();">%(code)s'''
 
 ANNOTATE_CLOSE = '''<div class="annotation">%(comment)s</div></a>'''
 
 BODY_START = '''<body class="code_page code_text">\n<pre class="code_page">'''
-
-BODY_START_INCLUDE_THEME = '''<body class="code_page code_text">\n<button type="button" onclick="dump_theme();">Download Color Scheme: %(name)s</button><pre class="code_page">'''
 
 FILE_INFO = '''<tr><td colspan="2"><div id="file_info"><span style="color: %(color)s">%(date_time)s %(file)s\n\n</span></div></td></tr>'''
 
@@ -312,7 +370,7 @@ ANNOTATION_FOOTER = (
     '</td></tr>'
 )
 
-BODY_END = '''</pre>\n%(js)s\n</body>\n</html>\n'''
+BODY_END = '''</pre>%(toolbar)s\n%(js)s\n</body>\n</html>\n'''
 
 DOUBLE_CLICK_EVENTS = \
 '''
@@ -604,7 +662,7 @@ class ExportHtml(object):
             self, numbers, highlight_selections, browser_print,
             color_scheme, wrap, multi_select, style_gutter,
             no_header, date_time_format, show_full_path,
-            download_theme
+            toolbar
         ):
         path_packages = sublime.packages_path()
 
@@ -647,7 +705,7 @@ class ExportHtml(object):
         self.open_annot = False
         self.no_header = no_header
         self.annot_tbl = []
-        self.download_theme = download_theme
+        self.toolbar = toolbar
 
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
@@ -699,6 +757,24 @@ class ExportHtml(object):
 
             if scope != None and colour != None:
                 self.colours[scope] = {"color": self.strip_transparency(colour), "style": ' '.join(style)}
+
+    def get_tools(self, tools, use_annotation):
+        toolbar_options = {
+            "gutter": TOOL_GUTTER,
+            "print": TOOL_PRINT,
+            "plain_text": TOOL_PLAIN_TEXT,
+            "annotation": TOOL_ANNOTATION if use_annotation else "",
+            "theme": TOOL_DUMP_THEME
+        }
+        t_opt = ""
+        toolbar_element = ""
+
+        if len(tools):
+            for t in tools:
+                if t in toolbar_options:
+                    t_opt += toolbar_options[t]
+            toolbar_element = TOOLBAR % {"options": t_opt}
+        return toolbar_element
 
     def strip_transparency(self, color):
         if color is None:
@@ -976,10 +1052,7 @@ class ExportHtml(object):
 
     def write_body(self, the_html):
         processed_rows = ""
-        if self.download_theme:
-            the_html.write(BODY_START_INCLUDE_THEME % {"name": self.scheme_file})
-        else:
-            the_html.write(BODY_START)
+        the_html.write(BODY_START)
 
         the_html.write(TABLE_START)
         if not self.no_header:
@@ -1052,10 +1125,9 @@ class ExportHtml(object):
             js_options.append(AUTO_PRINT)
 
         js_options.append(TOGGLE_GUTTER % {"tables": self.tables})
-        js_options.append(DOUBLE_CLICK_EVENTS)
 
         # Write empty line to allow copying of last line and line number without issue
-        the_html.write(BODY_END % {"js": ''.join(js_options)})
+        the_html.write(BODY_END % {"js": ''.join(js_options), "toolbar": self.get_tools(self.toolbar, len(self.annot_tbl))})
 
     def add_comments_table(self, the_html):
         the_html.write(ANNOTATION_TBL_START)
@@ -1068,13 +1140,13 @@ class ExportHtml(object):
         clipboard_copy=False, browser_print=False, color_scheme=None,
         wrap=None, view_open=False, multi_select=False, style_gutter=True,
         no_header=False, date_time_format="%m/%d/%y %I:%M:%S", show_full_path=True,
-        save_location=None, time_stamp="_%m%d%y%H%M%S", download_theme=False
+        save_location=None, time_stamp="_%m%d%y%H%M%S", toolbar=["plain_text", "gutter", "print", "annotation", "theme"]
     ):
         self.setup(
             bool(numbers), bool(highlight_selections), bool(browser_print),
             color_scheme, wrap, bool(multi_select), bool(style_gutter),
             bool(no_header), date_time_format, bool(show_full_path),
-            bool(download_theme)
+            toolbar
         )
 
         if save_location is not None:
