@@ -240,7 +240,7 @@ function dump_theme() {
 </script>
 '''
 
-ANNOTATE_OPEN = '''<a class="tooltip" href="javascript:toggle_comments();">%(code)s'''
+ANNOTATE_OPEN = '''<a class="tooltip" href="javascript:toggle_annotations();">%(code)s'''
 
 ANNOTATE_CLOSE = '''<div class="annotation">%(comment)s</div></a>'''
 
@@ -279,7 +279,7 @@ ANNOTATION_TBL_START = (
     '<div id="comment_list" style="display:none"><div id="comment_wrapper">' +
     '<table id="comment_table">' +
     '<tr><th>Line/Col</th><th>Comments' +
-    '<a href="javascript:void(0)" class="table_close" onclick="toggle_comments();return false;">(close)</a>'
+    '<a href="javascript:void(0)" class="table_close" onclick="toggle_annotations();return false;">(close)</a>'
     '</th></tr>'
 )
 
@@ -321,8 +321,8 @@ function double_click_events(e) {
     var evt = e ? e : window.event;
     if (evt.shiftKey && typeof toggle_gutter !== "undefined") {
         toggle_gutter();
-    } else if (evt.altKey && typeof toggle_comments !== "undefined") {
-        toggle_comments();
+    } else if (evt.altKey && typeof toggle_annotations !== "undefined") {
+        toggle_annotations();
     }
 }
 document.getElementsByTagName('body')[0].ondblclick = function (e) { double_click_events(e); };
@@ -362,10 +362,10 @@ function toggle_gutter() {
 </script>
 '''
 
-PLAIN_TEXT = \
+TOGGLE_PLAIN_TEXT = \
 '''
 <script type="text/javascript">
-function plain_text() {
+function toggle_plain_text() {
     var lines = document.querySelectorAll("td.code_line"),
         line_len = lines.length,
         i, text = "", pre,
@@ -439,10 +439,10 @@ wrap_code(%(numbered)s)
 </script>
 '''
 
-TOGGLE_COMMENTS = \
+TOGGLE_ANNOTATIONS = \
 '''
 <script type="text/javascript">
-function toggle_comments() {
+function toggle_annotations() {
     var comments_div = document.getElementById('comment_list'),
         mode = comments_div.style.display;
     if (mode == 'none') {
@@ -1030,7 +1030,7 @@ class ExportHtml(object):
         if len(self.annot_tbl):
             self.add_comments_table(the_html)
             js_options.append(POSITION)
-            js_options.append(TOGGLE_COMMENTS)
+            js_options.append(TOGGLE_ANNOTATIONS)
             js_options.append(SCROLL_TO_LINE)
 
         # Write javascript snippets
@@ -1046,7 +1046,7 @@ class ExportHtml(object):
             )
 
         js_options.append(PRINT)
-        js_options.append(PLAIN_TEXT)
+        js_options.append(TOGGLE_PLAIN_TEXT)
 
         if self.browser_print:
             js_options.append(AUTO_PRINT)
