@@ -11,6 +11,7 @@ import ExportHtmlLib.desktop as desktop
 import json
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
+JS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "js")
 
 if sublime.platform() == "linux":
     # Try and load Linux Python2.6 lib.  Default path is for Ubuntu.
@@ -46,6 +47,7 @@ CSS = \
     .simple_code_page { background-color: white; color: black }
     .code_gutter { display: %(display_mode)s; background-color: %(gutter_bg)s; }
     .code_line { padding-left: 10px; }
+    td.code_line div { width: 100%%; }
     span { border: 0; margin: 0; padding: 0; }
     span.bold { font-weight: bold; }
     span.italic { font-style: italic; }
@@ -165,117 +167,6 @@ CSS_ANNOTATIONS = \
     * html a:hover { background: transparent; }
 '''
 
-INCLUDE_THEME = \
-'''
-<script type="text/javascript">
-var plist = {
-        color_scheme: %(theme)s,
-        content: "",
-        indentlevel: 0,
-        isinstance: function(obj, s) {
-            return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase() === s;
-        },
-        get: function(file_name) {
-            this.content = '<?xml version="1.0" encoding="UTF-8"?>\\n' +
-                            '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\\n' +
-                            '<plist version="1.0">\\n' +
-                            '    <!-- ' + file_name + ' -->\\n';
-            this.parsedict(this.color_scheme);
-            this.content += '</plist>\\n';
-            return this.content;
-        },
-        indent: function() {
-            var i;
-            for (i = 0; i < this.indentlevel; i++) {
-                this.content += "    ";
-            }
-        },
-        parsekey: function(k) {
-            this.indent();
-            this.content += '<key>' + k + '</key>\\n';
-        },
-        parseitem: function(obj) {
-            if (this.isinstance(obj, "string")) {
-                this.parsestring(obj);
-            } else if (this.isinstance(obj, "array")) {
-                this.parsearray(obj);
-            } else if (this.isinstance(obj, "object")) {
-                this.parsedict(obj);
-            }
-        },
-        parsearray: function(obj) {
-            var i, len = obj.length;
-            this.indent();
-            this.content += '<array>\\n';
-            this.indentlevel++;
-            for (i = 0; i < len; i++) {
-                this.parseitem(obj[i]);
-            }
-            this.indentlevel--;
-            this.indent();
-            this.content += '</array>\\n';
-        },
-        parsestring: function(s) {
-            this.indent();
-            this.content += '<string>' + s + '</string>\\n';
-        },
-        parsedict: function(obj) {
-            var k, keys = Object.keys(obj);
-            keys.sort();
-            var len = keys.length, i;
-            this.indent();
-            this.content += '<dict>\\n';
-            this.indentlevel++;
-            for (i = 0; i < len; i++)
-            {
-                k = keys[i];
-                this.parsekey(k);
-                this.parseitem(obj[k]);
-            }
-            this.indentlevel--;
-            this.indent();
-            this.content += '</dict>\\n';
-        }
-    },
-
-    escape_html = {
-        safe_chars: {
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': '&quot;',
-            "'": '&#39;',
-            "/": '&#x2F;'
-        },
-        escape: function (s) {
-            return String(s).replace(/[&<>"'\/]/g, function (c) {return escape_html.safe_chars[c]})
-        }
-    };
-
-function dump_theme() {
-    var text, wnd, doc,
-        name = '%(name)s',
-        a = document.createElement('a');
-    window.URL = window.URL || window.webkitURL;
-
-    if (window.Blob != null && a.download != null) {
-        var a  = document.createElement('a');
-        text   = new Blob([plist.get(name)], {'type':'application/octet-stream'});
-        a.href = window.URL.createObjectURL(text);
-        a.download = name;
-        a.click();
-    } else {
-        text = '<pre>' + escape_html.escape(plist.get(name)) + '</pre>',
-        wnd  = window.open('', '_blank', "status=1,toolbar=0,scrollbars=1"),
-        doc  = wnd.document;
-        doc.write(text);
-        doc.close();
-        wnd.focus();
-    }
-}
-</script>
-'''
-
 TOOL_GUTTER = ''' <a href="javascript:toggle_gutter()" title="Toggle Gutter"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFg8FBLseHgAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAM5JREFUOMvdjzFqAlEQhuephZWNYEq9wJ4kt7C08AiyhWCXQI6xh5CtUqVJEbAU1kA6i92VzWPnmxR5gUUsfAQbf5himPm+YURumSzLetFQWZZj4Bn45DcHYFMUxfAqAbA1MwO+gHeA0L9cJfDeJ6q6yvO8LyKiqosgOKVp6qJf8t4nQfD9J42Kqi6D4DUabppmBhzNzNq2fYyC67p+AHbh+iYKrqpqAnwE+Ok/8Dr6b+AtwArsu6Wq8/P9wQXHTETEOdcTkWl3YGYjub/8ANrnvguZ++ozAAAAAElFTkSuQmCC" /></a> '''
 
 TOOL_PLAIN_TEXT = ''' <a href="javascript:toggle_plain_text()" title="Toggle Plain Text"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFg8dF9eGSAAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAANRJREFUOMvdkTFOgkEQhResaeQScAsplIRGDgKttnsIOYIUm1hQa/HfQiMFcIBt9k/UTWa/sRkbspKfzviS7eZ7M/uec39WbdsOgU/gI6V0ebZBKeVeTaWUu7PgpmkugD3wZW8XQuh3NhCRuaoq8AisVVVF5LazAfBi0JWITMzsuROccx4b8O6cc977HrAFyDmPumxfHQf3EyjwcBKOMQ6ApL8ISDHGwanqljb4VLlsY5ctqrD99c3Cm1aamZn5q/e+V6vuxgb2tc5DCH3gYAuu3f/RNzmJ99G3cZ53AAAAAElFTkSuQmCC" /></a> '''
@@ -285,6 +176,8 @@ TOOL_PRINT = ''' <a href="javascript:page_print()" title="Print"><img border="0"
 TOOL_ANNOTATION = ''' <a href="javascript:toggle_annotations();" title="Toggle Annotations"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAIt1BsPQAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAALVJREFUOMvNkkESgjAUQ/Or+8IN9A7ewHN7FRgvwIB7eW6+WGsRRjZm05n+Jn+aRNoIyy8Ak1QVZkjqzYyiQEKsJF0kxUxgkHSW1Eu6mdn9bStwABqgA0Y+MfqsBU7ALie3M8SS0NU5JqD2zWvIqUgD1MF9iCVDF8yPkixsjTF4PIOfa/Hi/GhiO5mYJHH0mL4ROzdvIu+TAoW8ddm30iJNjTQgevOqpMLPx8NilWe6X3z8n3gAfmBJ5rRJVyQAAAAASUVORK5CYII=" /></a> '''
 
 TOOL_DUMP_THEME = ''' <a href="javascript:dump_theme()" title="Download Theme"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAWTV9RXgAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAJtJREFUOMvdk9ENwyAQQ5+rDBA6QZbI/gN0h3YE2gXi/lykhABN1b9aQkh3+CEwiEK2BYyAyhbwlORtceCoEbgBqahnYI65C1CYr43eThd+1B8Ahkp0qXZZa8/2LlIFIG2i676DmDMwS8pDcZzW7tt4DbwOr8/2ZPthe3FbS6yZ4thfQdrmE5DP5g7kvLkCucdomtWDRJzUvvGqN6JK1cOooSjlAAAAAElFTkSuQmCC" /></a> '''
+
+TOOL_WRAPPING = ''' <a href="javascript:toggle_wrapping();" title="Toggle Wrapping"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AsBFiYl9jWoIQAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAP1JREFUOMudk0FuwkAMRZ+jbCGZXADlKvS8HKG9Qa8Q1K5LSLpG+ixwUmdKQMLSSDOeb/v7e8bITJIBNWD5FTCYmaLT7gTWwDtQZQlG4A0YYiILwTvgwxNsgV+vOuEm3wDsga+ZjaQkqZN0kdT7vpXU+Grd1zumk5Rm6g44STr6PjmriEl+d3RsK8li9T/nimXFOkmp8P4mwcZc5YXit7vRjxVgBQ/MK1aPWBWu9Jw1A9c+mZ0nW7AFdLevwKCR9BPE/SdiaWaSNADntdb9jXz6eQt8L15lGFM+vsarRevjtMqg7pkXrHghZiFs+QS8xmwDHIC9PXsHK197/t5XQswlGeOCYgkAAAAASUVORK5CYII=" /></a> '''
 
 TOOLBAR = \
 '''
@@ -367,250 +260,62 @@ ANNOTATION_FOOTER = (
 
 BODY_END = '''</pre>%(toolbar)s\n%(js)s\n</body>\n</html>\n'''
 
-TOGGLE_GUTTER = \
+INCLUDE_THEME = \
 '''
 <script type="text/javascript">
-function toggle_gutter() {
-    var i, j, mode, rows, r, tbls, rows, r,
-        tables = %(tables)s;
-    tbls  = document.getElementsByTagName('table');
-    for (i = 1; i <= tables; i++) {
-        rows = tbls[i].getElementsByTagName('tr');
-        r = rows.length;
-        for (j = 0; j < r; j++) {
-            cels = rows[j].getElementsByTagName('td');
-            if (mode == null) {
-                if (cels[0].style.display == 'none') {
-                    mode = 'table-cell';
-                } else {
-                    mode = 'none';
-                }
-            }
-            cels[0].style.display = mode;
-        }
-    }
-    if (typeof wrap_code !== "undefined" && mode != null) {
-        if (mode == 'table-cell') {
-            setTimeout("wrap_code(true)", 500)
-        } else {
-            setTimeout("wrap_code(false)", 500)
-        }
-    }
+%(jscode)s
+plist.color_scheme = %(theme)s;
+
+function dump_theme() {
+    extract_theme('%(name)s');
 }
 </script>
 '''
 
-TOGGLE_PLAIN_TEXT = \
+TOGGLE_LINE_OPTIONS = \
 '''
 <script type="text/javascript">
-function toggle_plain_text() {
-    var lines = document.querySelectorAll("td.code_line"),
-        line_len = lines.length,
-        i, text = "", pre,
-        orig_pre = document.querySelectorAll("pre.code_page")[0],
-        plain_pre = document.querySelectorAll("pre.simple_code_page");
-    if (plain_pre.length > 0) {
-        document.body.removeChild(plain_pre[0]);
-        orig_pre.style.display = 'block';
-        document.body.className = "code_page"
-    } else {
-        for (i = 1; i < line_len; i++) {
-            text += lines[i].textContent;
-        }
-        pre = document.createElement('pre');
-        pre.className = "simple_code_page";
-        pre.appendChild(document.createTextNode(text));
-        orig_pre.style.display = 'none';
-        document.body.appendChild(pre);
-        document.body.className = "simple_code_page"
-    }
-}
-</script>
-'''
+%(jscode)s
 
-PRINT = \
-'''
-<script type="text/javascript">
-function page_print() {
-    var element = document.getElementById("toolbarhide");
-    if (element != null) {
-        element.style.display = "none";
-    }
-    if (window.print) {
-        window.print();
-    }
-    if (element != null) {
-        element.style.display = "block";
-    }
-}
+page_line_info.wrap      = false;
+page_line_info.ranges    = [%(ranges)s];
+page_line_info.wrap_size = %(wrap_size)d;
+page_line_info.tables    = %(tables)s;
+page_line_info.header    = %(header)s;
+page_line_info.gutter    = %(gutter)s;
 </script>
 '''
 
 AUTO_PRINT = \
 '''
 <script type="text/javascript">
-document.getElementsByTagName('body')[0].onload = function (e) { page_print(); self.onload = null; }
+document.getElementsByTagName('body')[0].onload = function (e) { page_print(); self.onload = null; };
 </script>
 '''
 
 WRAP = \
 '''
 <script type="text/javascript">
-function wrap_code(numbered) {
-    var start, end, i, j, idx,
-        pad = 10,
-        ranges = [%(ranges)s],
-        wrap_size = %(wrap_size)d,
-        tables = %(tables)s,
-        header = %(header)s;
-    if (header) {
-        document.getElementById("file_info").style.width = wrap_size + "px";
-    }
-    for (i = 1; i <= tables; i++) {
-        idx = i - 1;
-        start = ranges[idx][0];
-        end = ranges[idx][1];
-        if (numbered) {
-            for(j = start; j < end; j++) {
-                var width = document.getElementById("L_" + idx + "_" + j).offsetWidth;
-                document.getElementById("C_" + idx + "_" + j).style.width = (wrap_size - width - pad) + "px";
-            }
-        } else {
-            for(j = start; j < end; j++) {
-                document.getElementById("C_" + idx + "_" + j).style.width = (wrap_size - pad) + "px";
-            }
-        }
-    }
-}
-wrap_code(%(numbered)s)
+toggle_wrapping();
 </script>
 '''
 
-TOGGLE_ANNOTATIONS = \
+HTML_JS_WRAP = \
 '''
 <script type="text/javascript">
-function toggle_annotations() {
-    var comments_div = document.getElementById('comment_list'),
-        mode = comments_div.style.display;
-    if (mode == 'none') {
-        comments_div.style.display = 'block';
-        position_table(comments_div)
-    } else {
-        comments_div.style.visibility = 'hidden'
-        comments_div.style.display = 'none';
-    }
-}
-
-function dock_table() {
-    var comments_div = document.getElementById('comment_list');
-    position_table(comments_div)
-}
-
-function position_table(el) {
-    var x, y,
-        sel = document.getElementById('dock'),
-        option = sel.options[sel.selectedIndex].value;
-    switch(option) {
-        case "0": x = 'center'; y = 'center';  break;
-        case "1": x = 'center'; y = 'top';     break;
-        case "2": x = 'center'; y = 'bottom';  break;
-        case "3": x = 'left';   y = 'center';  break;
-        case "4": x = 'right';  y = 'center';  break;
-        case "5": x = 'left';   y = 'top';     break;
-        case "6": x = 'right';  y = 'top';     break;
-        case "7": x = 'left';   y = 'bottom';  break;
-        case "8": x = 'right';  y = 'bottom';  break;
-        default: break;
-    }
-    setTimeout(function () {position_el.set(el, x, y); el.style.visibility = 'visible';}, 300)
-}
+%(jscode)s
 </script>
 '''
 
-POSITION = \
-'''
-<script type="text/javascript">
-var position_el = {
-    center : function (el, dim) {
-        var c = win_attr.get_center(),
-            top    = (c.y - (el.offsetHeight/2)),
-            left   = (c.x - (el.offsetWidth/2));
-        if (dim == null || dim === 'y') el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
-        if (dim == null || dim === 'x') el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
-    },
 
-    set : function (el, x, y) {
-        var left, top;
-
-        if (typeof x === "undefined") x = null;
-        if (typeof y === "undefined") y = null;
-
-        if (y === 'center') {
-            position_el.center(el, 'y');
-        } else if (y === 'top') {
-            el.style.top = 0 + 'px';
-        } else if (y === 'bottom') {
-            top = (win_attr.get_size('y') - (el.offsetHeight));
-            el.style.top = (top < 0) ? 0 + 'px' : top + 'px';
-        } else if (y.match(/^[\\d]+(%%|px|em|mm|cm|in|pt|pc)$/) != null) {
-            el.style.top = y;
-        }
-
-        if (x === "center") {
-            position_el.center(el, 'x');
-        } else if (x === 'left') {
-            el.style.left = 0 + 'px';
-        } else if (x === 'right') {
-            left = (win_attr.get_size('x') - (el.offsetWidth));
-            el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
-        } else if (x.match(/^[\\d]+(%%|px|em|mm|cm|in|pt|pc)$/) != null) {
-            el.style.left = x;
-        }
-    }
-};
-
-var win_attr = {
-    get_center : function (dim) {
-        var c = {
-            'x' : (win_attr.get_size('x')/2),
-            'y' : (win_attr.get_size('y')/2)
-        };
-        return ((dim) ? c[dim] : c);
-    },
-
-    get_size : function(dir) {
-        dir = (dir === 'x') ? 'Width' : 'Height';
-        return ((window['inner'+dir]) ?
-            window['inner'+dir] :
-            ((window.document.documentElement && window.document.documentElement['client'+dir]) ?
-                window.document.documentElement['client'+dir] :
-                window.document.body['client'+dir]
-            )
-        );
-    }
-};
-</script>
-'''
-
-SCROLL_TO_LINE = \
-'''
-<script type="text/javascript">
-function scroll_to_line(value) {
-    var pos = 0,
-        el = document.getElementById(value);
-    window.scrollTo(0, 0);
-    while(el) {
-        pos += el.offsetTop;
-        el = el.offsetParent;
-    }
-    pos -= win_attr.get_center('y');
-    if (pos < 0) {
-        pos = 0;
-    }
-    window.scrollTo(0, pos);
-}
-</script>
-'''
+def getjs(file_name):
+    code = ""
+    try:
+        with open(path.join(JS_DIR, file_name), "r") as f:
+            code = f.read()
+    except:
+        pass
+    return code
 
 
 class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
@@ -678,7 +383,8 @@ class ExportHtml(object):
         self.show_full_path = show_full_path
         self.highlight_selections = highlight_selections
         self.browser_print = browser_print
-        self.wrap = int(wrap) if wrap != None and int(wrap) > 0 else False
+        self.auto_wrap = wrap != None and int(wrap) > 0
+        self.wrap = 900 if not self.auto_wrap else int(wrap)
         self.hl_continue = None
         self.curr_hl = None
         self.sels = []
@@ -753,7 +459,8 @@ class ExportHtml(object):
             "print": TOOL_PRINT,
             "plain_text": TOOL_PLAIN_TEXT,
             "annotation": TOOL_ANNOTATION if use_annotation else "",
-            "theme": TOOL_DUMP_THEME
+            "theme": TOOL_DUMP_THEME,
+            "wrapping": TOOL_WRAPPING
         }
         t_opt = ""
         toolbar_element = ""
@@ -840,6 +547,7 @@ class ExportHtml(object):
 
         # Place the current theme info in the html so that it can be extracted
         header = INCLUDE_THEME % {
+            "jscode": getjs('plist.js'),
             "theme": json.dumps(self.plist_file, sort_keys=True, indent=4, separators=(',', ': ')).decode('raw_unicode_escape'),
             "name": self.scheme_file,
         }
@@ -1091,29 +799,25 @@ class ExportHtml(object):
         js_options = []
         if len(self.annot_tbl):
             self.add_comments_table(the_html)
-            js_options.append(POSITION)
-            js_options.append(TOGGLE_ANNOTATIONS)
-            js_options.append(SCROLL_TO_LINE)
+            js_options.append(HTML_JS_WRAP % {"jscode": getjs('annotation.js')})
 
         # Write javascript snippets
-        if self.wrap:
-            js_options.append(
-                WRAP % {
-                    "ranges":     processed_rows.rstrip(','),
-                    "wrap_size": self.wrap,
-                    "tables":    self.tables,
-                    "numbered": ("true" if self.numbers else "false"),
-                    "header": ("false" if self.no_header else "true")
-                }
-            )
-
-        js_options.append(PRINT)
-        js_options.append(TOGGLE_PLAIN_TEXT)
+        js_options.append(HTML_JS_WRAP % {"jscode": getjs('print.js')})
+        js_options.append(HTML_JS_WRAP % {"jscode": getjs('plaintext.js')})
+        js_options.append(TOGGLE_LINE_OPTIONS % {
+                "jscode":    getjs('lines.js'),
+                "wrap_size": self.wrap,
+                "ranges":    processed_rows.rstrip(','),
+                "tables":    self.tables,
+                "header":    ("false" if self.no_header else "true"),
+                "gutter":    ('true' if self.numbers else 'false')
+            }
+        )
+        if self.auto_wrap:
+            js_options.append(WRAP)
 
         if self.browser_print:
             js_options.append(AUTO_PRINT)
-
-        js_options.append(TOGGLE_GUTTER % {"tables": self.tables})
 
         # Write empty line to allow copying of last line and line number without issue
         the_html.write(BODY_END % {"js": ''.join(js_options), "toolbar": self.get_tools(self.toolbar, len(self.annot_tbl))})
@@ -1129,7 +833,7 @@ class ExportHtml(object):
         clipboard_copy=False, browser_print=False, color_scheme=None,
         wrap=None, view_open=False, multi_select=False, style_gutter=True,
         no_header=False, date_time_format="%m/%d/%y %I:%M:%S", show_full_path=True,
-        save_location=None, time_stamp="_%m%d%y%H%M%S", toolbar=["plain_text", "gutter", "print", "annotation", "theme"]
+        save_location=None, time_stamp="_%m%d%y%H%M%S", toolbar=["plain_text", "gutter", "wrapping", "print", "annotation", "theme"]
     ):
         self.setup(
             bool(numbers), bool(highlight_selections), bool(browser_print),

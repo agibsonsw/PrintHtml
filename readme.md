@@ -55,7 +55,7 @@ The name of the command is the key value, and then you add the parameters you wi
 - show_full_path (boolean): Show full path for filename when displaying header. Default is ```true```
 - save_location (string): Path to save html file.  If the file is wanted in the same file as the original, use ".".  Otherwise, use the absolute path to where the file is desired.  If there is an issue determining where to save the file, or the path does not exist, the OS temp folder will be used. Default is ```None``` (use temp folder).
 - time_stamp (string): Configure the time stamp of saved html when using ```save_location```.  To remove time stamps, just set to an empty string ```""```.  Please see Python's documentation on ```time.strftime``` for detailed info on formatting syntax.  Default is ```"_%m%d%y%H%M%S"```
-- toolbar (array of strings): Option to display a toolbar with to access features in a generated HTML.  This setting is an array of keywords that represent the icons in the toolbar to show.  Valid keywords include ```gutter```, ```print```, ```plain_text```, ```annotation```, and ```theme```.  Toolbar will appear when you mouse over the uppert right corner of the window of the generated html.  Default enables all.
+- toolbar (array of strings): Option to display a toolbar with to access features in a generated HTML.  This setting is an array of keywords that represent the icons in the toolbar to show.  Valid keywords include ```gutter```, ```print```, ```plain_text```, ```annotation```, ```theme```, and ```wrapping```.  Toolbar will appear when you mouse over the uppert right corner of the window of the generated html.  Default enables all.
 
 If you wish to bind a command to a key combination etc., the same settings as above can be used.
 
