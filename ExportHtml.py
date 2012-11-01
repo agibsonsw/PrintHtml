@@ -96,14 +96,17 @@ CSS_ANNOTATIONS = \
     }
     div#toolbarhide {
         position: fixed;
-        top: 0;
-        right: 0;
+        top: 5px;
+        right: 10px;
         -webkit-transform: translateZ(0); /* webkit flicker fix */
         -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
     }
     div#toolbar {
         visibility: hidden;
-        padding-top: 3px;
+        -webkit-border-radius: 5px;
+        -moz-border-radius: 5px;
+        border-radius: 5px;
+        padding-top: 5px;
         padding-left: 10px;
         padding-right: 10px;
         opacity: 0;
@@ -362,21 +365,6 @@ ANNOTATION_FOOTER = (
 )
 
 BODY_END = '''</pre>%(toolbar)s\n%(js)s\n</body>\n</html>\n'''
-
-DOUBLE_CLICK_EVENTS = \
-'''
-<script type="text/javascript">
-function double_click_events(e) {
-    var evt = e ? e : window.event;
-    if (evt.shiftKey && typeof toggle_gutter !== "undefined") {
-        toggle_gutter();
-    } else if (evt.altKey && typeof toggle_annotations !== "undefined") {
-        toggle_annotations();
-    }
-}
-document.getElementsByTagName('body')[0].ondblclick = function (e) { double_click_events(e); };
-</script>
-'''
 
 TOGGLE_GUTTER = \
 '''

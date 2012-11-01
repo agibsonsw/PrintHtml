@@ -1,5 +1,5 @@
 # About
-This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml) plugin.  This plugin allows the exporting of a document in ST2 to an HTML file or to BBCode.  It duplicates ST2's theme colors and font styles.
+This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml) plugin.  This plugin allows the exporting of a document in ST2 to an HTML file or to BBCode.  It duplicates ST2's theme colors and font styles.  You can play with the demo page that has actual html pages generated with this plugin [here](http://facelessuser.github.com/ExportHtml).
 
 <img src="http://dl.dropbox.com/u/342698/ExportHtml/preview.png" border="0"/>
 
@@ -15,6 +15,7 @@ This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml
 - Toggle gutter on/off in browser view
 - Automatically open browser print dialog (optional)
 - Enable/disable configurable word wrapping
+- Configurable toolbar to appear in the generated webpage
 
 # Usage: Exporting HTML
 ExportHtml comes with a number of default commands available, but these can be overridden in the settings file.  Or you can create commands directly outside of the settings file bound to the command palette, key bindings, or even the menu.
@@ -54,6 +55,7 @@ The name of the command is the key value, and then you add the parameters you wi
 - show_full_path (boolean): Show full path for filename when displaying header. Default is ```true```
 - save_location (string): Path to save html file.  If the file is wanted in the same file as the original, use ".".  Otherwise, use the absolute path to where the file is desired.  If there is an issue determining where to save the file, or the path does not exist, the OS temp folder will be used. Default is ```None``` (use temp folder).
 - time_stamp (string): Configure the time stamp of saved html when using ```save_location```.  To remove time stamps, just set to an empty string ```""```.  Please see Python's documentation on ```time.strftime``` for detailed info on formatting syntax.  Default is ```"_%m%d%y%H%M%S"```
+- toolbar (array of strings): Option to display a toolbar with to access features in a generated HTML.  This setting is an array of keywords that represent the icons in the toolbar to show.  Valid keywords include ```gutter```, ```print```, ```plain_text```, ```annotation```, and ```theme```.  Toolbar will appear when you mouse over the uppert right corner of the window of the generated html.  Default enables all.
 
 If you wish to bind a command to a key combination etc., the same settings as above can be used.
 
@@ -74,7 +76,7 @@ Example:
 }
 ```
 
-When viewing the HTML in your web browser, regardless of the gutter settings, the gutter can be toggled to show or be hidden using ```shift+double_mouse_click```.
+When viewing the HTML in your web browser, regardless of the gutter settings, the gutter can be toggled to show or be hidden using the toolbar.
 
 # Usage: Exporting BBCode
 ExportHtml can also export selected code as BBCode for posting in forums. Exporting BBCode is very similar to exporting HTML code.
@@ -135,7 +137,7 @@ The commands are as follows:
 - Delete All Annotations: Delete all annotation regions.
 - Show Annotation Comment: Show the annotation comment of the region under the cursor.
 
-You can navigate the annotations in the generate HTML by using a jump table.  You can show the jump table at any time wiht ```alt+double_mouse_click``` or simply by clicking an existing annotation.  If it gets in the way, you can dock in the bottom right.
+You can navigate the annotations in the generate HTML by using a jump table.  You can show the jump table at any time by selecting the annotation button in the toolbar.  You can also click any annotation to show the jump table as well.  If it gets in the way, you can dock it in a different location.
 
 <img src="http://dl.dropbox.com/u/342698/ExportHtml/annotation_table_preview.png" border="0"/>
 
