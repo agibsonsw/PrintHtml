@@ -156,6 +156,18 @@ You can navigate the annotations in the generate HTML by using a jump table.  Yo
 - Paul Boddie: Desktop module for open files in web browser cross platform
 - Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright
 
+#Version 0.5.0
+- Added ability to define path to save generated html to a specific folder with optional timestamp
+- If selection foreground is not defined, use normal colors for text.
+- Click annotations to show annotation jump table
+- Removed shortcut actions
+- Themes are now embedded in the html and can be extracted
+- Added toggle plain text option and toggle wrapping (if enababled)
+- Added toolbar to print, download theme, disable toggle wrapping (if enabled), toggle annotation jump table (if annotations available), toggle plain text, and toggle gutter
+- Exposed toolbar options in configuration (can define any toolbar item to appear)
+- Split out javascript into separate files
+- Improved  and fixed javascript issues
+
 # Version 0.4.1
 - Add date_time_format and show_full_path options
 - Some internal adjustments
