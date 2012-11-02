@@ -453,14 +453,14 @@ class ExportHtml(object):
             if scope != None and colour != None:
                 self.colours[scope] = {"color": self.strip_transparency(colour), "style": ' '.join(style)}
 
-    def get_tools(self, tools, use_annotation):
+    def get_tools(self, tools, use_annotation, use_wrapping):
         toolbar_options = {
             "gutter": TOOL_GUTTER,
             "print": TOOL_PRINT,
             "plain_text": TOOL_PLAIN_TEXT,
             "annotation": TOOL_ANNOTATION if use_annotation else "",
             "theme": TOOL_DUMP_THEME,
-            "wrapping": TOOL_WRAPPING
+            "wrapping": TOOL_WRAPPING if use_wrapping else ""
         }
         t_opt = ""
         toolbar_element = ""
@@ -820,7 +820,7 @@ class ExportHtml(object):
             js_options.append(AUTO_PRINT)
 
         # Write empty line to allow copying of last line and line number without issue
-        the_html.write(BODY_END % {"js": ''.join(js_options), "toolbar": self.get_tools(self.toolbar, len(self.annot_tbl))})
+        the_html.write(BODY_END % {"js": ''.join(js_options), "toolbar": self.get_tools(self.toolbar, len(self.annot_tbl), self.auto_wrap)})
 
     def add_comments_table(self, the_html):
         the_html.write(ANNOTATION_TBL_START)
