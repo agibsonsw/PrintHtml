@@ -7,7 +7,7 @@ function toggle_plain_text() {
         text = "",
         orig_pre = document.querySelectorAll("pre.code_page")[0],
         plain_pre = document.querySelectorAll("pre.simple_code_page"),
-        pre, i, j, spans, span_len;
+        pre, i, j, spans, span_len, span;
     if (plain_pre.length > 0) {
         document.body.removeChild(plain_pre[0]);
         orig_pre.style.display = 'block';
@@ -17,7 +17,12 @@ function toggle_plain_text() {
             spans = lines[i].querySelectorAll("span");
             span_len = spans.length;
             for (j = 0; j < span_len; j++) {
-                text += spans[j].textContent;
+                span = spans[j];
+                if ("textContent" in span) {
+                    text += span.textContent;
+                } else {
+                    text += span.innerText;
+                }
             }
             text += "\n";
         }

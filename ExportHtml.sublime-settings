@@ -32,6 +32,10 @@
     // (outline|solid)
     "annotation_highlight_style": "outline",
 
+    // Orientation that the toolbar will be rendered with.
+    // (horizontal|vertical)
+    "toolbar_orientation": "horizontal",
+
     // Define configurations for the drop down export menu
     "html_panel": [
         // Browser print color (selections and multi-selections allowed)

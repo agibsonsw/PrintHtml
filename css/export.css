@@ -1,0 +1,141 @@
+/* General */
+body { color: /* %body_fg% */; }
+pre { border: 0; margin: 0; padding: 0; }
+td { padding: 0; }
+table { border: 0; margin: 0; padding: 0; }
+td div {
+    float:left;
+    width:100%;
+    white-space: -moz-pre-wrap; /* Mozilla */
+    white-space: -hp-pre-wrap;  /* HP printers */
+    white-space: -o-pre-wrap;   /* Opera 7 */
+    white-space: -pre-wrap;     /* Opera 4-6 */
+    white-space: pre-wrap;      /* CSS 2.1 */
+    white-space: pre-line;      /* CSS 3 (and 2.1 as well, actually) */
+    word-wrap: break-word;      /* IE */
+}
+.code_text { font: /* %font_size% */pt /* %font_face% */, Consolas, Monospace; }
+.code_page { background-color: /* %page_bg% */; }
+.simple_code_page { background-color: white; color: black }
+.code_gutter { display: /* %display_mode% */; background-color: /* %gutter_bh% */; }
+.code_line { padding-left: 10px; }
+td.code_line div { width: 100%; }
+span { border: 0; margin: 0; padding: 0; }
+span.bold { font-weight: bold; }
+span.italic { font-style: italic; }
+span.normal { font-style: normal; }
+span.underline { text-decoration:underline; }
+
+/* Toolbar */
+div#toolbarhide {
+    position: fixed;
+    top: 5px;
+    right: 10px;
+    -webkit-transform: translateZ(0);    /* webkit flicker fix */
+    -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
+}
+div#toolbar {
+    visibility: hidden;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    padding-top: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    opacity: 0;
+    background-color:black;
+    color: white;
+}
+div#toolbarhide:hover div#toolbar {
+    visibility: visible;
+    opacity: .8;
+    -webkit-transition: all .25s ease-out;
+     -moz-transition: all .25s ease-out;
+      -ms-transition: all .25s ease-out;
+       -o-transition: all .25s ease-out;
+          transition: all .25s ease-out;
+}
+div#toolbar a {
+    display: /* %toolbar_orientation% */;
+    text-decoration:none;
+    color:white;
+    padding-left: 3px;
+    padding-right: 3px;
+}
+div#toolbar a:active, div#toolbar a:visited {
+    border: none;
+    outline: none;
+}
+
+/* Annotations */
+.tooltip {
+    border-bottom: 2px dotted /* %dot_color% */;
+    outline: none;
+    text-decoration: none;
+    position: relative;
+    color: black;
+}
+.tooltip div.annotation {
+    border-radius: 5px 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
+    -webkit-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
+    -moz-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
+    white-space: -moz-pre-wrap; /* Mozilla */
+    white-space: -hp-pre-wrap;  /* HP printers */
+    white-space: -o-pre-wrap;   /* Opera 7 */
+    white-space: -pre-wrap;     /* Opera 4-6 */
+    white-space: pre-wrap;      /* CSS 2.1 */
+    white-space: pre-line;      /* CSS 3 (and 2.1 as well, actually) */
+    word-wrap: break-word;      /* IE */
+    margin-left: -999em;
+    position: absolute;
+    padding: 0.8em 1em;
+    background: lightyellow; border: solid black;
+    font-family: Calibri, Tahoma, Geneva, sans-serif;
+    font-size: 10pt;
+    font-weight: bold;
+    width: 250px;
+    left: 1em;
+    top: 2em;
+    z-index: 99;
+}
+.tooltip:hover div.annotation {
+    margin-left: 0;
+}
+div#comment_list {
+    visibility: hidden;
+    display: none;
+    margin: auto auto;
+    text-align: center;
+    position: fixed;
+    z-index: 99;
+    left:0px;
+    top: 0px;
+}
+div#comment_wrapper {
+    max-height: 200px;
+    overflow: auto;
+    border: solid black;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
+    -webkit-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
+    -moz-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
+}
+table#comment_table {
+    border: thin solid; border-collapse: collapse;
+    color: #000000; background-color: lightyellow; margin: auto auto;
+}
+div.table_footer { text-align:right; font-size: 8pt; font-weight: bold;}
+a.table_close { float: right; }
+a.table_close:link { color: black; text-decoration: None;}
+a.table_close:active { color: black; text-decoration: None;}
+a.table_close:visited { color: black; text-decoration: None;}
+a.table_close:hover { color: red; text-decoration: None;}
+table#comment_table th, table#comment_table td { border: thin solid; padding: 5px; }
+td.annotation_link { width: 60px; text-align: right; padding-right: 20px; }
+.annotation_comment { width: 500px; }
+div.annotation_comment { float: left; text-align: left; }
+* html a:hover { background: transparent; }

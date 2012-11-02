@@ -12,6 +12,7 @@ import json
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
 JS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "js")
+CSS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "css")
 
 if sublime.platform() == "linux":
     # Try and load Linux Python2.6 lib.  Default path is for Ubuntu.
@@ -21,7 +22,7 @@ if sublime.platform() == "linux":
 from plistlib import readPlist
 
 # HTML Code
-CSS = \
+HTML_HEADER = \
 '''
 <!DOCTYPE html>
 <html>
@@ -31,156 +32,22 @@ CSS = \
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 <style type="text/css">
-    pre { border: 0; margin: 0; padding: 0; }
-    td { padding: 0; }
-    table { border: 0; margin: 0; padding: 0; }
-    td div {
-        float:left;
-        width:100%%;
-        white-space: -moz-pre-wrap; /* Mozilla */
-        white-space: -hp-pre-wrap; /* HP printers */
-        white-space: -o-pre-wrap; /* Opera 7 */
-        white-space: -pre-wrap; /* Opera 4-6 */
-        white-space: pre-wrap; /* CSS 2.1 */
-        white-space: pre-line; /* CSS 3 (and 2.1 as well, actually) */
-        word-wrap: break-word; /* IE */
-    }
-    .code_text { font: %(font_size)dpt "%(font_face)s", Consolas, Monospace; }
-    .code_page { background-color: %(page_bg)s; }
-    .simple_code_page { background-color: white; color: black }
-    .code_gutter { display: %(display_mode)s; background-color: %(gutter_bg)s; }
-    .code_line { padding-left: 10px; }
-    td.code_line div { width: 100%%; }
-    span { border: 0; margin: 0; padding: 0; }
-    span.bold { font-weight: bold; }
-    span.italic { font-style: italic; }
-    span.normal { font-style: normal; }
-    span.underline { text-decoration:underline; }
-    body { color: %(body_fg)s; }
-    %(annotations)s
+%(css)s
 </style>
 </head>
 '''
 
-CSS_ANNOTATIONS = \
-'''
-    .tooltip {
-        border-bottom: 2px dotted %(dot_colour)s;
-        outline: none;
-        text-decoration: none;
-        position: relative;
-        color: black;
-    }
-    .tooltip div.annotation {
-        border-radius: 5px 5px;
-        -moz-border-radius: 5px;
-        -webkit-border-radius: 5px;
-        box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
-        -webkit-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
-        -moz-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
-        white-space: -moz-pre-wrap; /* Mozilla */
-        white-space: -hp-pre-wrap; /* HP printers */
-        white-space: -o-pre-wrap; /* Opera 7 */
-        white-space: -pre-wrap; /* Opera 4-6 */
-        white-space: pre-wrap; /* CSS 2.1 */
-        white-space: pre-line; /* CSS 3 (and 2.1 as well, actually) */
-        word-wrap: break-word; /* IE */
-        margin-left: -999em;
-        position: absolute;
-        padding: 0.8em 1em;
-        background: lightyellow; border: solid black;
-        font-family: Calibri, Tahoma, Geneva, sans-serif;
-        font-size: 10pt;
-        font-weight: bold;
-        width: 250px;
-        left: 1em;
-        top: 2em;
-        z-index: 99;
-    }
-    .tooltip:hover div.annotation {
-        margin-left: 0;
-    }
-    div#toolbarhide {
-        position: fixed;
-        top: 5px;
-        right: 10px;
-        -webkit-transform: translateZ(0); /* webkit flicker fix */
-        -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
-    }
-    div#toolbar {
-        visibility: hidden;
-        -webkit-border-radius: 5px;
-        -moz-border-radius: 5px;
-        border-radius: 5px;
-        padding-top: 5px;
-        padding-left: 10px;
-        padding-right: 10px;
-        opacity: 0;
-        background-color:black;
-        color: white;
-    }
-    div#toolbarhide:hover div#toolbar {
-        visibility: visible;
-        opacity: .8;
-        -webkit-transition: all .25s ease-out;
-         -moz-transition: all .25s ease-out;
-          -ms-transition: all .25s ease-out;
-           -o-transition: all .25s ease-out;
-              transition: all .25s ease-out;
-    }
-    div#toolbar a {
-        text-decoration:none;
-        color:white;
-    }
-    div#comment_list {
-        visibility: hidden;
-        display: none;
-        margin: auto auto;
-        text-align: center;
-        position: fixed;
-        z-index: 99;
-        left:0px;
-        top: 0px;
-    }
-    div#comment_wrapper {
-        max-height: 200px;
-        overflow: auto;
-        border: solid black;
-        -moz-border-radius: 5px;
-        -webkit-border-radius: 5px;
-        box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
-        -webkit-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
-        -moz-box-shadow: 5px 5px rgba(0, 0, 0, 0.1);
-    }
-    table#comment_table {
-        border: thin solid; border-collapse: collapse;
-        color: #000000; background-color: lightyellow; margin: auto auto;
-    }
-    div.table_footer { text-align:right; font-size: 8pt; font-weight: bold;}
-    a.table_close { float: right; }
-    a.table_close:link { color: black; text-decoration: None;}
-    a.table_close:active { color: black; text-decoration: None;}
-    a.table_close:visited { color: black; text-decoration: None;}
-    a.table_close:hover { color: red; text-decoration: None;}
-    table#comment_table th, table#comment_table td { border: thin solid; padding: 5px; }
-    td.annotation_link { width: 60px; text-align: right; padding-right: 20px; }
-    .annotation_comment { width: 500px; }
-    div.annotation_comment { float: left; text-align: left; }
+TOOL_GUTTER = '''<a href="javascript:toggle_gutter()" title="Toggle Gutter"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFg8FBLseHgAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAM5JREFUOMvdjzFqAlEQhuephZWNYEq9wJ4kt7C08AiyhWCXQI6xh5CtUqVJEbAU1kA6i92VzWPnmxR5gUUsfAQbf5himPm+YURumSzLetFQWZZj4Bn45DcHYFMUxfAqAbA1MwO+gHeA0L9cJfDeJ6q6yvO8LyKiqosgOKVp6qJf8t4nQfD9J42Kqi6D4DUabppmBhzNzNq2fYyC67p+AHbh+iYKrqpqAnwE+Ok/8Dr6b+AtwArsu6Wq8/P9wQXHTETEOdcTkWl3YGYjub/8ANrnvguZ++ozAAAAAElFTkSuQmCC" /></a>'''
 
-    * html a:hover { background: transparent; }
-'''
+TOOL_PLAIN_TEXT = '''<a href="javascript:toggle_plain_text()" title="Toggle Plain Text"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFg8dF9eGSAAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAANRJREFUOMvdkTFOgkEQhResaeQScAsplIRGDgKttnsIOYIUm1hQa/HfQiMFcIBt9k/UTWa/sRkbspKfzviS7eZ7M/uec39WbdsOgU/gI6V0ebZBKeVeTaWUu7PgpmkugD3wZW8XQuh3NhCRuaoq8AisVVVF5LazAfBi0JWITMzsuROccx4b8O6cc977HrAFyDmPumxfHQf3EyjwcBKOMQ6ApL8ISDHGwanqljb4VLlsY5ctqrD99c3Cm1aamZn5q/e+V6vuxgb2tc5DCH3gYAuu3f/RNzmJ99G3cZ53AAAAAElFTkSuQmCC" /></a>'''
 
-TOOL_GUTTER = ''' <a href="javascript:toggle_gutter()" title="Toggle Gutter"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFg8FBLseHgAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAM5JREFUOMvdjzFqAlEQhuephZWNYEq9wJ4kt7C08AiyhWCXQI6xh5CtUqVJEbAU1kA6i92VzWPnmxR5gUUsfAQbf5himPm+YURumSzLetFQWZZj4Bn45DcHYFMUxfAqAbA1MwO+gHeA0L9cJfDeJ6q6yvO8LyKiqosgOKVp6qJf8t4nQfD9J42Kqi6D4DUabppmBhzNzNq2fYyC67p+AHbh+iYKrqpqAnwE+Ok/8Dr6b+AtwArsu6Wq8/P9wQXHTETEOdcTkWl3YGYjub/8ANrnvguZ++ozAAAAAElFTkSuQmCC" /></a> '''
+TOOL_PRINT = '''<a href="javascript:page_print()" title="Print"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAl8o8wSAAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAQZJREFUOMulkzFSgjEUhL8X/xJ/iBegkAtQ6A08gIUehFthYykOw9BzBmwcaxGoZW1eZjIx/sC4TTJv8ja7mxfDIcmAAWDUIeDLzJQXm2w/AFZOkB8yoAU+gHtJ7yVJUnAlaS1pJOm6WN8kjSUtJQ1dLQChIvMATIEXXw9e3wMT4NnV/rKQsAcegAvgG9g5wcwv7OU51QgugSegD2yBO+DWmyLw+leINQXyW5VeoQj4qIIcW+CxPFwjSLKtEnAZOkGSSYruL3QMUxq0AERJUZKl5pV7bjsmMR+qHfAJ3DReDB4cwKLiv0R0S5Yy6ANz37ecgSZ7nui1zYm9G0B2wi+k63fyX/wA0b9vjF8iB3oAAAAASUVORK5CYII=" /></a>'''
 
-TOOL_PLAIN_TEXT = ''' <a href="javascript:toggle_plain_text()" title="Toggle Plain Text"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFg8dF9eGSAAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAANRJREFUOMvdkTFOgkEQhResaeQScAsplIRGDgKttnsIOYIUm1hQa/HfQiMFcIBt9k/UTWa/sRkbspKfzviS7eZ7M/uec39WbdsOgU/gI6V0ebZBKeVeTaWUu7PgpmkugD3wZW8XQuh3NhCRuaoq8AisVVVF5LazAfBi0JWITMzsuROccx4b8O6cc977HrAFyDmPumxfHQf3EyjwcBKOMQ6ApL8ISDHGwanqljb4VLlsY5ctqrD99c3Cm1aamZn5q/e+V6vuxgb2tc5DCH3gYAuu3f/RNzmJ99G3cZ53AAAAAElFTkSuQmCC" /></a> '''
+TOOL_ANNOTATION = '''<a href="javascript:toggle_annotations();" title="Toggle Annotations"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAIt1BsPQAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAALVJREFUOMvNkkESgjAUQ/Or+8IN9A7ewHN7FRgvwIB7eW6+WGsRRjZm05n+Jn+aRNoIyy8Ak1QVZkjqzYyiQEKsJF0kxUxgkHSW1Eu6mdn9bStwABqgA0Y+MfqsBU7ALie3M8SS0NU5JqD2zWvIqUgD1MF9iCVDF8yPkixsjTF4PIOfa/Hi/GhiO5mYJHH0mL4ROzdvIu+TAoW8ddm30iJNjTQgevOqpMLPx8NilWe6X3z8n3gAfmBJ5rRJVyQAAAAASUVORK5CYII=" /></a>'''
 
-TOOL_PRINT = ''' <a href="javascript:page_print()" title="Print"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAl8o8wSAAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAQZJREFUOMulkzFSgjEUhL8X/xJ/iBegkAtQ6A08gIUehFthYykOw9BzBmwcaxGoZW1eZjIx/sC4TTJv8ja7mxfDIcmAAWDUIeDLzJQXm2w/AFZOkB8yoAU+gHtJ7yVJUnAlaS1pJOm6WN8kjSUtJQ1dLQChIvMATIEXXw9e3wMT4NnV/rKQsAcegAvgG9g5wcwv7OU51QgugSegD2yBO+DWmyLw+leINQXyW5VeoQj4qIIcW+CxPFwjSLKtEnAZOkGSSYruL3QMUxq0AERJUZKl5pV7bjsmMR+qHfAJ3DReDB4cwKLiv0R0S5Yy6ANz37ecgSZ7nui1zYm9G0B2wi+k63fyX/wA0b9vjF8iB3oAAAAASUVORK5CYII=" /></a> '''
+TOOL_DUMP_THEME = '''<a href="javascript:dump_theme()" title="Download Theme"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAWTV9RXgAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAJtJREFUOMvdk9ENwyAQQ5+rDBA6QZbI/gN0h3YE2gXi/lykhABN1b9aQkh3+CEwiEK2BYyAyhbwlORtceCoEbgBqahnYI65C1CYr43eThd+1B8Ahkp0qXZZa8/2LlIFIG2i676DmDMwS8pDcZzW7tt4DbwOr8/2ZPthe3FbS6yZ4thfQdrmE5DP5g7kvLkCucdomtWDRJzUvvGqN6JK1cOooSjlAAAAAElFTkSuQmCC" /></a>'''
 
-TOOL_ANNOTATION = ''' <a href="javascript:toggle_annotations();" title="Toggle Annotations"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAIt1BsPQAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAALVJREFUOMvNkkESgjAUQ/Or+8IN9A7ewHN7FRgvwIB7eW6+WGsRRjZm05n+Jn+aRNoIyy8Ak1QVZkjqzYyiQEKsJF0kxUxgkHSW1Eu6mdn9bStwABqgA0Y+MfqsBU7ALie3M8SS0NU5JqD2zWvIqUgD1MF9iCVDF8yPkixsjTF4PIOfa/Hi/GhiO5mYJHH0mL4ROzdvIu+TAoW8ddm30iJNjTQgevOqpMLPx8NilWe6X3z8n3gAfmBJ5rRJVyQAAAAASUVORK5CYII=" /></a> '''
-
-TOOL_DUMP_THEME = ''' <a href="javascript:dump_theme()" title="Download Theme"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAWTV9RXgAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAJtJREFUOMvdk9ENwyAQQ5+rDBA6QZbI/gN0h3YE2gXi/lykhABN1b9aQkh3+CEwiEK2BYyAyhbwlORtceCoEbgBqahnYI65C1CYr43eThd+1B8Ahkp0qXZZa8/2LlIFIG2i676DmDMwS8pDcZzW7tt4DbwOr8/2ZPthe3FbS6yZ4thfQdrmE5DP5g7kvLkCucdomtWDRJzUvvGqN6JK1cOooSjlAAAAAElFTkSuQmCC" /></a> '''
-
-TOOL_WRAPPING = ''' <a href="javascript:toggle_wrapping();" title="Toggle Wrapping"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AsBFiYl9jWoIQAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAP1JREFUOMudk0FuwkAMRZ+jbCGZXADlKvS8HKG9Qa8Q1K5LSLpG+ixwUmdKQMLSSDOeb/v7e8bITJIBNWD5FTCYmaLT7gTWwDtQZQlG4A0YYiILwTvgwxNsgV+vOuEm3wDsga+ZjaQkqZN0kdT7vpXU+Grd1zumk5Rm6g44STr6PjmriEl+d3RsK8li9T/nimXFOkmp8P4mwcZc5YXit7vRjxVgBQ/MK1aPWBWu9Jw1A9c+mZ0nW7AFdLevwKCR9BPE/SdiaWaSNADntdb9jXz6eQt8L15lGFM+vsarRevjtMqg7pkXrHghZiFs+QS8xmwDHIC9PXsHK197/t5XQswlGeOCYgkAAAAASUVORK5CYII=" /></a> '''
+TOOL_WRAPPING = '''<a href="javascript:toggle_wrapping();" title="Toggle Wrapping"><img border="0" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AsBFiYl9jWoIQAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAP1JREFUOMudk0FuwkAMRZ+jbCGZXADlKvS8HKG9Qa8Q1K5LSLpG+ixwUmdKQMLSSDOeb/v7e8bITJIBNWD5FTCYmaLT7gTWwDtQZQlG4A0YYiILwTvgwxNsgV+vOuEm3wDsga+ZjaQkqZN0kdT7vpXU+Grd1zumk5Rm6g44STr6PjmriEl+d3RsK8li9T/nimXFOkmp8P4mwcZc5YXit7vRjxVgBQ/MK1aPWBWu9Jw1A9c+mZ0nW7AFdLevwKCR9BPE/SdiaWaSNADntdb9jXz6eQt8L15lGFM+vsarRevjtMqg7pkXrHghZiFs+QS8xmwDHIC9PXsHK197/t5XQswlGeOCYgkAAAAASUVORK5CYII=" /></a>'''
 
 TOOLBAR = \
 '''
@@ -321,6 +188,26 @@ def getjs(file_name):
     return code
 
 
+def getcss(file_name, options):
+    code = ""
+    final_code = ""
+    last_pt = 0
+    keys = '|'.join(options.keys())
+    replace = re.compile("/\\* *%(" + keys + ")% * \\*/")
+
+    try:
+        with open(path.join(CSS_DIR, file_name), "r") as f:
+            code = f.read()
+            for m in replace.finditer(code):
+                final_code += code[last_pt:m.start()] + options[m.group(1)]
+                last_pt = m.end()
+            final_code += code[last_pt:]
+    except:
+        pass
+
+    return final_code
+
+
 class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
     def execute(self, value):
         if value >= 0:
@@ -404,6 +291,7 @@ class ExportHtml(object):
         self.no_header = no_header
         self.annot_tbl = []
         self.toolbar = toolbar
+        self.toolbar_orientation = "block" if eh_settings.get("toolbar_orientation", "horizontal") == "vertical" else "inline-block"
 
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
@@ -536,15 +424,21 @@ class ExportHtml(object):
         return the_colour, the_style
 
     def write_header(self, the_html):
-        header = CSS % {
-            "title":     path.basename(self.file_name),
-            "font_size": self.font_size,
-            "font_face": self.font_face,
-            "page_bg":   self.bground,
-            "gutter_bg": self.gbground,
-            "body_fg":   self.fground,
-            "display_mode": ('table-cell' if self.numbers else 'none'),
-            "annotations": (CSS_ANNOTATIONS % {"dot_colour": self.fground})
+        header = HTML_HEADER % {
+            "title": path.basename(self.file_name),
+            "css":   getcss(
+                'export.css',
+                {
+                    "font_size":           str(self.font_size),
+                    "font_face":           '"' + self.font_face + '"',
+                    "page_bg":             self.bground,
+                    "gutter_bg":           self.gbground,
+                    "body_fg":             self.fground,
+                    "display_mode":        'table-cell' if self.numbers else 'none',
+                    "dot_color":           self.fground,
+                    "toolbar_orientation": self.toolbar_orientation
+                }
+            )
         }
         the_html.write(header)
 
