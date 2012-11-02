@@ -27,6 +27,9 @@ CSS = \
 <html>
 <head>
 <title>%(title)s</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <style type="text/css">
     pre { border: 0; margin: 0; padding: 0; }
     td { padding: 0; }
