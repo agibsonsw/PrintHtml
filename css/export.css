@@ -29,20 +29,25 @@ span.underline { text-decoration:underline; }
 /* Toolbar */
 div#toolbarhide {
     position: fixed;
-    top: 5px;
-    right: 10px;
+    top: 0px;
+    right: 0px;
+    padding-top: 5px;
+    padding-right: 10px;
     -webkit-transform: translateZ(0);    /* webkit flicker fix */
     -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
 }
 div#toolbar {
     visibility: hidden;
+    text-align: center;
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
     border-radius: 5px;
-    padding-top: 5px;
-    padding-left: 10px;
-    padding-right: 10px;
     opacity: 0;
+    -webkit-transition: all .25s ease-in;
+     -moz-transition: all .25s ease-in;
+      -ms-transition: all .25s ease-in;
+       -o-transition: all .25s ease-in;
+          transition: all .25s ease-in;
     background-color:black;
     color: white;
 }
@@ -55,16 +60,15 @@ div#toolbarhide:hover div#toolbar {
        -o-transition: all .25s ease-out;
           transition: all .25s ease-out;
 }
-div#toolbar a {
-    display: /* %toolbar_orientation% */;
-    text-decoration:none;
-    color:white;
-    padding-left: 3px;
-    padding-right: 3px;
-}
-div#toolbar a:active, div#toolbar a:visited {
-    border: none;
-    outline: none;
+
+div#toolbar img {
+    display:  /* %toolbar_orientation% */ ;
+    vertical-align: middle;
+    border: 0;
+    cursor: pointer;
+    height: 16px;
+    width: 16px;
+    padding: 5px;
 }
 
 /* Annotations */
