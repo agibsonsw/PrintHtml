@@ -17,7 +17,7 @@ td div {
 .code_text { font: /* %font_size% */pt /* %font_face% */, "Courier New", Monospace; }
 .code_page { background-color: /* %page_bg% */; }
 .simple_code_page { background-color: white; color: black }
-.code_gutter { display: /* %display_mode% */; background-color: /* %gutter_bh% */; }
+.code_gutter { display: /* %display_mode% */; background-color: /* %gutter_bg% */; }
 .code_line { padding-left: 10px; }
 td.code_line div { width: 100%; }
 span { display:inline; border: 0; margin: 0; padding: 0; }
