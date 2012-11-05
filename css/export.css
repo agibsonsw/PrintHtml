@@ -12,7 +12,7 @@ td div {
     white-space: -pre-wrap;     /* Opera 4-6 */
     white-space: pre-wrap;      /* CSS 2.1 */
     white-space: pre-line;      /* CSS 3 (and 2.1 as well, actually) */
-    word-wrap: break-word;      /* IE */
+    word-wrap:   break-word;      /* IE */
 }
 .code_text { font: /* %font_size% */pt /* %font_face% */, "Courier New", Monospace; }
 .code_page { background-color: /* %page_bg% */; }

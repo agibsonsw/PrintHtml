@@ -489,7 +489,7 @@ class ExportHtml(object):
         comments.sort()
         return comments
 
-    def annotate_text(self, line, the_colour, the_style, highlight=False, custom_bg=None):
+    def annotate_text(self, line, the_colour, the_bgcolour, the_style):
         pre_text = None
         annot_text = None
         post_text = None
@@ -520,15 +520,15 @@ class ExportHtml(object):
 
         # Print the separate parts pre text, annotation, post text
         if pre_text != None:
-            self.format_text(line, pre_text, the_colour, the_style, highlight=highlight, custom_bg=custom_bg)
+            self.format_text(line, pre_text, the_colour, the_bgcolour, the_style)
         if annot_text != None:
-            self.format_text(line, annot_text, the_colour, the_style, highlight=highlight, annotate=True, custom_bg=custom_bg)
+            self.format_text(line, annot_text, the_colour, the_bgcolour, the_style, annotate=True)
             if self.curr_annot == None:
                 self.curr_comment = None
         if post_text != None:
-            self.format_text(line, post_text, the_colour, the_style, highlight=highlight, custom_bg=custom_bg)
+            self.format_text(line, post_text, the_colour, the_bgcolour, the_style)
 
-    def add_annotation_table_entry(self, ):
+    def add_annotation_table_entry(self):
         row, col = self.view.rowcol(self.annot_pt)
         self.annot_tbl.append(
             (
@@ -538,13 +538,10 @@ class ExportHtml(object):
         )
         self.annot_pt = None
 
-    def format_text(self, line, text, the_colour, the_style, highlight=False, annotate=False, custom_bg=None):
-        if highlight:
-            # Highlighted code
-            code = HIGHLIGHTED_CODE % {"highlight": self.sbground, "color": the_colour, "content": text, "class": the_style}
-        elif custom_bg is not None:
+    def format_text(self, line, text, the_colour, the_bgcolour, the_style, annotate=False):
+        if the_bgcolour is not None:
             # Custom backgrounds
-            code = HIGHLIGHTED_CODE % {"highlight": custom_bg, "color": the_colour, "content": text, "class": the_style}
+            code = HIGHLIGHTED_CODE % {"highlight": the_bgcolour, "color": the_colour, "content": text, "class": the_style}
         else:
             # Normal code
             code = CODE % {"color": the_colour, "content": text, "class": the_style}
@@ -572,7 +569,6 @@ class ExportHtml(object):
 
     def convert_line_to_html(self, the_html):
         line = []
-        hl_found = False
         hl_done = False
 
         # Continue highlight form last line
@@ -581,7 +577,6 @@ class ExportHtml(object):
             self.hl_continue = None
 
         while self.end <= self.size:
-            bgnew = None
             # Get next highlight region
             if self.highlight_selections and self.curr_hl == None and len(self.highlights) > 0:
                 self.curr_hl = self.highlights.pop(0)
@@ -589,7 +584,6 @@ class ExportHtml(object):
             # See if we are starting a highlight region
             if self.curr_hl != None and self.pt == self.curr_hl.begin():
                 # Get text of like scope up to a highlight
-                hl_found = True
                 scope_name = self.view.scope_name(self.pt)
                 while self.view.scope_name(self.end) == scope_name and self.end < self.size:
                     # Kick out if we hit a highlight region
@@ -607,6 +601,7 @@ class ExportHtml(object):
                     the_colour, the_style, _ = self.guess_colour(scope_name)
                 else:
                     the_colour, the_style = self.sfground, "normal"
+                the_bgcolour = self.sbground
             else:
                 # Get text of like scope up to a highlight
                 scope_name = self.view.scope_name(self.pt)
@@ -615,7 +610,7 @@ class ExportHtml(object):
                     if self.curr_hl != None and self.end == self.curr_hl.begin():
                         break
                     self.end += 1
-                the_colour, the_style, bgnew = self.guess_colour(scope_name)
+                the_colour, the_style, the_bgcolour = self.guess_colour(scope_name)
 
             # Get new annotation
             if (self.curr_annot == None or self.curr_annot.end() < self.pt) and len(self.annotations):
@@ -634,16 +629,15 @@ class ExportHtml(object):
             region = sublime.Region(self.pt, self.end)
             if self.curr_annot != None and region.intersects(self.curr_annot):
                 # Apply annotation within the text and format the text
-                self.annotate_text(line, the_colour, the_style, highlight=hl_found, custom_bg=bgnew)
+                self.annotate_text(line, the_colour, the_bgcolour, the_style)
             else:
                 # Normal text formatting
                 tidied_text = self.html_encode(self.view.substr(region))
-                self.format_text(line, tidied_text, the_colour, the_style, highlight=hl_found, custom_bg=bgnew)
+                self.format_text(line, tidied_text, the_colour, the_bgcolour, the_style)
 
             if hl_done:
                 # Clear highlight flags and variables
                 hl_done = False
-                hl_found = False
                 self.curr_hl = None
 
             # Continue walking through line
