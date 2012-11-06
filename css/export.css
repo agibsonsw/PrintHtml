@@ -2,10 +2,8 @@
 body { color: /* %body_fg% */; }
 pre { border: 0; margin: 0; padding: 0; }
 td { padding: 0; }
-table { border: 0; margin: 0; padding: 0; }
+table { border: 0; margin: 0; padding: 0; border-collapse: collapse; empty-cells: show; }
 td div {
-    float:left;
-    width:100%;
     white-space: -moz-pre-wrap; /* Mozilla */
     white-space: -hp-pre-wrap;  /* HP printers */
     white-space: -o-pre-wrap;   /* Opera 7 */
@@ -20,7 +18,7 @@ td div {
 .code_gutter { display: /* %display_mode% */; background-color: /* %gutter_bg% */; }
 .code_line { padding-left: 10px; }
 td.code_line div { width: 100%; }
-span { display:inline; border: 0; margin: 0; padding: 0; }
+span { display:inline; border: 0; margin: 0; padding: 1px 0; }
 span.bold { font-weight: bold; }
 span.italic { font-style: italic; }
 span.normal { font-style: normal; }

@@ -23,8 +23,7 @@ from plistlib import readPlist
 
 # HTML Code
 HTML_HEADER = \
-'''
-<!DOCTYPE html>
+'''<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 <title>%(title)s</title>
@@ -34,6 +33,7 @@ HTML_HEADER = \
 <style type="text/css">
 %(css)s
 </style>
+%(js)s
 </head>
 '''
 
@@ -49,20 +49,13 @@ TOOL_DUMP_THEME = '''<img onclick="dump_theme();" alt="" title="Download" src="d
 
 TOOL_WRAPPING = '''<img onclick="toggle_wrapping();" alt="" title="Toggle Wrapping" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AsBFiYl9jWoIQAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAP1JREFUOMudk0FuwkAMRZ+jbCGZXADlKvS8HKG9Qa8Q1K5LSLpG+ixwUmdKQMLSSDOeb/v7e8bITJIBNWD5FTCYmaLT7gTWwDtQZQlG4A0YYiILwTvgwxNsgV+vOuEm3wDsga+ZjaQkqZN0kdT7vpXU+Grd1zumk5Rm6g44STr6PjmriEl+d3RsK8li9T/nimXFOkmp8P4mwcZc5YXit7vRjxVgBQ/MK1aPWBWu9Jw1A9c+mZ0nW7AFdLevwKCR9BPE/SdiaWaSNADntdb9jXz6eQt8L15lGFM+vsarRevjtMqg7pkXrHghZiFs+QS8xmwDHIC9PXsHK197/t5XQswlGeOCYgkAAAAASUVORK5CYII=" />'''
 
-TOOLBAR = \
-'''
-<div id="toolbarhide">
-    <div id="toolbar">
-        %(options)s
-    </div>
-</div>
-'''
+TOOLBAR = '''<div id="toolbarhide"><div id="toolbar">%(options)s</div></div>'''
 
 ANNOTATE_OPEN = '''<a class="tooltip" href="javascript:toggle_annotations();">%(code)s'''
 
 ANNOTATE_CLOSE = '''<div class="annotation">%(comment)s</div></a>'''
 
-BODY_START = '''<body class="code_page code_text">\n<pre class="code_page">'''
+BODY_START = '''<body class="code_page code_text"><pre class="code_page">'''
 
 FILE_INFO = '''<tr><td colspan="2"><div id="file_info"><span style="color: %(color)s">%(date_time)s %(file)s\n\n</span></div></td></tr>'''
 
@@ -446,24 +439,22 @@ class ExportHtml(object):
                     "body_fg":             self.fground,
                     "display_mode":        'table-cell' if self.numbers else 'none',
                     "dot_color":           self.fground,
-                    "toolbar_orientation": self.toolbar_orientation
+                    "toolbar_orientation": self.toolbar_orientation,
                 }
-            )
-        }
-        the_html.write(header)
-
-        # Place the current theme info in the html so that it can be extracted
-        header = INCLUDE_THEME % {
-            "jscode": getjs('plist.js'),
-            "theme": json.dumps(self.plist_file, sort_keys=True, indent=4, separators=(',', ': ')).decode('raw_unicode_escape'),
-            "name": self.scheme_file,
+            ),
+            "js": INCLUDE_THEME % {
+                "jscode": getjs('plist.js'),
+                "theme": json.dumps(self.plist_file, sort_keys=True, indent=4, separators=(',', ': ')).decode('raw_unicode_escape'),
+                "name": self.scheme_file,
+            }
         }
         the_html.write(header)
 
     def convert_view_to_html(self, the_html):
-        for line in self.view.split_by_newlines(sublime.Region(self.end, self.size)):
+        for line in self.view.split_by_newlines(sublime.Region(self.pt, self.size)):
             self.size = line.end()
-            line = self.convert_line_to_html(the_html)
+            empty = not bool(line.size())
+            line = self.convert_line_to_html(the_html, empty)
             the_html.write(self.print_line(line, self.curr_row))
             self.curr_row += 1
 
@@ -489,7 +480,7 @@ class ExportHtml(object):
         comments.sort()
         return comments
 
-    def annotate_text(self, line, the_colour, the_bgcolour, the_style):
+    def annotate_text(self, line, the_colour, the_bgcolour, the_style, empty):
         pre_text = None
         annot_text = None
         post_text = None
@@ -520,13 +511,13 @@ class ExportHtml(object):
 
         # Print the separate parts pre text, annotation, post text
         if pre_text != None:
-            self.format_text(line, pre_text, the_colour, the_bgcolour, the_style)
+            self.format_text(line, pre_text, the_colour, the_bgcolour, the_style, empty)
         if annot_text != None:
-            self.format_text(line, annot_text, the_colour, the_bgcolour, the_style, annotate=True)
+            self.format_text(line, annot_text, the_colour, the_bgcolour, the_style, empty, annotate=True)
             if self.curr_annot == None:
                 self.curr_comment = None
         if post_text != None:
-            self.format_text(line, post_text, the_colour, the_bgcolour, the_style)
+            self.format_text(line, post_text, the_colour, the_bgcolour, the_style, empty)
 
     def add_annotation_table_entry(self):
         row, col = self.view.rowcol(self.annot_pt)
@@ -538,7 +529,11 @@ class ExportHtml(object):
         )
         self.annot_pt = None
 
-    def format_text(self, line, text, the_colour, the_bgcolour, the_style, annotate=False):
+    def format_text(self, line, text, the_colour, the_bgcolour, the_style, empty, annotate=False):
+        if empty:
+            text = '&nbsp;'
+        else:
+            the_style += " real_text"
         if the_bgcolour is not None:
             # Custom backgrounds
             code = HIGHLIGHTED_CODE % {"highlight": the_bgcolour, "color": the_colour, "content": text, "class": the_style}
@@ -567,7 +562,7 @@ class ExportHtml(object):
                     )
         line.append(code)
 
-    def convert_line_to_html(self, the_html):
+    def convert_line_to_html(self, the_html, empty):
         line = []
         hl_done = False
 
@@ -597,11 +592,14 @@ class ExportHtml(object):
                         self.curr_hl = sublime.Region(self.end, self.curr_hl.end())
                 else:
                     hl_done = True
-                if self.sfground is None:
+                if hl_done and empty:
+                    the_colour, the_style, the_bgcolour = self.guess_colour(scope_name)
+                elif self.sfground is None:
                     the_colour, the_style, _ = self.guess_colour(scope_name)
+                    the_bgcolour = self.sbground
                 else:
                     the_colour, the_style = self.sfground, "normal"
-                the_bgcolour = self.sbground
+                    the_bgcolour = self.sbground
             else:
                 # Get text of like scope up to a highlight
                 scope_name = self.view.scope_name(self.pt)
@@ -629,11 +627,11 @@ class ExportHtml(object):
             region = sublime.Region(self.pt, self.end)
             if self.curr_annot != None and region.intersects(self.curr_annot):
                 # Apply annotation within the text and format the text
-                self.annotate_text(line, the_colour, the_bgcolour, the_style)
+                self.annotate_text(line, the_colour, the_bgcolour, the_style, empty)
             else:
                 # Normal text formatting
                 tidied_text = self.html_encode(self.view.substr(region))
-                self.format_text(line, tidied_text, the_colour, the_bgcolour, the_style)
+                self.format_text(line, tidied_text, the_colour, the_bgcolour, the_style, empty)
 
             if hl_done:
                 # Clear highlight flags and variables
