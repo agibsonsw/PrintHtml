@@ -285,6 +285,7 @@ class ExportHtml(object):
         self.annot_tbl = []
         self.toolbar = toolbar
         self.toolbar_orientation = "block" if eh_settings.get("toolbar_orientation", "horizontal") == "vertical" else "inline-block"
+        self.matched = {}
 
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
@@ -317,7 +318,7 @@ class ExportHtml(object):
                     self.highlights.append(sel)
 
         # Create scope colors mapping from color scheme file
-        self.colours = {self.view.scope_name(self.end).split(' ')[0]: {"color": self.fground, "bgcolor": None, "style": "normal"}}
+        self.colours = {self.view.scope_name(self.end).split(' ')[0]: {"color": self.fground, "bgcolor": None, "style": None}}
         for item in self.plist_file["settings"]:
             scope = item.get('scope', None)
             colour = None
@@ -332,14 +333,11 @@ class ExportHtml(object):
                         if s == "bold" or s == "italic":  # or s == "underline":
                             style.append(s)
 
-            if len(style) == 0:
-                style.append('normal')
-
             if scope != None and (colour != None or bgcolour != None):
                 self.colours[scope] = {
                     "color": self.strip_transparency(colour),
                     "bgcolor": self.strip_transparency(bgcolour),
-                    "style": ' '.join(style)
+                    "style": style
                 }
 
     def get_tools(self, tools, use_annotation, use_wrapping):
@@ -362,11 +360,23 @@ class ExportHtml(object):
         return toolbar_element
 
     def strip_transparency(self, color):
+        def alpha_multiply(cf, cb, af):
+            channel = hex(cf * af + cb * 0xCC * (1 - af))
+            return channel[-2:len(channel)]
+
+        bg = self.bground if self.bground != "" else "#FFFFFF"
+
         if color is None:
             return color
         m = re.match("^(#[A-Fa-f\d]{6})([A-Fa-f\d]{2})", color)
         if m != None:
-            color = m.group(1)
+            hex_color = m.group(1)
+            hex_alpha = int(m.group(2), 16)
+            r = alpha_multiply(int(hex_color[1:3], 16), int(bg[1:3], 16), hex_alpha)
+            g = alpha_multiply(int(hex_color[3:5], 16), int(bg[3:5], 16), hex_alpha)
+            b = alpha_multiply(int(hex_color[5:7], 16), int(bg[5:7], 16), hex_alpha)
+
+            color = "#%s%s%s" % (r, g, b)
         return color
 
     def setup_print_block(self, curr_sel, multi=False):
@@ -406,24 +416,34 @@ class ExportHtml(object):
         return html_line
 
     def guess_colour(self, the_key):
-        the_colour = None
+        the_colour = self.fground
         the_bgcolour = None
-        the_style = None
-        if the_key in self.colours:
-            the_colour = self.colours[the_key]["color"]
-            the_style = self.colours[the_key]["style"]
-            the_bgcolour = self.colours[the_key]["bgcolor"]
+        the_style = set([])
+        if the_key in self.matched:
+            the_colour = self.matched[the_key]["color"]
+            the_style = self.matched[the_key]["style"]
+            the_bgcolour = self.matched[the_key]["bgcolor"]
         else:
-            best_match = 0
+            best_match_bg = 0
+            best_match_fg = 0
+            best_match_style = 0
             for key in self.colours:
-                if self.view.score_selector(self.pt, key) > best_match:
-                    best_match = self.view.score_selector(self.pt, key)
+                match = self.view.score_selector(self.pt, key)
+                if self.colours[key]["color"] is not None and match > best_match_fg:
+                    best_match_fg = match
                     the_colour = self.colours[key]["color"]
-                    the_style = self.colours[key]["style"]
+                if self.colours[key]["style"] is not None and match > best_match_style:
+                    best_match_style = match
+                    for s in self.colours[key]["style"]:
+                        the_style.add(s)
+                if self.colours[key]["bgcolor"] is not None and match > best_match_bg:
+                    best_match_bg = match
                     the_bgcolour = self.colours[key]["bgcolor"]
-            self.colours[the_key] = {"color": the_colour, "bgcolor": the_bgcolour, "style": the_style}
-        if the_colour is None:
-            the_colour = self.fground
+            self.matched[the_key] = {"color": the_colour, "bgcolor": the_bgcolour, "style": the_style}
+        if len(the_style) == 0:
+            the_style = "normal"
+        else:
+            the_style = ' '.join(the_style)
         return the_colour, the_style, the_bgcolour
 
     def write_header(self, the_html):
