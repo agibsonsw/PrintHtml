@@ -20,6 +20,20 @@ var plist = {
         return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase() === s;
     },
 
+    sortkeys: function(obj) {
+        var sorted = {},
+            keys = [],
+            key;
+
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                keys.push(key);
+            }
+        }
+        keys.sort();
+        return keys;
+    },
+
     indent: function() {
         var i;
         for (i = 0; i < this.indentlevel; i++) {
@@ -61,10 +75,9 @@ var plist = {
     },
 
     parsedict: function(obj) {
-        var keys = Object.keys(obj),
+        var keys = this.sortkeys(obj),
             len = keys.length,
             k, i;
-        keys.sort();
 
         this.indent();
         this.content += '<dict>\n';
