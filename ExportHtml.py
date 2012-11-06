@@ -361,7 +361,7 @@ class ExportHtml(object):
 
     def strip_transparency(self, color):
         def alpha_multiply(cf, cb, af):
-            channel = hex(cf * af + cb * 0xCC * (1 - af))
+            channel = hex(cf * af + cb * 0xAA * (1 - af))
             return channel[-2:len(channel)]
 
         bg = self.bground if self.bground != "" else "#FFFFFF"
