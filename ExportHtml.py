@@ -66,15 +66,13 @@ LINE = (
     '<td valign="top" id="L_%(table)d_%(line_id)d" class="code_text code_gutter">' +
     '<span style="color: %(color)s;">%(line)s&nbsp;</span>' +
     '</td>' +
-    '<td class="code_text code_line">' +
+    '<td class="code_text code_line" style="background-color: %(pad_color)s;">' +
     '<div id="C_%(table)d_%(code_id)d">%(code)s\n</div>' +
     '</td>' +
     '</tr>'
 )
 
-CODE = '''<span class="%(class)s" style="color:%(color)s">%(content)s</span>'''
-
-HIGHLIGHTED_CODE = '''<span class="%(class)s" style="background-color: %(highlight)s; color: %(color)s;">%(content)s</span>'''
+CODE = '''<span class="%(class)s" style="background-color: %(highlight)s; color: %(color)s;">%(content)s</span>'''
 
 TABLE_END = '''</table>'''
 
@@ -286,6 +284,7 @@ class ExportHtml(object):
         self.toolbar = toolbar
         self.toolbar_orientation = "block" if eh_settings.get("toolbar_orientation", "horizontal") == "vertical" else "inline-block"
         self.matched = {}
+        self.ebground = self.bground
 
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
@@ -410,12 +409,13 @@ class ExportHtml(object):
             "line": str(num).rjust(self.gutter_pad).replace(" ", '&nbsp;'),
             "code_id": num,
             "code": line,
-            "table": self.tables
+            "table": self.tables,
+            "pad_color": self.ebground or self.bground
         }
 
         return html_line
 
-    def guess_colour(self, the_key):
+    def guess_colour(self, pt, the_key):
         the_colour = self.fground
         the_bgcolour = None
         the_style = set([])
@@ -428,7 +428,7 @@ class ExportHtml(object):
             best_match_fg = 0
             best_match_style = 0
             for key in self.colours:
-                match = self.view.score_selector(self.pt, key)
+                match = self.view.score_selector(pt, key)
                 if self.colours[key]["color"] is not None and match > best_match_fg:
                     best_match_fg = match
                     the_colour = self.colours[key]["color"]
@@ -459,7 +459,7 @@ class ExportHtml(object):
                     "body_fg":             self.fground,
                     "display_mode":        'table-cell' if self.numbers else 'none',
                     "dot_color":           self.fground,
-                    "toolbar_orientation": self.toolbar_orientation,
+                    "toolbar_orientation": self.toolbar_orientation
                 }
             ),
             "js": INCLUDE_THEME % {
@@ -554,12 +554,12 @@ class ExportHtml(object):
             text = '&nbsp;'
         else:
             the_style += " real_text"
-        if the_bgcolour is not None:
-            # Custom backgrounds
-            code = HIGHLIGHTED_CODE % {"highlight": the_bgcolour, "color": the_colour, "content": text, "class": the_style}
-        else:
-            # Normal code
-            code = CODE % {"color": the_colour, "content": text, "class": the_style}
+
+        if the_bgcolour is None:
+            the_bgcolour = self.bground
+
+        code = CODE % {"highlight": the_bgcolour, "color": the_colour, "content": text, "class": the_style}
+
         if annotate:
             if self.curr_annot != None and not self.open_annot:
                 # Open an annotation
@@ -613,9 +613,9 @@ class ExportHtml(object):
                 else:
                     hl_done = True
                 if hl_done and empty:
-                    the_colour, the_style, the_bgcolour = self.guess_colour(scope_name)
+                    the_colour, the_style, the_bgcolour = self.guess_colour(self.pt, scope_name)
                 elif self.sfground is None:
-                    the_colour, the_style, _ = self.guess_colour(scope_name)
+                    the_colour, the_style, _ = self.guess_colour(self.pt, scope_name)
                     the_bgcolour = self.sbground
                 else:
                     the_colour, the_style = self.sfground, "normal"
@@ -628,7 +628,7 @@ class ExportHtml(object):
                     if self.curr_hl != None and self.end == self.curr_hl.begin():
                         break
                     self.end += 1
-                the_colour, the_style, the_bgcolour = self.guess_colour(scope_name)
+                the_colour, the_style, the_bgcolour = self.guess_colour(self.pt, scope_name)
 
             # Get new annotation
             if (self.curr_annot == None or self.curr_annot.end() < self.pt) and len(self.annotations):
@@ -666,6 +666,11 @@ class ExportHtml(object):
         if self.open_annot:
             line.append(ANNOTATE_CLOSE % {"comment": self.curr_comment})
             self.open_annot = False
+
+        # Get the color for the space at the end of a line
+        if self.end < self.view.size():
+            end_key = self.view.scope_name(self.pt)
+            _, _, self.ebground = self.guess_colour(self.pt, end_key)
 
         # Join line segments
         return ''.join(line)

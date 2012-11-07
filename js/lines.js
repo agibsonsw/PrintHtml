@@ -12,8 +12,7 @@ var page_line_info = {
 
 function wrap_code() {
     var start, end, i, j, mode, idx,
-        width = 0,
-        pad = 10;
+        width = 0;
     if (page_line_info.header) {
         document.getElementById("file_info").style.width = page_line_info.wrap_size + "px";
     }
@@ -28,7 +27,7 @@ function wrap_code() {
                     width = document.getElementById("L_" + idx + "_" + j).offsetWidth;
                 }
             }
-            document.getElementById("C_" + idx + "_" + j).style.width = (page_line_info.wrap_size - width - pad) + "px";
+            document.getElementById("C_" + idx + "_" + j).style.width = (page_line_info.wrap_size - width) + "px";
         }
     }
 }
