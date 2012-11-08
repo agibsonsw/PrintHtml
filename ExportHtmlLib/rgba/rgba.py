@@ -48,7 +48,7 @@ class RGBA(object):
         return self.get_rgb()
 
     def luminance(self):
-        return int(math.sqrt(math.pow(self.r, 2) * .241 + math.pow(self.g, 2) * .691 + math.pow(self.b, 2) + .068))
+        return int(math.sqrt(math.pow(self.r, 2) * .241 + math.pow(self.g, 2) * .691 + math.pow(self.b, 2) * .068))
 
     def brightness(self, factor):
         def limit_range(c):
