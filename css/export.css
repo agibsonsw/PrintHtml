@@ -17,7 +17,8 @@ td div {
 .simple_code_page { background-color: white; color: black }
 .code_gutter { display: /* %display_mode% */; background-color: /* %gutter_bg% */; padding-right: 10px; }
 td.code_line div { width: 100%; }
-span { display:inline; border: 0; margin: 0; padding: 1px 0; }
+div.wrap span { display: inline; padding: 1px 0; }
+span { display: inline-block; border: 0; margin: 0; }
 span.bold { font-weight: bold; }
 span.italic { font-style: italic; }
 span.normal { font-style: normal; }
@@ -131,10 +132,10 @@ table#comment_table {
 }
 div.table_footer { text-align:right; font-size: 8pt; font-weight: bold;}
 a.table_close { float: right; }
-a.table_close:link { color: black; text-decoration: none;}
-a.table_close:active { color: black; text-decoration: none;}
-a.table_close:visited { color: black; text-decoration: none;}
-a.table_close:hover { color: red; text-decoration: none;}
+a.table_close:link { color: black; text-decoration: none; }
+a.table_close:active { color: black; text-decoration: none; }
+a.table_close:visited { color: black; text-decoration: none; }
+a.table_close:hover { color: red; text-decoration: none; }
 table#comment_table th, table#comment_table td { border: thin solid; padding: 5px; }
 td.annotation_link { width: 60px; text-align: right; padding-right: 20px; }
 .annotation_comment { width: 500px; }

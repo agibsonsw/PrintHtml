@@ -12,7 +12,7 @@ var page_line_info = {
 
 function wrap_code() {
     var start, end, i, j, mode, idx,
-        width = 0;
+        width = 0, el;
     if (page_line_info.header) {
         document.getElementById("file_info").style.width = page_line_info.wrap_size + "px";
     }
@@ -27,7 +27,9 @@ function wrap_code() {
                     width = document.getElementById("L_" + idx + "_" + j).offsetWidth;
                 }
             }
-            document.getElementById("C_" + idx + "_" + j).style.width = (page_line_info.wrap_size - width) + "px";
+            el = document.getElementById("C_" + idx + "_" + j);
+            el.style.width = (page_line_info.wrap_size - width) + "px";
+            el.className = "wrap";
         }
     }
 }
@@ -58,7 +60,7 @@ function toggle_gutter() {
 }
 
 function unwrap_code() {
-    var i, j, idx, start, end;
+    var i, j, idx, start, end, el;
     if (page_line_info.header) {
         document.getElementById("file_info").style.width = "100%";
     }
@@ -67,7 +69,9 @@ function unwrap_code() {
         start = page_line_info.ranges[idx][0];
         end = page_line_info.ranges[idx][1];
         for(j = start; j < end; j++) {
-            document.getElementById("C_" + idx + "_" + j).style.width = "100%";
+            el = document.getElementById("C_" + idx + "_" + j);
+            el.style.width = "100%";
+            el.className = "";
         }
     }
 }
