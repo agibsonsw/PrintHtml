@@ -53,7 +53,7 @@ class RGBA(object):
     def brightness(self, factor):
         def limit_range(c):
             c &= 0xFF
-            max(min(c, 0xFF), 0x0)
+            return max(min(c, 0xFF), 0x0)
 
         self.r = limit_range(int(((self.r / 255.0) + float(factor)) * 255))
         self.g = limit_range(int(((self.g / 255.0) + float(factor)) * 255))
