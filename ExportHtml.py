@@ -199,6 +199,45 @@ def getcss(file_name, options):
     return final_code
 
 
+class RGBA(object):
+    r = None
+    g = None
+    b = None
+    a = None
+    color_pattern = re.compile(r"^#(?:([A-Fa-f\d]{6})([A-Fa-f\d]{2})?|([A-Fa-f\d]{3}))")
+
+    def __init__(self, s):
+        self.r, self.g, self.b, self.a = self._split_channels(s)
+
+    def _split_channels(self, s):
+        def alpha_channel(alpha):
+            return int(alpha, 16) if alpha else None
+
+        m = self.color_pattern.match(s)
+        if m is not None:
+            if m.group(1):
+                return int(s[1:3], 16), int(s[3:5], 16), int(s[5:7], 16), alpha_channel(m.group(2))
+            else:
+                return int(s[1] * 2, 16), int(s[2] * 2, 16), int(s[3] * 2, 16), None
+        return None, None, None, None
+
+    def get_color(self):
+        return "#%2X%2X%2X%2X" % (self.r, self.g, self.b, self.a) if self.a is not None else "#%2X%2X%2X" % (self.r, self.g, self.b)
+
+    def sim_alpha(self, background="#FFFFFF", alpha="0xAA"):
+        def tx_alpha(cf, af, cb, ab):
+            return abs(cf * af + cb * ab * (1 - af)) & 0xFF
+
+        r, g, b, _ = self._split_channels(background)
+        a = int(alpha, 16)
+
+        if self.a is not None:
+            color = "#%2X%2X%2X" % (tx_alpha(self.r, self.a, r, a), tx_alpha(self.g, self.a, g, a), tx_alpha(self.b, self.a, b, a))
+        else:
+            color = self.get_color()
+        return color
+
+
 class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
     def execute(self, value):
         if value >= 0:
@@ -359,24 +398,9 @@ class ExportHtml(object):
         return toolbar_element
 
     def strip_transparency(self, color):
-        def alpha_multiply(cf, cb, af):
-            channel = hex(cf * af + cb * 0xAA * (1 - af))
-            return channel[-2:len(channel)]
-
         bg = self.bground if self.bground != "" else "#FFFFFF"
-
-        if color is None:
-            return color
-        m = re.match("^(#[A-Fa-f\d]{6})([A-Fa-f\d]{2})", color)
-        if m != None:
-            hex_color = m.group(1)
-            hex_alpha = int(m.group(2), 16)
-            r = alpha_multiply(int(hex_color[1:3], 16), int(bg[1:3], 16), hex_alpha)
-            g = alpha_multiply(int(hex_color[3:5], 16), int(bg[3:5], 16), hex_alpha)
-            b = alpha_multiply(int(hex_color[5:7], 16), int(bg[5:7], 16), hex_alpha)
-
-            color = "#%s%s%s" % (r, g, b)
-        return color
+        print color
+        return RGBA(color.replace(" ", "")).sim_alpha(bg) if color is not None else color
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
