@@ -8,6 +8,7 @@ import webbrowser
 import re
 from HtmlAnnotations import get_annotations
 import ExportHtmlLib.desktop as desktop
+from ExportHtmlLib.rgba.rgba import RGBA
 import json
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
@@ -199,45 +200,6 @@ def getcss(file_name, options):
     return final_code
 
 
-class RGBA(object):
-    r = None
-    g = None
-    b = None
-    a = None
-    color_pattern = re.compile(r"^#(?:([A-Fa-f\d]{6})([A-Fa-f\d]{2})?|([A-Fa-f\d]{3}))")
-
-    def __init__(self, s):
-        self.r, self.g, self.b, self.a = self._split_channels(s)
-
-    def _split_channels(self, s):
-        def alpha_channel(alpha):
-            return int(alpha, 16) if alpha else None
-
-        m = self.color_pattern.match(s)
-        if m is not None:
-            if m.group(1):
-                return int(s[1:3], 16), int(s[3:5], 16), int(s[5:7], 16), alpha_channel(m.group(2))
-            else:
-                return int(s[1] * 2, 16), int(s[2] * 2, 16), int(s[3] * 2, 16), None
-        return None, None, None, None
-
-    def get_color(self):
-        return "#%2X%2X%2X%2X" % (self.r, self.g, self.b, self.a) if self.a is not None else "#%2X%2X%2X" % (self.r, self.g, self.b)
-
-    def sim_alpha(self, background="#FFFFFF", alpha="0xAA"):
-        def tx_alpha(cf, af, cb, ab):
-            return abs(cf * af + cb * ab * (1 - af)) & 0xFF
-
-        r, g, b, _ = self._split_channels(background)
-        a = int(alpha, 16)
-
-        if self.a is not None:
-            color = "#%2X%2X%2X" % (tx_alpha(self.r, self.a, r, a), tx_alpha(self.g, self.a, g, a), tx_alpha(self.b, self.a, b, a))
-        else:
-            color = self.get_color()
-        return color
-
-
 class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
     def execute(self, value):
         if value >= 0:
@@ -398,9 +360,12 @@ class ExportHtml(object):
         return toolbar_element
 
     def strip_transparency(self, color):
-        bg = self.bground if self.bground != "" else "#FFFFFF"
-        print color
-        return RGBA(color.replace(" ", "")).sim_alpha(bg) if color is not None else color
+        if color is None:
+            return color
+        ba = "AA"
+        rgba = RGBA(color.replace(" ", ""))
+        rgba.apply_alpha(self.bground + ba if self.bground != "" else "#FFFFFF%s" % ba)
+        return rgba.get_rgb()
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
