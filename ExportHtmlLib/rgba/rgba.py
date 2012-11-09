@@ -50,6 +50,12 @@ class RGBA(object):
     def luminance(self):
         return int(0.299 * self.r + 0.587 * self.g + 0.114 * self.b)
 
+    def grayscale(self):
+        luminance = self.luminance() & 0xFF
+        self.r = luminance
+        self.g = luminance
+        self.b = luminance
+
     def brightness(self, lumes):
         def get_overage(c):
             o = 0

@@ -251,7 +251,8 @@ class ExportHtml(object):
             "time_stamp": kwargs.get("time_stamp", "_%m%d%y%H%M%S"),
             "clipboard_copy": bool(kwargs.get("clipboard_copy", False)),
             "view_open": bool(kwargs.get("view_open", False)),
-            "shift_brightness": bool(kwargs.get("shift_brightness", False))
+            "shift_brightness": bool(kwargs.get("shift_brightness", False)),
+            "gray_scale": bool(kwargs.get("gray_scale", False))
         }
 
     def setup(self, **kwargs):
@@ -302,7 +303,6 @@ class ExportHtml(object):
         self.matched = {}
         self.ebground = self.bground
         self.dark_lumens = None
-        self.shift_brightness = kwargs["shift_brightness"]
         self.lumens_limit = float(eh_settings.get("bg_min_lumen_threshold", 62))
 
         fname = self.view.file_name()
@@ -322,12 +322,12 @@ class ExportHtml(object):
         colour_settings = self.plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
-        self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'), self.shift_brightness)
+        self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'), True)
         self.fground = self.strip_transparency(colour_settings.get("foreground", '#000000'))
-        self.sbground = self.strip_transparency(colour_settings.get("selection", self.fground), self.shift_brightness)
+        self.sbground = self.strip_transparency(colour_settings.get("selection", self.fground), True)
         self.sfground = self.strip_transparency(colour_settings.get("selectionForeground", None))
         self.gbground = self.strip_transparency(colour_settings.get("gutter", self.bground)) if kwargs["style_gutter"] else self.bground
-        self.gfground = self.strip_transparency(colour_settings.get("gutterForeground", self.fground), self.shift_brightness) if kwargs["style_gutter"] else self.fground
+        self.gfground = self.strip_transparency(colour_settings.get("gutterForeground", self.fground), True) if kwargs["style_gutter"] else self.fground
 
         self.highlights = []
         if self.highlight_selections:
@@ -354,29 +354,38 @@ class ExportHtml(object):
             if scope != None and (colour != None or bgcolour != None):
                 self.colours[scope] = {
                     "color": self.strip_transparency(colour),
-                    "bgcolor": self.strip_transparency(bgcolour, self.shift_brightness),
+                    "bgcolor": self.strip_transparency(bgcolour, True),
                     "style": style
                 }
 
-        if self.shift_brightness and self.dark_lumens is not None and self.dark_lumens < self.lumens_limit:
-            factor = self.lumens_limit - self.dark_lumens
-            for k, v in self.colours.items():
-                fg, bg = v["color"], v["bgcolor"]
-                if v["color"] is not None:
-                    self.colours[k]["color"] = self.brighten(v["color"], factor)
-                if v["bgcolor"] is not None:
-                    self.colours[k]["bgcolor"] = self.brighten(v["bgcolor"], factor)
-            self.bground = self.brighten(self.bground, factor)
-            self.fground = self.brighten(self.fground, factor)
-            self.sbground = self.brighten(self.sbground, factor)
-            if self.sfground is not None:
-                self.sfground = self.brighten(self.sfground, factor)
-            self.gbground = self.brighten(self.gbground, factor)
-            self.gfground = self.brighten(self.gfground, factor)
+        self.shift_brightness = kwargs["shift_brightness"] and self.dark_lumens is not None and self.dark_lumens < self.lumens_limit
+        self.gray_scale = kwargs["gray_scale"]
 
-    def brighten(self, color, factor):
+        if self.shift_brightness or self.gray_scale:
+            self.color_adjust()
+
+    def color_adjust(self):
+        factor = self.lumens_limit - self.dark_lumens if self.shift_brightness else None
+        for k, v in self.colours.items():
+            fg, bg = v["color"], v["bgcolor"]
+            if v["color"] is not None:
+                self.colours[k]["color"] = self.apply_color_change(v["color"], factor)
+            if v["bgcolor"] is not None:
+                self.colours[k]["bgcolor"] = self.apply_color_change(v["bgcolor"], factor)
+        self.bground = self.apply_color_change(self.bground, factor)
+        self.fground = self.apply_color_change(self.fground, factor)
+        self.sbground = self.apply_color_change(self.sbground, factor)
+        if self.sfground is not None:
+            self.sfground = self.apply_color_change(self.sfground, factor)
+        self.gbground = self.apply_color_change(self.gbground, factor)
+        self.gfground = self.apply_color_change(self.gfground, factor)
+
+    def apply_color_change(self, color, shift_factor):
         rgba = RGBA(color)
-        rgba.brightness(factor)
+        if self.gray_scale:
+            rgba.grayscale()
+        if shift_factor is not None:
+            rgba.brightness(shift_factor)
         return rgba.get_rgb()
 
     def get_tools(self, tools, use_annotation, use_wrapping):
