@@ -48,17 +48,72 @@ class RGBA(object):
         return self.get_rgb()
 
     def luminance(self):
-        return int(math.sqrt(math.pow(self.r, 2) * .241 + math.pow(self.g, 2) * .691 + math.pow(self.b, 2) * .068))
+        return int(0.299 * self.r + 0.587 * self.g + 0.114 * self.b)
 
     def brightness(self, lumes):
-        lumes = float(max(min(lumes, 255), 0))
+        def get_overage(c):
+            o = 0
+            if c < 0:
+                o = 0 + c
+                c = 0
+            elif c > 255:
+                o = c - 255
+                c = 255
+            return o, c
+
+        def distribute_overage(r, g, b, o, s):
+            channels = len(s)
+            if channels == 0:
+                return r, g, b
+            share = o / len(s)
+            if "r" in s and "g" in s:
+                return r + share, g + share, b
+            elif "r" in s and "b" in s:
+                return r + share, g, b + share
+            elif "g" in s and "b" in s:
+                return r, g + share, b + share
+            elif "r" in s:
+                return r + share, g, b
+            elif "g" in s:
+                return r, g + share, b
+            else:  # "b" in s:
+                return r, g, b + share
+
         l = self.luminance()
-        factor = ((lumes + l) / 255.0) - (l / 255.0)
 
-        def limit_range(c):
-            c &= 0xFF
-            return max(min(c, 0xFF), 0x0)
+        # Balck or white
+        if l + lumes > 255:
+            self.r = 0xFF
+            self.g = 0xFF
+            self.b = 0xFF
+            return
+        elif l + lumes < 0:
+            self.r = 0x00
+            self.g = 0x00
+            self.b = 0x00
+            return
 
-        self.r = limit_range(int(math.ceil(self.r + float(factor) * 255.0)))
-        self.g = limit_range(int(math.ceil(self.g + float(factor) * 255.0)))
-        self.b = limit_range(int(math.ceil(self.b + float(factor) * 255.0)))
+        # Adjust Brightness
+        factor = (l + lumes - 0.299 * self.r - 0.587 * self.g - 0.114 * self.b)
+
+        slots = set(["r", "g", "b"])
+        rf = self.r + factor
+        gf = self.g + factor
+        bf = self.b + factor
+
+        overage, rf = get_overage(rf)
+        if overage:
+            slots.remove("r")
+            rf, gf, bf = distribute_overage(rf, gf, bf, overage, slots)
+        overage, gf = get_overage(gf)
+        if overage:
+            slots.remove("g")
+            rf, gf, bf = distribute_overage(rf, gf, bf, overage, slots)
+        overage, bf = get_overage(bf)
+        if overage:
+            slots.remove("b")
+            rf, gf, bf = distribute_overage(rf, gf, bf, overage, slots)
+
+        self.r = int(math.ceil(rf)) & 0xFF
+        self.g = int(math.ceil(gf)) & 0xFF
+        self.b = int(math.ceil(bf)) & 0xFF

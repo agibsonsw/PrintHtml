@@ -359,20 +359,14 @@ class ExportHtml(object):
                 }
 
         if self.shift_brightness and self.dark_lumens is not None and self.dark_lumens < self.lumens_limit:
-            print self.lumens_limit
-            print "lowest lumen %s" % self.dark_lumens
             factor = self.lumens_limit - self.dark_lumens
-            print "factor %d" % factor
-            print self.bground
             for k, v in self.colours.items():
                 fg, bg = v["color"], v["bgcolor"]
                 if v["color"] is not None:
                     self.colours[k]["color"] = self.brighten(v["color"], factor)
                 if v["bgcolor"] is not None:
                     self.colours[k]["bgcolor"] = self.brighten(v["bgcolor"], factor)
-            print RGBA(self.bground).luminance()
             self.bground = self.brighten(self.bground, factor)
-            print RGBA(self.bground).luminance()
             self.fground = self.brighten(self.fground, factor)
             self.sbground = self.brighten(self.sbground, factor)
             if self.sfground is not None:
