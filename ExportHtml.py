@@ -234,12 +234,27 @@ class ExportHtml(object):
     def __init__(self, view):
         self.view = view
 
-    def setup(
-            self, numbers, highlight_selections, browser_print,
-            color_scheme, wrap, multi_select, style_gutter,
-            no_header, date_time_format, show_full_path,
-            toolbar
-        ):
+    def process_inputs(self, **kwargs):
+        return {
+            "numbers": bool(kwargs.get("numbers", False)),
+            "highlight_selections": bool(kwargs.get("highlight_selections", False)),
+            "browser_print": bool(kwargs.get("browser_print", False)),
+            "color_scheme": kwargs.get("color_scheme", None),
+            "wrap": kwargs.get("wrap", None),
+            "multi_select": bool(kwargs.get("multi_select", False)),
+            "style_gutter": bool(kwargs.get("style_gutter", True)),
+            "no_header": bool(kwargs.get("no_header", False)),
+            "date_time_format": kwargs.get("date_time_format", "%m/%d/%y %I:%M:%S"),
+            "show_full_path": bool(kwargs.get("show_full_path", True)),
+            "toolbar": kwargs.get("toolbar", ["plain_text", "gutter", "wrapping", "print", "annotation", "theme"]),
+            "save_location": kwargs.get("save_location", None),
+            "time_stamp": kwargs.get("time_stamp", "_%m%d%y%H%M%S"),
+            "clipboard_copy": bool(kwargs.get("clipboard_copy", False)),
+            "view_open": bool(kwargs.get("view_open", False)),
+            "shift_brightness": bool(kwargs.get("shift_brightness", False))
+        }
+
+    def setup(self, **kwargs):
         path_packages = sublime.packages_path()
 
         # Get get general document preferences from sublime preferences
@@ -259,18 +274,18 @@ class ExportHtml(object):
         self.gfground = ''
         self.sbground = ''
         self.sfground = ''
-        self.numbers = numbers
-        self.date_time_format = date_time_format
+        self.numbers = kwargs["numbers"]
+        self.date_time_format = kwargs["date_time_format"]
         self.time = time.localtime()
-        self.show_full_path = show_full_path
-        self.highlight_selections = highlight_selections
-        self.browser_print = browser_print
-        self.auto_wrap = wrap != None and int(wrap) > 0
-        self.wrap = 900 if not self.auto_wrap else int(wrap)
+        self.show_full_path = kwargs["show_full_path"]
+        self.highlight_selections = kwargs["highlight_selections"]
+        self.browser_print = kwargs["browser_print"]
+        self.auto_wrap = kwargs["wrap"] != None and int(kwargs["wrap"]) > 0
+        self.wrap = 900 if not self.auto_wrap else int(kwargs["wrap"])
         self.hl_continue = None
         self.curr_hl = None
         self.sels = []
-        self.multi_select = self.check_sel() if multi_select and not highlight_selections else False
+        self.multi_select = self.check_sel() if kwargs["multi_select"] and not kwargs["highlight_selections"] else False
         self.size = self.view.size()
         self.pt = 0
         self.end = 0
@@ -280,12 +295,15 @@ class ExportHtml(object):
         self.curr_comment = None
         self.annotations = self.get_annotations()
         self.open_annot = False
-        self.no_header = no_header
+        self.no_header = kwargs["no_header"]
         self.annot_tbl = []
-        self.toolbar = toolbar
+        self.toolbar = kwargs["toolbar"]
         self.toolbar_orientation = "block" if eh_settings.get("toolbar_orientation", "horizontal") == "vertical" else "inline-block"
         self.matched = {}
         self.ebground = self.bground
+        self.dark_lumens = None
+        self.shift_brightness = kwargs["shift_brightness"]
+        self.lumens_limit = float(eh_settings.get("bg_min_lumen_threshold", 62))
 
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
@@ -293,8 +311,8 @@ class ExportHtml(object):
         self.file_name = fname
 
         # Get color scheme
-        if color_scheme != None:
-            alt_scheme = color_scheme
+        if kwargs["color_scheme"] != None:
+            alt_scheme = kwargs["color_scheme"]
         else:
             alt_scheme = eh_settings.get("alternate_scheme", False)
         scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
@@ -304,12 +322,12 @@ class ExportHtml(object):
         colour_settings = self.plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
-        self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'))
+        self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'), self.shift_brightness)
         self.fground = self.strip_transparency(colour_settings.get("foreground", '#000000'))
-        self.sbground = self.strip_transparency(colour_settings.get("selection", self.fground))
+        self.sbground = self.strip_transparency(colour_settings.get("selection", self.fground), self.shift_brightness)
         self.sfground = self.strip_transparency(colour_settings.get("selectionForeground", None))
-        self.gbground = self.strip_transparency(colour_settings.get("gutter", self.bground)) if style_gutter else self.bground
-        self.gfground = self.strip_transparency(colour_settings.get("gutterForeground", self.fground)) if style_gutter else self.fground
+        self.gbground = self.strip_transparency(colour_settings.get("gutter", self.bground)) if kwargs["style_gutter"] else self.bground
+        self.gfground = self.strip_transparency(colour_settings.get("gutterForeground", self.fground), self.shift_brightness) if kwargs["style_gutter"] else self.fground
 
         self.highlights = []
         if self.highlight_selections:
@@ -336,9 +354,36 @@ class ExportHtml(object):
             if scope != None and (colour != None or bgcolour != None):
                 self.colours[scope] = {
                     "color": self.strip_transparency(colour),
-                    "bgcolor": self.strip_transparency(bgcolour),
+                    "bgcolor": self.strip_transparency(bgcolour, self.shift_brightness),
                     "style": style
                 }
+
+        if self.shift_brightness and self.dark_lumens is not None and self.dark_lumens < self.lumens_limit:
+            print self.lumens_limit
+            print "lowest lumen %s" % self.dark_lumens
+            factor = self.lumens_limit - self.dark_lumens
+            print "factor %d" % factor
+            print self.bground
+            for k, v in self.colours.items():
+                fg, bg = v["color"], v["bgcolor"]
+                if v["color"] is not None:
+                    self.colours[k]["color"] = self.brighten(v["color"], factor)
+                if v["bgcolor"] is not None:
+                    self.colours[k]["bgcolor"] = self.brighten(v["bgcolor"], factor)
+            print RGBA(self.bground).luminance()
+            self.bground = self.brighten(self.bground, factor)
+            print RGBA(self.bground).luminance()
+            self.fground = self.brighten(self.fground, factor)
+            self.sbground = self.brighten(self.sbground, factor)
+            if self.sfground is not None:
+                self.sfground = self.brighten(self.sfground, factor)
+            self.gbground = self.brighten(self.gbground, factor)
+            self.gfground = self.brighten(self.gfground, factor)
+
+    def brighten(self, color, factor):
+        rgba = RGBA(color)
+        rgba.brightness(factor)
+        return rgba.get_rgb()
 
     def get_tools(self, tools, use_annotation, use_wrapping):
         toolbar_options = {
@@ -359,12 +404,16 @@ class ExportHtml(object):
             toolbar_element = TOOLBAR % {"options": t_opt}
         return toolbar_element
 
-    def strip_transparency(self, color):
+    def strip_transparency(self, color, track_darkness=False):
         if color is None:
             return color
         ba = "AA"
         rgba = RGBA(color.replace(" ", ""))
         rgba.apply_alpha(self.bground + ba if self.bground != "" else "#FFFFFF%s" % ba)
+        if track_darkness:
+            lumens = rgba.luminance()
+            if self.dark_lumens is None or lumens < self.dark_lumens:
+                self.dark_lumens = lumens
         return rgba.get_rgb()
 
     def setup_print_block(self, curr_sel, multi=False):
@@ -745,19 +794,12 @@ class ExportHtml(object):
         the_html.write(ANNOTATION_FOOTER)
         the_html.write(ANNOTATION_TBL_END)
 
-    def run(
-        self, numbers=False, highlight_selections=False,
-        clipboard_copy=False, browser_print=False, color_scheme=None,
-        wrap=None, view_open=False, multi_select=False, style_gutter=True,
-        no_header=False, date_time_format="%m/%d/%y %I:%M:%S", show_full_path=True,
-        save_location=None, time_stamp="_%m%d%y%H%M%S", toolbar=["plain_text", "gutter", "wrapping", "print", "annotation", "theme"]
-    ):
-        self.setup(
-            bool(numbers), bool(highlight_selections), bool(browser_print),
-            color_scheme, wrap, bool(multi_select), bool(style_gutter),
-            bool(no_header), date_time_format, bool(show_full_path),
-            toolbar
-        )
+    def run(self, **kwargs):
+        inputs = self.process_inputs(**kwargs)
+        self.setup(**inputs)
+
+        save_location = inputs["save_location"]
+        time_stamp = inputs["time_stamp"]
 
         if save_location is not None:
             fname = self.view.file_name()
@@ -785,12 +827,12 @@ class ExportHtml(object):
         with open_html(html_file) as the_html:
             self.write_header(the_html)
             self.write_body(the_html)
-            if bool(clipboard_copy):
+            if inputs["clipboard_copy"]:
                 the_html.seek(0)
                 sublime.set_clipboard(the_html.read())
                 sublime.status_message("Export to HTML: copied to clipboard")
 
-        if bool(view_open):
+        if inputs["view_open"]:
             self.view.window().open_file(the_html.name)
         else:
             # Open in web browser; check return code, if failed try webbrowser

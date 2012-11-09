@@ -31,10 +31,10 @@ class RGBA(object):
         return 0x0, 0x0, 0x0, 0xFF
 
     def get_rgba(self):
-        return "#%2X%2X%2X%2X" % (self.r, self.g, self.b, self.a)
+        return "#%02X%02X%02X%02X" % (self.r, self.g, self.b, self.a)
 
     def get_rgb(self):
-        return "#%2X%2X%2X" % (self.r, self.g, self.b)
+        return "#%02X%02X%02X" % (self.r, self.g, self.b)
 
     def apply_alpha(self, background="#000000AA"):
         def tx_alpha(cf, af, cb, ab):
@@ -50,11 +50,15 @@ class RGBA(object):
     def luminance(self):
         return int(math.sqrt(math.pow(self.r, 2) * .241 + math.pow(self.g, 2) * .691 + math.pow(self.b, 2) * .068))
 
-    def brightness(self, factor):
+    def brightness(self, lumes):
+        lumes = float(max(min(lumes, 255), 0))
+        l = self.luminance()
+        factor = ((lumes + l) / 255.0) - (l / 255.0)
+
         def limit_range(c):
             c &= 0xFF
             return max(min(c, 0xFF), 0x0)
 
-        self.r = limit_range(int(((self.r / 255.0) + float(factor)) * 255))
-        self.g = limit_range(int(((self.g / 255.0) + float(factor)) * 255))
-        self.b = limit_range(int(((self.b / 255.0) + float(factor)) * 255))
+        self.r = limit_range(int(math.ceil(self.r + float(factor) * 255.0)))
+        self.g = limit_range(int(math.ceil(self.g + float(factor) * 255.0)))
+        self.b = limit_range(int(math.ceil(self.b + float(factor) * 255.0)))
