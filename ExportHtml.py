@@ -496,7 +496,7 @@ class ExportHtml(object):
             ),
             "js": INCLUDE_THEME % {
                 "jscode": getjs('plist.js'),
-                "theme": json.dumps(self.plist_file, sort_keys=True, indent=4, separators=(',', ': ')).decode('raw_unicode_escape'),
+                "theme": json.dumps(self.plist_file, sort_keys=True, indent=4, separators=(',', ': ')).encode('raw_unicode_escape'),
                 "name": self.scheme_file,
             }
         }
