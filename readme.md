@@ -56,6 +56,8 @@ The name of the command is the key value, and then you add the parameters you wi
 - save_location (string): Path to save html file.  If the file is wanted in the same file as the original, use ".".  Otherwise, use the absolute path to where the file is desired.  If there is an issue determining where to save the file, or the path does not exist, the OS temp folder will be used. Default is ```None``` (use temp folder).
 - time_stamp (string): Configure the time stamp of saved html when using ```save_location```.  To remove time stamps, just set to an empty string ```""```.  Please see Python's documentation on ```time.strftime``` for detailed info on formatting syntax.  Default is ```"_%m%d%y%H%M%S"```
 - toolbar (array of strings): Option to display a toolbar with to access features in a generated HTML.  This setting is an array of keywords that represent the icons in the toolbar to show.  Valid keywords include ```gutter```, ```print```, ```plain_text```, ```annotation```, ```theme```, and ```wrapping```.  Toolbar will appear when you mouse over the uppert right corner of the window of the generated html.  Default enables all.
+- filter (string): Filters to use on the theme's colors.  The string is a sequence of filters separated by ```;```.  The accepted filters are ```grayscale```, ```invert```, ```sepia```, ```brightness```, and ```saturation```.  ```brightness``` and ```saturation``` requires a float parameter to specify to what magnitude the filter should be applied at.  Example: ```"filter": "sepia;invert;brightness(1.1);saturation(1.3);"```.  Default is ```""```.
+- shift_brightness (bool): This setting shifts the entire theme's brightness if a background color's luminace is below the global setting ```bg_min_lumen_threshold```.  This was added to solve an issue that I had when copying dark themes into an outlook email; if a html span had a background that was too dark, the foreground would just be white.  This allows me to not have to worry about how dark the theme is, and probably serves very little use besides that.
 
 If you wish to bind a command to a key combination etc., the same settings as above can be used.
 
@@ -155,6 +157,11 @@ You can navigate the annotations in the generate HTML by using a jump table.  Yo
 - agibsonsw: Original idea and algorithm for the plugin
 - Paul Boddie: Desktop module for open files in web browser cross platform
 - Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright
+
+#Version 0.5.5
+- Various bug fixes
+- Add color filters that can be applied to a theme
+- Add shift_brightness to solve an issue I had with copying the html of very dark themes into Outlook at work
 
 #Version 0.5.0
 - Added ability to define path to save generated html to a specific folder with optional timestamp
