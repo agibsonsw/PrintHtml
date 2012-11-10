@@ -365,7 +365,7 @@ class ExportHtml(object):
             self.color_adjust()
 
     def color_adjust(self):
-        factor = self.lumens_limit - self.dark_lumens if self.shift_brightness else None
+        factor = 1 + ((self.lumens_limit - self.dark_lumens) / 255.0) if self.shift_brightness else None
         for k, v in self.colours.items():
             fg, bg = v["color"], v["bgcolor"]
             if v["color"] is not None:

@@ -74,15 +74,16 @@ class RGBA(object):
         b = max(min(int((self.r * .272) + (self.g * .534) + (self.b * .131)), 255), 0) & 0xFF
         self.r, self.g, self.b = r, g, b
 
-    def brightness(self, lumes):
+    def brightness(self, factor):
         def get_overage(c):
-            o = 0
-            if c < 0:
-                o = 0 + c
-                c = 0
-            elif c > 255:
-                o = c - 255
-                c = 255
+            if c < 0.0:
+                o = 0.0 + c
+                c = 0.0
+            elif c > 255.0:
+                o = c - 255.0
+                c = 255.0
+            else:
+                o = 0.0
             return o, c
 
         def distribute_overage(c, o, s):
@@ -104,38 +105,28 @@ class RGBA(object):
                 c = c[0], c[1], c[2] + parts
             return c
 
-        def is_black_or_white(l):
-            bw = False
-            if l >= 255:
-                self.r = 0xFF
-                self.g = 0xFF
-                self.b = 0xFF
-                bw = True
-            elif l <= 0:
-                self.r = 0x00
-                self.g = 0x00
-                self.b = 0x00
-                bw = True
-            return bw
-
         channels = ["r", "g", "b"]
-        total_lumes = self.luminance() + lumes
+        total_lumes = max(min(self.luminance() + (255.0 * factor) - 255.0, 255.0), 0.0)
 
-        if is_black_or_white(total_lumes):
-            return
+        if total_lumes == 255:
+            # white
+            self.r, self.g, self.b = 0xFF, 0xFF, 0xFF
+        elif total_lumes == 0:
+            # black
+            self.r, self.g, self.b = 0x00, 0x00, 0x00
+        else:
+            # Adjust Brightness
+            pts = (total_lumes - 0.299 * self.r - 0.587 * self.g - 0.114 * self.b)
+            slots = set(channels)
+            components = [float(self.r) + pts, float(self.g) + pts, float(self.b) + pts]
+            count = 0
+            for c in channels:
+                overage, components[count] = get_overage(components[count])
+                if overage:
+                    slots.remove(c)
+                    components = list(distribute_overage(components, overage, slots))
+                count += 1
 
-        # Adjust Brightness
-        pts = (total_lumes - 0.299 * self.r - 0.587 * self.g - 0.114 * self.b)
-        slots = set(channels)
-        components = [self.r + pts, self.g + pts, self.b + pts]
-        count = 0
-        for c in channels:
-            overage, components[count] = get_overage(components[count])
-            if overage:
-                slots.remove(c)
-                components = list(distribute_overage(components, overage, slots))
-            count += 1
-
-        self.r = int(math.ceil(components[0])) & 0xFF
-        self.g = int(math.ceil(components[1])) & 0xFF
-        self.b = int(math.ceil(components[2])) & 0xFF
+            self.r = int(round(components[0])) & 0xFF
+            self.g = int(round(components[1])) & 0xFF
+            self.b = int(round(components[2])) & 0xFF
