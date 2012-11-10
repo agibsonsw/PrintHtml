@@ -252,7 +252,7 @@ class ExportHtml(object):
             "clipboard_copy": bool(kwargs.get("clipboard_copy", False)),
             "view_open": bool(kwargs.get("view_open", False)),
             "shift_brightness": bool(kwargs.get("shift_brightness", False)),
-            "filter": kwargs.get("filter", None)
+            "filter": kwargs.get("filter", "")
         }
 
     def setup(self, **kwargs):
@@ -304,6 +304,14 @@ class ExportHtml(object):
         self.ebground = self.bground
         self.dark_lumens = None
         self.lumens_limit = float(eh_settings.get("bg_min_lumen_threshold", 62))
+        self.filter = []
+        for f in kwargs["filter"].split(";"):
+            m = re.match(r'^(?:(brightness|saturation)\(([\d]+|[\d]*\.[\d]+)\)|(sepia|grayscale|invert))$', f)
+            if m:
+                if m.group(1):
+                    self.filter.append((m.group(1), float(m.group(2))))
+                else:
+                    self.filter.append((m.group(3), 0.0))
 
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
@@ -318,7 +326,7 @@ class ExportHtml(object):
         scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
         colour_scheme = path.normpath(scheme_file)
         self.scheme_file = path.basename(colour_scheme)
-        self.plist_file = readPlist(path_packages + colour_scheme.replace('Packages', ''))
+        self.plist_file = self.apply_filters(readPlist(path_packages + colour_scheme.replace('Packages', '')))
         colour_settings = self.plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
@@ -359,10 +367,48 @@ class ExportHtml(object):
                 }
 
         self.shift_brightness = kwargs["shift_brightness"] and self.dark_lumens is not None and self.dark_lumens < self.lumens_limit
-        self.filter = kwargs["filter"]
-
-        if self.shift_brightness or self.filter is not None:
+        if self.shift_brightness:
             self.color_adjust()
+
+    def apply_filters(self, tmtheme):
+        def filter_color(color):
+            rgba = RGBA(color)
+            for f in self.filter:
+                name = f[0]
+                value = f[1]
+                if name == "grayscale":
+                    rgba.grayscale()
+                elif name == "sepia":
+                    rgba.sepia()
+                elif name == "saturation":
+                    rgba.saturation(value)
+                elif name == "invert":
+                    rgba.invert()
+                elif name == "brightness":
+                    rgba.brightness(value)
+            return rgba.get_rgba()
+
+        if len(self.filter):
+            general_settings_read = False
+            for settings in tmtheme["settings"]:
+                if not general_settings_read:
+                    for k, v in settings["settings"].items():
+                        try:
+                            settings["settings"][k] = filter_color(v)
+                        except:
+                            pass
+                    general_settings_read = True
+                    continue
+
+                try:
+                    settings["settings"]["foreground"] = filter_color(settings["settings"]["foreground"])
+                except:
+                    pass
+                try:
+                    settings["settings"]["background"] = filter_color(settings["settings"]["background"])
+                except:
+                    pass
+        return tmtheme
 
     def color_adjust(self):
         factor = 1 + ((self.lumens_limit - self.dark_lumens) / 255.0) if self.shift_brightness else None
@@ -382,16 +428,6 @@ class ExportHtml(object):
 
     def apply_color_change(self, color, shift_factor):
         rgba = RGBA(color)
-        if self.filter == "grayscale":
-            rgba.grayscale()
-        elif self.filter == "sepia":
-            rgba.sepia()
-        elif self.filter == "desaturate":
-            rgba.saturation(.3)
-        elif self.filter == "saturate":
-            rgba.saturation(3.0)
-        elif self.filter == "invert":
-            rgba.invert()
         if shift_factor is not None:
             rgba.brightness(shift_factor)
         return rgba.get_rgb()

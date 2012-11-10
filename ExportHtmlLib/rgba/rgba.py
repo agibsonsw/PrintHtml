@@ -4,8 +4,11 @@ Licensed under MIT
 Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
 '''
 
-import math
 import re
+
+
+def clamp(value, mn, mx):
+    return max(min(value, mx), mn)
 
 
 class RGBA(object):
@@ -23,12 +26,11 @@ class RGBA(object):
             return int(alpha, 16) if alpha else 0xFF
 
         m = self.color_pattern.match(s)
-        if m is not None:
-            if m.group(1):
-                return int(s[1:3], 16), int(s[3:5], 16), int(s[5:7], 16), alpha_channel(m.group(2))
-            else:
-                return int(s[1] * 2, 16), int(s[2] * 2, 16), int(s[3] * 2, 16), 0xFF
-        return 0x0, 0x0, 0x0, 0xFF
+        assert(m is not None)
+        if m.group(1):
+            return int(s[1:3], 16), int(s[3:5], 16), int(s[5:7], 16), alpha_channel(m.group(2))
+        else:
+            return int(s[1] * 2, 16), int(s[2] * 2, 16), int(s[3] * 2, 16), 0xFF
 
     def get_rgba(self):
         return "#%02X%02X%02X%02X" % (self.r, self.g, self.b, self.a)
@@ -48,7 +50,7 @@ class RGBA(object):
         return self.get_rgb()
 
     def luminance(self):
-        return int(0.299 * self.r + 0.587 * self.g + 0.114 * self.b)
+        return clamp(int(round(0.299 * self.r + 0.587 * self.g + 0.114 * self.b)), 0, 255)
 
     def invert(self):
         self.r ^= 0xFF
@@ -57,9 +59,9 @@ class RGBA(object):
 
     def saturation(self, factor):
         l = self.luminance()
-        r = max(min(int(l + (self.r - l) * factor), 255), 0) & 0xFF
-        g = max(min(int(l + (self.g - l) * factor), 255), 0) & 0xFF
-        b = max(min(int(l + (self.b - l) * factor), 255), 0) & 0xFF
+        r = clamp(int(l + (self.r - l) * factor), 0, 255) & 0xFF
+        g = clamp(int(l + (self.g - l) * factor), 0, 255) & 0xFF
+        b = clamp(int(l + (self.b - l) * factor), 0, 255) & 0xFF
         self.r, self.g, self.b = r, g, b
 
     def grayscale(self):
@@ -69,9 +71,9 @@ class RGBA(object):
         self.b = luminance
 
     def sepia(self):
-        r = max(min(int((self.r * .393) + (self.g * .769) + (self.b * .189)), 255), 0) & 0xFF
-        g = max(min(int((self.r * .349) + (self.g * .686) + (self.b * .168)), 255), 0) & 0xFF
-        b = max(min(int((self.r * .272) + (self.g * .534) + (self.b * .131)), 255), 0) & 0xFF
+        r = clamp(int((self.r * .393) + (self.g * .769) + (self.b * .189)), 0, 255) & 0xFF
+        g = clamp(int((self.r * .349) + (self.g * .686) + (self.b * .168)), 0, 255) & 0xFF
+        b = clamp(int((self.r * .272) + (self.g * .534) + (self.b * .131)), 0, 255) & 0xFF
         self.r, self.g, self.b = r, g, b
 
     def brightness(self, factor):
@@ -106,7 +108,7 @@ class RGBA(object):
             return c
 
         channels = ["r", "g", "b"]
-        total_lumes = max(min(self.luminance() + (255.0 * factor) - 255.0, 255.0), 0.0)
+        total_lumes = clamp(self.luminance() + (255.0 * factor) - 255.0, 0.0, 255.0)
 
         if total_lumes == 255:
             # white
