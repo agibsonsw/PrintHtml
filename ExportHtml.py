@@ -252,7 +252,7 @@ class ExportHtml(object):
             "clipboard_copy": bool(kwargs.get("clipboard_copy", False)),
             "view_open": bool(kwargs.get("view_open", False)),
             "shift_brightness": bool(kwargs.get("shift_brightness", False)),
-            "gray_scale": bool(kwargs.get("gray_scale", False))
+            "filter": kwargs.get("filter", None)
         }
 
     def setup(self, **kwargs):
@@ -359,9 +359,9 @@ class ExportHtml(object):
                 }
 
         self.shift_brightness = kwargs["shift_brightness"] and self.dark_lumens is not None and self.dark_lumens < self.lumens_limit
-        self.gray_scale = kwargs["gray_scale"]
+        self.filter = kwargs["filter"]
 
-        if self.shift_brightness or self.gray_scale:
+        if self.shift_brightness or self.filter is not None:
             self.color_adjust()
 
     def color_adjust(self):
@@ -382,8 +382,16 @@ class ExportHtml(object):
 
     def apply_color_change(self, color, shift_factor):
         rgba = RGBA(color)
-        if self.gray_scale:
+        if self.filter == "grayscale":
             rgba.grayscale()
+        elif self.filter == "sepia":
+            rgba.sepia()
+        elif self.filter == "desaturate":
+            rgba.saturation(.3)
+        elif self.filter == "saturate":
+            rgba.saturation(3.0)
+        elif self.filter == "invert":
+            rgba.invert()
         if shift_factor is not None:
             rgba.brightness(shift_factor)
         return rgba.get_rgb()

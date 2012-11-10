@@ -50,11 +50,29 @@ class RGBA(object):
     def luminance(self):
         return int(0.299 * self.r + 0.587 * self.g + 0.114 * self.b)
 
+    def invert(self):
+        self.r ^= 0xFF
+        self.g ^= 0xFF
+        self.b ^= 0xFF
+
+    def saturation(self, factor):
+        l = self.luminance()
+        r = max(min(int(l + (self.r - l) * factor), 255), 0) & 0xFF
+        g = max(min(int(l + (self.g - l) * factor), 255), 0) & 0xFF
+        b = max(min(int(l + (self.b - l) * factor), 255), 0) & 0xFF
+        self.r, self.g, self.b = r, g, b
+
     def grayscale(self):
         luminance = self.luminance() & 0xFF
         self.r = luminance
         self.g = luminance
         self.b = luminance
+
+    def sepia(self):
+        r = max(min(int((self.r * .393) + (self.g * .769) + (self.b * .189)), 255), 0) & 0xFF
+        g = max(min(int((self.r * .349) + (self.g * .686) + (self.b * .168)), 255), 0) & 0xFF
+        b = max(min(int((self.r * .272) + (self.g * .534) + (self.b * .131)), 255), 0) & 0xFF
+        self.r, self.g, self.b = r, g, b
 
     def brightness(self, lumes):
         def get_overage(c):
@@ -67,59 +85,57 @@ class RGBA(object):
                 c = 255
             return o, c
 
-        def distribute_overage(r, g, b, o, s):
+        def distribute_overage(c, o, s):
             channels = len(s)
             if channels == 0:
-                return r, g, b
-            share = o / len(s)
+                return c
+            parts = o / len(s)
             if "r" in s and "g" in s:
-                return r + share, g + share, b
+                c = c[0] + parts, c[1] + parts, c[2]
             elif "r" in s and "b" in s:
-                return r + share, g, b + share
+                c = c[0] + parts, c[1], c[2] + parts
             elif "g" in s and "b" in s:
-                return r, g + share, b + share
+                c = c[0], c[1] + parts, c[2] + parts
             elif "r" in s:
-                return r + share, g, b
+                c = c[0] + parts, c[1], c[2]
             elif "g" in s:
-                return r, g + share, b
+                c = c[0], c[1] + parts, c[2]
             else:  # "b" in s:
-                return r, g, b + share
+                c = c[0], c[1], c[2] + parts
+            return c
 
-        l = self.luminance()
+        def is_black_or_white(l):
+            bw = False
+            if l >= 255:
+                self.r = 0xFF
+                self.g = 0xFF
+                self.b = 0xFF
+                bw = True
+            elif l <= 0:
+                self.r = 0x00
+                self.g = 0x00
+                self.b = 0x00
+                bw = True
+            return bw
 
-        # Balck or white
-        if l + lumes > 255:
-            self.r = 0xFF
-            self.g = 0xFF
-            self.b = 0xFF
-            return
-        elif l + lumes < 0:
-            self.r = 0x00
-            self.g = 0x00
-            self.b = 0x00
+        channels = ["r", "g", "b"]
+        total_lumes = self.luminance() + lumes
+
+        if is_black_or_white(total_lumes):
             return
 
         # Adjust Brightness
-        factor = (l + lumes - 0.299 * self.r - 0.587 * self.g - 0.114 * self.b)
+        pts = (total_lumes - 0.299 * self.r - 0.587 * self.g - 0.114 * self.b)
+        slots = set(channels)
+        components = [self.r + pts, self.g + pts, self.b + pts]
+        count = 0
+        for c in channels:
+            overage, components[count] = get_overage(components[count])
+            if overage:
+                slots.remove(c)
+                components = list(distribute_overage(components, overage, slots))
+            count += 1
 
-        slots = set(["r", "g", "b"])
-        rf = self.r + factor
-        gf = self.g + factor
-        bf = self.b + factor
-
-        overage, rf = get_overage(rf)
-        if overage:
-            slots.remove("r")
-            rf, gf, bf = distribute_overage(rf, gf, bf, overage, slots)
-        overage, gf = get_overage(gf)
-        if overage:
-            slots.remove("g")
-            rf, gf, bf = distribute_overage(rf, gf, bf, overage, slots)
-        overage, bf = get_overage(bf)
-        if overage:
-            slots.remove("b")
-            rf, gf, bf = distribute_overage(rf, gf, bf, overage, slots)
-
-        self.r = int(math.ceil(rf)) & 0xFF
-        self.g = int(math.ceil(gf)) & 0xFF
-        self.b = int(math.ceil(bf)) & 0xFF
+        self.r = int(math.ceil(components[0])) & 0xFF
+        self.g = int(math.ceil(components[1])) & 0xFF
+        self.b = int(math.ceil(components[2])) & 0xFF
