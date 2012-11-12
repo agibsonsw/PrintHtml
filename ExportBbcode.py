@@ -75,7 +75,7 @@ class ExportBbcode(object):
             "numbers": bool(kwargs.get("numbers", False)),
             "color_scheme": kwargs.get("color_scheme", None),
             "multi_select": bool(kwargs.get("multi_select", False)),
-            "clipboard_copy": bool(kwargs.get("clipboard_copy", False)),
+            "clipboard_copy": bool(kwargs.get("clipboard_copy", True)),
             "view_open": bool(kwargs.get("view_open", False)),
             "filter": kwargs.get("filter", "")
         }
