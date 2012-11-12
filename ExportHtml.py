@@ -8,7 +8,6 @@ import webbrowser
 import re
 from HtmlAnnotations import get_annotations
 import ExportHtmlLib.desktop as desktop
-from ExportHtmlLib.rgba.rgba import RGBA
 import json
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
@@ -21,6 +20,9 @@ if sublime.platform() == "linux":
     if not linux_lib in sys.path and path.exists(linux_lib):
         sys.path.append(linux_lib)
 from plistlib import readPlist
+from ExportHtmlLib.rgba.rgba import RGBA
+
+FILTER_MATCH = re.compile(r'^(?:(brightness|saturation|hue|colorize)\((-?[\d]+|[\d]*\.[\d]+)\)|(sepia|grayscale|invert))$')
 
 # HTML Code
 HTML_HEADER = \
@@ -306,7 +308,7 @@ class ExportHtml(object):
         self.lumens_limit = float(eh_settings.get("bg_min_lumen_threshold", 62))
         self.filter = []
         for f in kwargs["filter"].split(";"):
-            m = re.match(r'^(?:(brightness|saturation)\(([\d]+|[\d]*\.[\d]+)\)|(sepia|grayscale|invert))$', f)
+            m = FILTER_MATCH.match(f)
             if m:
                 if m.group(1):
                     self.filter.append((m.group(1), float(m.group(2))))
@@ -386,6 +388,10 @@ class ExportHtml(object):
                     rgba.invert()
                 elif name == "brightness":
                     rgba.brightness(value)
+                elif name == "hue":
+                    rgba.hue(value)
+                elif name == "colorize":
+                    rgba.colorize(value)
             return rgba.get_rgba()
 
         if len(self.filter):

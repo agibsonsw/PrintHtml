@@ -5,6 +5,10 @@ Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
 '''
 
 import re
+from colorsys import rgb_to_hls, hls_to_rgb, rgb_to_hsv, hsv_to_rgb
+
+RGB_CHANNEL_SCALE = 1.0 / 255.0
+HUE_SCALE = 1.0 / 360.0
 
 
 def clamp(value, mn, mx):
@@ -18,7 +22,9 @@ class RGBA(object):
     a = None
     color_pattern = re.compile(r"^#(?:([A-Fa-f\d]{6})([A-Fa-f\d]{2})?|([A-Fa-f\d]{3}))")
 
-    def __init__(self, s):
+    def __init__(self, s=None):
+        if s is None:
+            s = "#000000FF"
         self.r, self.g, self.b, self.a = self._split_channels(s)
 
     def _split_channels(self, s):
@@ -52,17 +58,48 @@ class RGBA(object):
     def luminance(self):
         return clamp(int(round(0.299 * self.r + 0.587 * self.g + 0.114 * self.b)), 0, 255)
 
+    def tohsv(self):
+        return rgb_to_hsv(self.r * RGB_CHANNEL_SCALE, self.g * RGB_CHANNEL_SCALE, self.b * RGB_CHANNEL_SCALE)
+
+    def fromhsv(self, h, s, v):
+        r, g, b = hsv_to_rgb(h, s, v)
+        self.r = int(round(r * 255)) & 0xFF
+        self.g = int(round(g * 255)) & 0xFF
+        self.b = int(round(b * 255)) & 0xFF
+
+    def tohls(self):
+        return rgb_to_hls(self.r * RGB_CHANNEL_SCALE, self.g * RGB_CHANNEL_SCALE, self.b * RGB_CHANNEL_SCALE)
+
+    def fromhls(self, h, l, s):
+        r, g, b = hls_to_rgb(h, l, s)
+        self.r = int(round(r * 255)) & 0xFF
+        self.g = int(round(g * 255)) & 0xFF
+        self.b = int(round(b * 255)) & 0xFF
+
+    def colorize(self, deg):
+        h, l, s = self.tohls()
+        h = clamp(deg * HUE_SCALE, 0.0, 1.0)
+        self.fromhls(h, l, s)
+
+    def hue(self, deg):
+        d = deg * HUE_SCALE
+        h, l, s = self.tohls()
+        h = h + d
+        while h > 1.0:
+            h -= 1.0
+        while h < 0.0:
+            h += 1.0
+        self.fromhls(h, l, s)
+
     def invert(self):
         self.r ^= 0xFF
         self.g ^= 0xFF
         self.b ^= 0xFF
 
     def saturation(self, factor):
-        l = self.luminance()
-        r = clamp(int(l + (self.r - l) * factor), 0, 255) & 0xFF
-        g = clamp(int(l + (self.g - l) * factor), 0, 255) & 0xFF
-        b = clamp(int(l + (self.b - l) * factor), 0, 255) & 0xFF
-        self.r, self.g, self.b = r, g, b
+        h, l, s = self.tohls()
+        s = clamp(s * factor, 0.0, 1.0)
+        self.fromhls(h, l, s)
 
     def grayscale(self):
         luminance = self.luminance() & 0xFF
@@ -77,6 +114,8 @@ class RGBA(object):
         self.r, self.g, self.b = r, g, b
 
     def brightness(self, factor):
+        # Caculate brightness based on RGB luminance.
+        # Maybe HLS or HSV brightness adjustment is better?
         def get_overage(c):
             if c < 0.0:
                 o = 0.0 + c

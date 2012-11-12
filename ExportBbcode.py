@@ -13,6 +13,7 @@ if sublime.platform() == "linux":
     if not linux_lib in sys.path and path.exists(linux_lib):
         sys.path.append(linux_lib)
 from plistlib import readPlist
+from ExportHtmlLib.rgba.rgba import RGBA
 
 NUMBERED_BBCODE_LINE = '[color=%(color)s]%(line)s [/color]%(code)s\n'
 
@@ -30,7 +31,9 @@ POST_START = '[pre=%(bg_color)s]'
 
 POST_END = '[/pre]\n'
 
-BBCODE_MATCH = r"""(\[/?)((?:code|pre|table|tr|td|th|b|i|u|sup|color|url|img|list|trac|center|quote|size|li|ul|ol|youtube|gvideo)(?:=[^\]]+)?)(\])"""
+BBCODE_MATCH = re.compile(r"""(\[/?)((?:code|pre|table|tr|td|th|b|i|u|sup|color|url|img|list|trac|center|quote|size|li|ul|ol|youtube|gvideo)(?:=[^\]]+)?)(\])""")
+
+FILTER_MATCH = re.compile(r'^(?:(brightness|saturation|hue|colorize)\((-?[\d]+|[\d]*\.[\d]+)\)|(sepia|grayscale|invert))$')
 
 
 class ExportBbcodePanelCommand(sublime_plugin.WindowCommand):
@@ -67,7 +70,17 @@ class ExportBbcode(object):
     def __init__(self, view):
         self.view = view
 
-    def setup(self, numbers, color_scheme, multi_select):
+    def process_inputs(self, **kwargs):
+        return {
+            "numbers": bool(kwargs.get("numbers", False)),
+            "color_scheme": kwargs.get("color_scheme", None),
+            "multi_select": bool(kwargs.get("multi_select", False)),
+            "clipboard_copy": bool(kwargs.get("clipboard_copy", False)),
+            "view_open": bool(kwargs.get("view_open", False)),
+            "filter": kwargs.get("filter", "")
+        }
+
+    def setup(self, **kwargs):
         path_packages = sublime.packages_path()
 
         # Get get general document preferences from sublime preferences
@@ -81,26 +94,34 @@ class ExportBbcode(object):
         self.gfground = ''
         self.sbground = ''
         self.sfground = ''
-        self.numbers = numbers
+        self.numbers = kwargs["numbers"]
         self.hl_continue = None
         self.curr_hl = None
         self.sels = []
-        self.multi_select = self.check_sel() if multi_select else False
+        self.multi_select = self.check_sel() if kwargs["multi_select"] else False
         self.size = self.view.size()
         self.pt = 0
         self.end = 0
         self.curr_row = 0
         self.empty_space = None
+        self.filter = []
+        for f in kwargs["filter"].split(";"):
+            m = FILTER_MATCH.match(f)
+            if m:
+                if m.group(1):
+                    self.filter.append((m.group(1), float(m.group(2))))
+                else:
+                    self.filter.append((m.group(3), 0.0))
 
         # Get color scheme
-        if color_scheme != None:
-            alt_scheme = color_scheme
+        if kwargs["color_scheme"] != None:
+            alt_scheme = kwargs["color_scheme"]
         else:
             alt_scheme = eh_settings.get("alternate_scheme", False)
         scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
         colour_scheme = path.normpath(scheme_file)
-        plist_file = readPlist(path_packages + colour_scheme.replace('Packages', ''))
-        colour_settings = plist_file["settings"][0]["settings"]
+        self.plist_file = self.apply_filters(readPlist(path_packages + colour_scheme.replace('Packages', '')))
+        colour_settings = self.plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
         self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'))
@@ -110,7 +131,7 @@ class ExportBbcode(object):
 
         # Create scope colors mapping from color scheme file
         self.colours = {self.view.scope_name(self.end).split(' ')[0]: {"color": self.fground, "style": []}}
-        for item in plist_file["settings"]:
+        for item in self.plist_file["settings"]:
             scope = item.get('scope', None)
             colour = None
             style = []
@@ -126,11 +147,57 @@ class ExportBbcode(object):
             if scope != None and colour != None:
                 self.colours[scope] = {"color": self.strip_transparency(colour), "style": style}
 
-    def strip_transparency(self, color):
-        m = re.match("^(#[A-Fa-f\d]{6})([A-Fa-f\d]{2})", color)
-        if m != None:
-            color = m.group(1)
-        return color
+    def apply_filters(self, tmtheme):
+        def filter_color(color):
+            rgba = RGBA(color)
+            for f in self.filter:
+                name = f[0]
+                value = f[1]
+                if name == "grayscale":
+                    rgba.grayscale()
+                elif name == "sepia":
+                    rgba.sepia()
+                elif name == "saturation":
+                    rgba.saturation(value)
+                elif name == "invert":
+                    rgba.invert()
+                elif name == "brightness":
+                    rgba.brightness(value)
+                elif name == "hue":
+                    rgba.hue(value)
+                elif name == "colorize":
+                    rgba.colorize(value)
+            return rgba.get_rgba()
+
+        if len(self.filter):
+            general_settings_read = False
+            for settings in tmtheme["settings"]:
+                if not general_settings_read:
+                    for k, v in settings["settings"].items():
+                        try:
+                            settings["settings"][k] = filter_color(v)
+                        except:
+                            pass
+                    general_settings_read = True
+                    continue
+
+                try:
+                    settings["settings"]["foreground"] = filter_color(settings["settings"]["foreground"])
+                except:
+                    pass
+                try:
+                    settings["settings"]["background"] = filter_color(settings["settings"]["background"])
+                except:
+                    pass
+        return tmtheme
+
+    def strip_transparency(self, color, track_darkness=False):
+        if color is None:
+            return color
+        ba = "AA"
+        rgba = RGBA(color.replace(" ", ""))
+        rgba.apply_alpha(self.bground + ba if self.bground != "" else "#FFFFFF%s" % ba)
+        return rgba.get_rgb()
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
@@ -210,7 +277,7 @@ class ExportBbcode(object):
             self.empty_space = text
         else:
             code = ""
-            text = re.sub(BBCODE_MATCH, lambda m: self.repl(m, the_colour), text)
+            text = BBCODE_MATCH.sub(lambda m: self.repl(m, the_colour), text)
             bold = False
             italic = False
             for s in the_style:
@@ -268,20 +335,18 @@ class ExportBbcode(object):
 
         the_bbcode.write(POST_END)
 
-    def run(
-        self, numbers=False, clipboard_copy=True, color_scheme=None,
-        view_open=False, multi_select=False
-    ):
-        self.setup(numbers, color_scheme, multi_select)
+    def run(self, **kwargs):
+        inputs = self.process_inputs(**kwargs)
+        self.setup(**inputs)
 
-        delete = False if view_open else True
+        delete = False if inputs["view_open"] else True
 
         with tempfile.NamedTemporaryFile(delete=delete, suffix='.txt') as the_bbcode:
             self.write_body(the_bbcode)
-            if clipboard_copy:
+            if inputs["clipboard_copy"]:
                 the_bbcode.seek(0)
                 sublime.set_clipboard(the_bbcode.read())
                 sublime.status_message("Export to BBCode: copied to clipboard")
 
-        if view_open:
+        if inputs["view_open"]:
             self.view.window().open_file(the_bbcode.name)
