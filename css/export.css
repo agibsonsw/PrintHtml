@@ -17,7 +17,7 @@ div.wrap {
     white-space: pre-line;      /* CSS 3 (and 2.1 as well, actually) */
     word-wrap:   break-word;      /* IE */
 }
-div.wrap span { display: inline; }
+div.wrap span { display: inline; padding: 1px 0;}
 span { display: inline-block; border: 0; margin: 0; }
 span.bold { font-weight: bold; }
 span.italic { font-style: italic; }
