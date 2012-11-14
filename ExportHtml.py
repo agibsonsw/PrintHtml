@@ -69,7 +69,7 @@ LINE = (
     '<td valign="top" id="L_%(table)d_%(line_id)d" class="code_text code_gutter">' +
     '<span style="color: %(color)s;">%(line)s&nbsp;</span>' +
     '</td>' +
-    '<td class="code_text code_line" style="background-color: %(pad_color)s;">' +
+    '<td valign="top" class="code_text code_line" style="background-color: %(pad_color)s;">' +
     '<div id="C_%(table)d_%(code_id)d">%(code)s\n</div>' +
     '</td>' +
     '</tr>'
