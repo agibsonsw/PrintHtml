@@ -1,13 +1,21 @@
 /* General */
+* html a:hover { background: transparent; }
 body { color: /* %body_fg% */; }
 pre { border: 0; margin: 0; padding: 0; }
 td { padding: 0; }
 table { border: 0; margin: 0; padding: 0; border-collapse: collapse; empty-cells: show; }
-.code_text { font: /* %font_size% */pt /* %font_face% */, "Courier New", Monospace; }
+.code_text { font: /* %font_size% */pt /* %font_face% */, "Courier", Monospace; }
 .code_page { background-color: /* %page_bg% */; }
 .simple_code_page { background-color: white; color: black }
 .code_gutter { display: /* %display_mode% */; background-color: /* %gutter_bg% */; padding-right: 10px; }
 td.code_line div { width: 100%; }
+span { display: inline-block; border: 0; margin: 0; }
+span.bold { font-weight: bold; }
+span.italic { font-style: italic; }
+span.normal { font-style: normal; }
+span.underline { text-decoration:underline; }
+
+/* Wrapping */
 div.wrap {
     white-space: -moz-pre-wrap; /* Mozilla */
     white-space: -hp-pre-wrap;  /* HP printers */
@@ -15,14 +23,9 @@ div.wrap {
     white-space: -pre-wrap;     /* Opera 4-6 */
     white-space: pre-wrap;      /* CSS 2.1 */
     white-space: pre-line;      /* CSS 3 (and 2.1 as well, actually) */
-    word-wrap:   break-word;      /* IE */
+    word-wrap: break-word;      /* IE */
 }
-div.wrap span { display: inline; padding: 1px 0;}
-span { display: inline-block; border: 0; margin: 0; }
-span.bold { font-weight: bold; }
-span.italic { font-style: italic; }
-span.normal { font-style: normal; }
-span.underline { text-decoration:underline; }
+div.wrap span { display: inline; }
 
 /* Toolbar */
 div#toolbarhide {
@@ -69,19 +72,8 @@ div#toolbar img {
     padding: 5px;
 }
 
-/* Annotations */
-.tooltip {
-    display:inline-block;
-    border-bottom: 2px dotted /* %dot_color% */;
-    outline: none;
-    text-decoration: none;
-    position: relative;
-    color: black;
-}
-
-div.wrap .tooltip { display: inline; }
-
-.tooltip div.annotation {
+/* tooltips */
+#tooltip {
     border-radius: 5px 5px;
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
@@ -95,21 +87,26 @@ div.wrap .tooltip { display: inline; }
     white-space: pre-wrap;      /* CSS 2.1 */
     white-space: pre-line;      /* CSS 3 (and 2.1 as well, actually) */
     word-wrap: break-word;      /* IE */
-    margin-left: -999em;
-    position: absolute;
+    position:absolute; display:block;
+    color: black;
     padding: 0.8em 1em;
     background: #FFFFE0; border: solid black;
     font-family: Calibri, Tahoma, Geneva, sans-serif;
     font-size: 10pt;
     font-weight: bold;
-    width: 250px;
-    left: 1em;
-    top: 2em;
-    z-index: 99;
 }
-.tooltip:hover div.annotation {
-    margin-left: 0;
+
+a.annotation {
+    color: /* %body_fg% */;
+    outline: none;
+    text-decoration: underline;
 }
+
+span.annotation{ display: inline; }
+
+.tooltip_hotspot { cursor:pointer; }
+
+/* Annotation Table */
 div#comment_list {
     visibility: hidden;
     display: none;
@@ -143,5 +140,14 @@ a.table_close:hover { text-decoration: none; }
 table#comment_table th, table#comment_table td { border: thin solid; padding: 5px; }
 td.annotation_link { width: 60px; text-align: right; padding-right: 20px; }
 .annotation_comment { width: 500px; }
-div.annotation_comment { float: left; text-align: left; }
-* html a:hover { background: transparent; }
+div.annotation_comment {
+    float: left;
+    text-align: left;
+    white-space: -moz-pre-wrap; /* Mozilla */
+    white-space: -hp-pre-wrap;  /* HP printers */
+    white-space: -o-pre-wrap;   /* Opera 7 */
+    white-space: -pre-wrap;     /* Opera 4-6 */
+    white-space: pre-wrap;      /* CSS 2.1 */
+    white-space: pre-line;      /* CSS 3 (and 2.1 as well, actually) */
+    word-wrap: break-word;      /* IE */
+}

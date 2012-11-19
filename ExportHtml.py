@@ -54,9 +54,9 @@ TOOL_WRAPPING = '''<img onclick="toggle_wrapping();" alt="" title="Toggle Wrappi
 
 TOOLBAR = '''<div id="toolbarhide"><div id="toolbar">%(options)s</div></div>'''
 
-ANNOTATE_OPEN = '''<a class="tooltip" href="javascript:toggle_annotations();">%(code)s'''
+ANNOTATE_OPEN = '''<span onclick="toggle_annotations();" class="tooltip_hotspot" onmouseover="tooltip.show(%(comment)s);" onmouseout="tooltip.hide();">%(code)s'''
 
-ANNOTATE_CLOSE = '''<div class="annotation">%(comment)s</div></a>'''
+ANNOTATE_CLOSE = '''</span>'''
 
 BODY_START = '''<body class="code_page code_text"><pre class="code_page">'''
 
@@ -76,6 +76,7 @@ LINE = (
 )
 
 CODE = '''<span class="%(class)s" style="background-color: %(highlight)s; color: %(color)s;">%(content)s</span>'''
+ANNOTATION_CODE = '''<span style="background-color: %(highlight)s;"><a href="javascript:void();" class="annotation"><span class="%(class)s annotation" style="color: %(color)s;">%(content)s</span></a></span>'''
 
 TABLE_END = '''</table>'''
 
@@ -297,6 +298,8 @@ class ExportHtml(object):
         self.curr_annot = None
         self.curr_comment = None
         self.annotations = self.get_annotations()
+        self.annot_num = -1
+        self.new_annot = False
         self.open_annot = False
         self.no_header = kwargs["no_header"]
         self.annot_tbl = []
@@ -649,27 +652,36 @@ class ExportHtml(object):
         if the_bgcolour is None:
             the_bgcolour = self.bground
 
-        code = CODE % {"highlight": the_bgcolour, "color": the_colour, "content": text, "class": the_style}
+        if annotate:
+            code = ANNOTATION_CODE % {"highlight": the_bgcolour, "color": the_colour, "content": text, "class": the_style}
+        else:
+            code = CODE % {"highlight": the_bgcolour, "color": the_colour, "content": text, "class": the_style}
 
         if annotate:
             if self.curr_annot != None and not self.open_annot:
                 # Open an annotation
                 if self.annot_pt != None:
                     self.add_annotation_table_entry()
-                code = ANNOTATE_OPEN % {"code": code}
+                if self.new_annot:
+                    self.annot_num += 1
+                    self.new_annot = False
+                code = ANNOTATE_OPEN % {"code": code, "comment": str(self.annot_num)}
                 self.open_annot = True
             elif self.curr_annot == None:
                 if self.open_annot:
                     # Close an annotation
-                    code += ANNOTATE_CLOSE % {"comment": self.curr_comment.encode('ascii', 'xmlcharrefreplace')}
+                    code += ANNOTATE_CLOSE
                     self.open_annot = False
                 else:
                     # Do a complete annotation
                     if self.annot_pt != None:
                         self.add_annotation_table_entry()
+                    if self.new_annot:
+                        self.annot_num += 1
+                        self.new_annot = False
                     code = (
-                        ANNOTATE_OPEN % {"code": code} +
-                        ANNOTATE_CLOSE % {"comment": self.curr_comment.encode('ascii', 'xmlcharrefreplace')}
+                        ANNOTATE_OPEN % {"code": code, "comment": str(self.annot_num)} +
+                        ANNOTATE_CLOSE
                     )
         line.append(code)
 
@@ -733,6 +745,7 @@ class ExportHtml(object):
                         self.curr_annot = None
                         self.curr_comment = None
                         break
+                self.new_annot = True
                 self.curr_annot = sublime.Region(self.curr_annot[0], self.curr_annot[1])
 
             region = sublime.Region(self.pt, self.end)
