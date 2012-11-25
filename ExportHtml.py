@@ -878,7 +878,7 @@ class ExportHtml(object):
                 save_location = None
             elif save_location == ".":
                 html_file = "%s%s.html" % (fname, time.strftime(time_stamp, self.time))
-            elif not path.exists(fname):
+            elif fname is None or not path.exists(fname):
                 html_file = path.join(save_location, "Untitled%s.html" % time.strftime(time_stamp, self.time))
             else:
                 html_file = path.join(save_location, "%s%s.html" % (path.basename(fname), time.strftime(time_stamp, self.time)))
