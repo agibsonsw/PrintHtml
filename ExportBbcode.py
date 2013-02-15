@@ -4,16 +4,10 @@ from os import path
 import tempfile
 import sys
 import re
+from plistlib import readPlist
+from ExportHtml.ExportHtmlLib.rgba.rgba import RGBA
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
-
-if sublime.platform() == "linux":
-    # Try and load Linux Python2.6 lib.  Default path is for Ubuntu.
-    linux_lib = sublime.load_settings(PACKAGE_SETTINGS).get("linux_python2.6_lib", "/usr/lib/python2.6/lib-dynload")
-    if not linux_lib in sys.path and path.exists(linux_lib):
-        sys.path.append(linux_lib)
-from plistlib import readPlist
-from ExportHtmlLib.rgba.rgba import RGBA
 
 NUMBERED_BBCODE_LINE = '[color=%(color)s]%(line)s [/color]%(code)s\n'
 
@@ -48,7 +42,7 @@ class ExportBbcodePanelCommand(sublime_plugin.WindowCommand):
         menu = []
         self.args = []
         for opt in options:
-            k, v = opt.items()[0]
+            k, v = list(opt.items())[0]
             menu.append(k)
             self.args.append(v)
 
@@ -341,7 +335,7 @@ class ExportBbcode(object):
 
         delete = False if inputs["view_open"] else True
 
-        with tempfile.NamedTemporaryFile(delete=delete, suffix='.txt') as the_bbcode:
+        with tempfile.NamedTemporaryFile(mode='w+', delete=delete, suffix='.txt') as the_bbcode:
             self.write_body(the_bbcode)
             if inputs["clipboard_copy"]:
                 the_bbcode.seek(0)

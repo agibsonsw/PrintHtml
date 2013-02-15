@@ -6,21 +6,13 @@ import sys
 import time
 import webbrowser
 import re
-from HtmlAnnotations import get_annotations
-import ExportHtmlLib.desktop as desktop
+from ExportHtml.HtmlAnnotations import get_annotations
+from ExportHtml.ExportHtmlLib.rgba.rgba import RGBA
+import ExportHtml.ExportHtmlLib.desktop as desktop
 import json
+from plistlib import readPlist
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
-JS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "js")
-CSS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "css")
-
-if sublime.platform() == "linux":
-    # Try and load Linux Python2.6 lib.  Default path is for Ubuntu.
-    linux_lib = sublime.load_settings(PACKAGE_SETTINGS).get("linux_python2.6_lib", "/usr/lib/python2.6/lib-dynload")
-    if not linux_lib in sys.path and path.exists(linux_lib):
-        sys.path.append(linux_lib)
-from plistlib import readPlist
-from ExportHtmlLib.rgba.rgba import RGBA
 
 FILTER_MATCH = re.compile(r'^(?:(brightness|saturation|hue|colorize)\((-?[\d]+|[\d]*\.[\d]+)\)|(sepia|grayscale|invert))$')
 
@@ -215,7 +207,7 @@ class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
         menu = []
         self.args = []
         for opt in options:
-            k, v = opt.items()[0]
+            k, v = list(opt.items())[0]
             menu.append(k)
             self.args.append(v)
 
@@ -558,7 +550,7 @@ class ExportHtml(object):
             ),
             "js": INCLUDE_THEME % {
                 "jscode": getjs('plist.js'),
-                "theme": json.dumps(self.plist_file, sort_keys=True, indent=4, separators=(',', ': ')).encode('raw_unicode_escape'),
+                "theme": json.dumps(self.plist_file, sort_keys=True, indent=4, separators=(',', ': ')).encode('raw_unicode_escape').decode("utf-8"),
                 "name": self.scheme_file,
             }
         }
@@ -583,7 +575,7 @@ class ExportHtml(object):
             '\n': ''
         }
 
-        return ''.join(encode_table.get(c, c) for c in text).encode('ascii', 'xmlcharrefreplace')
+        return ''.join(encode_table.get(c, c) for c in text).encode('ascii', 'xmlcharrefreplace').decode("utf-8")
 
     def get_annotations(self):
         annotations = get_annotations(self.view)
@@ -888,7 +880,7 @@ class ExportHtml(object):
         if save_location is not None:
             open_html = lambda x: open(x, "w")
         else:
-            open_html = lambda x: tempfile.NamedTemporaryFile(delete=False, suffix=x)
+            open_html = lambda x: tempfile.NamedTemporaryFile(mode = 'w+', delete=False, suffix=x)
 
         with open_html(html_file) as the_html:
             self.write_header(the_html)
@@ -905,3 +897,9 @@ class ExportHtml(object):
             status = desktop.open(the_html.name, status=True)
             if not status:
                 webbrowser.open(the_html.name, new=2)
+
+def plugin_loaded():
+    global JS_DIR
+    global CSS_DIR
+    JS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "js")
+    CSS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "css")

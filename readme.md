@@ -149,7 +149,6 @@ You can navigate the annotations in the generate HTML by using a jump table.  Yo
 - alternate_font_size (int or false): Define an alternate font_size to use by default instead of the current one in use.  Use the current one in use if set to a literal ```false```.  Default is ```false```.
 - alternate_font_face (string or false): Define an alternate font_face to use by default instead of the current one in use.  Use the current one in use if set to a literal ```false```.  Default is ```false```.
 - valid_selection_size (integer): Minimum allowable size for a selection to be accepted for only the selection to be printed.
-- linux_python2.6_lib (string): If you are on linux and Sublime Text is not including your Python 2.6 library folder, you can try and configure it here.
 - html_panel (array of commands): Define export configurations to appear under the ```Export to HTML: Show Export Menu``` command palette command.
 - bbcode_panel (array of commands): Define export configurations to appear under the ```Export to BBCode: Show Export Menu``` command palette command.
 
