@@ -334,11 +334,11 @@ class ExportHtml(object):
         colour_settings = self.plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
-        self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'), True)
+        self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'), True, True)
         self.fground = self.strip_transparency(colour_settings.get("foreground", '#000000'))
         self.sbground = self.strip_transparency(colour_settings.get("selection", self.fground), True)
         self.sfground = self.strip_transparency(colour_settings.get("selectionForeground", None))
-        self.gbground = self.strip_transparency(colour_settings.get("gutter", self.bground)) if kwargs["style_gutter"] else self.bground
+        self.gbground = self.strip_transparency(colour_settings.get("gutter", self.bground), simple_strip=True) if kwargs["style_gutter"] else self.bground
         self.gfground = self.strip_transparency(colour_settings.get("gutterForeground", self.fground), True) if kwargs["style_gutter"] else self.fground
 
         self.highlights = []
@@ -459,12 +459,13 @@ class ExportHtml(object):
             toolbar_element = TOOLBAR % {"options": t_opt}
         return toolbar_element
 
-    def strip_transparency(self, color, track_darkness=False):
+    def strip_transparency(self, color, track_darkness=False, simple_strip=False):
         if color is None:
             return color
         ba = "AA"
         rgba = RGBA(color.replace(" ", ""))
-        rgba.apply_alpha(self.bground + ba if self.bground != "" else "#FFFFFF%s" % ba)
+        if not simple_strip:
+            rgba.apply_alpha(self.bground + ba if self.bground != "" else "#FFFFFF%s" % ba)
         if track_darkness:
             lumens = rgba.luminance()
             if self.dark_lumens is None or lumens < self.dark_lumens:
