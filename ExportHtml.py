@@ -338,7 +338,7 @@ class ExportHtml(object):
         self.fground = self.strip_transparency(colour_settings.get("foreground", '#000000'))
         self.sbground = self.strip_transparency(colour_settings.get("selection", self.fground), True)
         self.sfground = self.strip_transparency(colour_settings.get("selectionForeground", None))
-        self.gbground = self.strip_transparency(colour_settings.get("gutter", self.bground), simple_strip=True) if kwargs["style_gutter"] else self.bground
+        self.gbground = self.strip_transparency(colour_settings.get("gutter", self.bground)) if kwargs["style_gutter"] else self.bground
         self.gfground = self.strip_transparency(colour_settings.get("gutterForeground", self.fground), True) if kwargs["style_gutter"] else self.fground
 
         self.highlights = []
