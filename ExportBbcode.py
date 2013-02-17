@@ -124,7 +124,7 @@ class ExportBbcode(object):
         colour_settings = self.plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
-        self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'))
+        self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'), simple_strip=True)
         self.fground = self.strip_transparency(colour_settings.get("foreground", '#000000'))
         self.gbground = self.bground
         self.gfground = self.fground
@@ -191,12 +191,13 @@ class ExportBbcode(object):
                     pass
         return tmtheme
 
-    def strip_transparency(self, color, track_darkness=False):
+    def strip_transparency(self, color, track_darkness=False, simple_strip=False):
         if color is None:
             return color
         ba = "AA"
         rgba = RGBA(color.replace(" ", ""))
-        rgba.apply_alpha(self.bground + ba if self.bground != "" else "#FFFFFF%s" % ba)
+        if not simple_strip:
+            rgba.apply_alpha(self.bground + ba if self.bground != "" else "#FFFFFF%s" % ba)
         return rgba.get_rgb()
 
     def setup_print_block(self, curr_sel, multi=False):
