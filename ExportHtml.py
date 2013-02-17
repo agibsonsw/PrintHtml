@@ -9,8 +9,9 @@ import re
 from ExportHtml.HtmlAnnotations import get_annotations
 from ExportHtml.ExportHtmlLib.rgba.rgba import RGBA
 import ExportHtml.ExportHtmlLib.desktop as desktop
+from ExportHtml.ExportHtmlLib.package_resources import package_file_binary_contents as package_file_contents
 import json
-from plistlib import readPlist
+from plistlib import readPlistFromBytes
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
 
@@ -323,7 +324,13 @@ class ExportHtml(object):
         scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
         colour_scheme = path.normpath(scheme_file)
         self.scheme_file = path.basename(colour_scheme)
-        self.plist_file = self.apply_filters(readPlist(path_packages + colour_scheme.replace('Packages', '')))
+        self.plist_file = self.apply_filters(
+            readPlistFromBytes(
+                package_file_contents(
+                    path_packages + colour_scheme.replace('Packages', '')
+                )
+            )
+        )
         colour_settings = self.plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
