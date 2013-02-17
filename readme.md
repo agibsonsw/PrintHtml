@@ -156,13 +156,13 @@ You can navigate the annotations in the generate HTML by using a jump table.  Yo
 - agibsonsw: Original idea and algorithm for the plugin
 - Paul Boddie: Desktop module for open files in web browser cross platform
 - Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright
+- Thanks to castles_made_of_sand a.k.a sublimator for package_resources.py (https://github.com/sublimator/PackageResources) and skuroda for his contributions to said library.
 
 #Version 0.5.7
 - Better tooltips for annotations (they now follow the mouse)
 - Remove workaround to fix gaps in background color (it is recommended to just use a reliable font like Courier)
 - Change method of underlining annotations to work in wrap mode and non-wrap mode and with background colors
 - Fix for CSS in annotation table not handling comment overflow
-- Thanks to castles_made_of_sand a.k.a sublimator for package_resources.py (https://github.com/sublimator/PackageResources) and skuroda for his contributions to said library.
 
 #Version 0.5.6
 - Expose filters to ExportBbcode
