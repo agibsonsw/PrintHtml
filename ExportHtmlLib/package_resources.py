@@ -114,7 +114,7 @@ def decompose_package_file_path(pth):
     ('Fool', 'one.py', 0, None)
     
     """
-
+    pth = re.sub(r'\\', '/', pth)
     if pth.startswith("Packages/"):
         _, package, relative = pth.split("/", 2)
         return package, relative, PATH_CONFIG_RELATIVE, None
@@ -124,6 +124,7 @@ def decompose_package_file_path(pth):
         return m['package'], m['relative'], PATH_ZIPFILE_PSEUDO, m['prefix']
     else:
         pth = pth[len(sublime.packages_path())+1:]
+        print(pth)
         pkg, relative = pth.split("/", 1)
         return pkg, relative, PATH_ABSOLUTE, sublime.packages_path()
 
