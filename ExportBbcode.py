@@ -115,13 +115,18 @@ class ExportBbcode(object):
             alt_scheme = eh_settings.get("alternate_scheme", False)
         scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
         colour_scheme = path.normpath(scheme_file)
-        self.plist_file = self.apply_filters(
-            readPlistFromBytes(
-                package_file_contents(
-                    path_packages + colour_scheme.replace('Packages', '')
+        if int(sublime.version()) >= 3013:
+            self.plist_file = self.apply_filters(
+                readPlistFromBytes(sublime.load_binary_resource(colour_scheme))
+            )
+        else:
+            self.plist_file = self.apply_filters(
+                readPlistFromBytes(
+                    package_file_contents(
+                        path_packages + colour_scheme.replace('Packages', '')
+                    )
                 )
             )
-        )
         colour_settings = self.plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
