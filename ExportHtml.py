@@ -166,13 +166,19 @@ HTML_JS_WRAP = \
 '''
 
 
+def sublime_format_path(pth):
+    if sublime.platform() == "windows" and re.match(r"(^[A-Za-z]{1}:(?:/|\\))", pth) != None:
+        pth = "/" + pth
+    return pth.replace("\\", "/")
+
+
 def getjs(file_name):
     code = ""
     try:
         if int(sublime.version()) >= 3013:
             code = sublime.load_resource(path.join(JS_DIR, file_name))
         else:
-            with open(path.join(JS_DIR, file_name), "r") as f:
+            with open(sublime_format_path(path.join(JS_DIR, file_name)), "r") as f:
                 code = f.read()
     except:
         pass
@@ -188,7 +194,7 @@ def getcss(file_name, options):
 
     try:
         if int(sublime.version()) >= 3013:
-            code = sublime.load_resource(path.join(CSS_DIR, file_name))
+            code = sublime.load_resource(sublime_format_path(path.join(CSS_DIR, file_name)))
         else:
             with open(path.join(CSS_DIR, file_name), "r") as f:
                 code = f.read()
@@ -332,7 +338,7 @@ class ExportHtml(object):
         self.scheme_file = path.basename(colour_scheme)
         if int(sublime.version()) >= 3013:
             self.plist_file = self.apply_filters(
-                readPlistFromBytes(sublime.load_binary_resource(colour_scheme))
+                readPlistFromBytes(sublime.load_binary_resource(sublime_format_path(colour_scheme)))
             )
         else:
             self.plist_file = self.apply_filters(

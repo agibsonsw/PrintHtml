@@ -31,6 +31,12 @@ BBCODE_MATCH = re.compile(r"""(\[/?)((?:code|pre|table|tr|td|th|b|i|u|sup|color|
 FILTER_MATCH = re.compile(r'^(?:(brightness|saturation|hue|colorize)\((-?[\d]+|[\d]*\.[\d]+)\)|(sepia|grayscale|invert))$')
 
 
+def sublime_format_path(pth):
+    if sublime.platform() == "windows" and re.match(r"(^[A-Za-z]{1}:(?:/|\\))", pth) != None:
+        pth = "/" + pth
+    return pth.replace("\\", "/")
+
+
 class ExportBbcodePanelCommand(sublime_plugin.WindowCommand):
     def execute(self, value):
         if value >= 0:
@@ -117,7 +123,7 @@ class ExportBbcode(object):
         colour_scheme = path.normpath(scheme_file)
         if int(sublime.version()) >= 3013:
             self.plist_file = self.apply_filters(
-                readPlistFromBytes(sublime.load_binary_resource(colour_scheme))
+                readPlistFromBytes(sublime.load_binary_resource(sublime_format_path(colour_scheme)))
             )
         else:
             self.plist_file = self.apply_filters(
