@@ -169,8 +169,11 @@ HTML_JS_WRAP = \
 def getjs(file_name):
     code = ""
     try:
-        with open(path.join(JS_DIR, file_name), "r") as f:
-            code = f.read()
+        if int(sublime.version()) >= 3013:
+            code = sublime.load_resource(path.join(JS_DIR, file_name))
+        else:
+            with open(path.join(JS_DIR, file_name), "r") as f:
+                code = f.read()
     except:
         pass
     return code
@@ -184,12 +187,15 @@ def getcss(file_name, options):
     replace = re.compile("/\\* *%(" + keys + ")% * \\*/")
 
     try:
-        with open(path.join(CSS_DIR, file_name), "r") as f:
-            code = f.read()
-            for m in replace.finditer(code):
-                final_code += code[last_pt:m.start()] + options[m.group(1)]
-                last_pt = m.end()
-            final_code += code[last_pt:]
+        if int(sublime.version()) >= 3013:
+            code = sublime.load_resource(path.join(CSS_DIR, file_name))
+        else:
+            with open(path.join(CSS_DIR, file_name), "r") as f:
+                code = f.read()
+        for m in replace.finditer(code):
+            final_code += code[last_pt:m.start()] + options[m.group(1)]
+            last_pt = m.end()
+        final_code += code[last_pt:]
     except:
         pass
 
@@ -914,5 +920,9 @@ class ExportHtml(object):
 def plugin_loaded():
     global JS_DIR
     global CSS_DIR
-    JS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "js")
-    CSS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "css")
+    if int(sublime.version()) >= 3013:
+        JS_DIR = path.join('Packages', 'ExportHtml', "js")
+        CSS_DIR = path.join('Packages', 'ExportHtml', "css")
+    else:
+        JS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "js")
+        CSS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "css")
