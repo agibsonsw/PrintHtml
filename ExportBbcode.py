@@ -32,8 +32,9 @@ FILTER_MATCH = re.compile(r'^(?:(brightness|saturation|hue|colorize)\((-?[\d]+|[
 
 
 def sublime_format_path(pth):
-    if sublime.platform() == "windows" and re.match(r"(^[A-Za-z]{1}:(?:/|\\))", pth) != None:
-        pth = "/" + pth
+    m = re.match(r"^([A-Za-z]{1}):(?:/|\\)(.*)", pth)
+    if sublime.platform() == "windows" and m != None:
+        pth = m.group(1) + "/" + m.group(2)
     return pth.replace("\\", "/")
 
 
