@@ -177,9 +177,9 @@ def getjs(file_name):
     code = ""
     try:
         if int(sublime.version()) >= 3013:
-            code = sublime.load_resource(path.join(JS_DIR, file_name))
+            code = sublime.load_resource(sublime_format_path(path.join(JS_DIR, file_name)))
         else:
-            with open(sublime_format_path(path.join(JS_DIR, file_name)), "r") as f:
+            with open(path.join(JS_DIR, file_name), "r") as f:
                 code = f.read()
     except:
         pass
@@ -656,7 +656,7 @@ class ExportHtml(object):
         self.annot_tbl.append(
             (
                 self.tables, self.curr_row, "Line %d Col %d" % (row + 1, col + 1),
-                self.curr_comment.encode('ascii', 'xmlcharrefreplace')
+                self.curr_comment.encode('ascii', 'xmlcharrefreplace').decode('utf-8')
             )
         )
         self.annot_pt = None
