@@ -463,10 +463,9 @@ class ExportHtml(object):
     def strip_transparency(self, color, track_darkness=False, simple_strip=False):
         if color is None:
             return color
-        ba = "AA"
         rgba = RGBA(color.replace(" ", ""))
         if not simple_strip:
-            rgba.apply_alpha(self.bground + ba if self.bground != "" else "#FFFFFF%s" % ba)
+            rgba.apply_alpha(self.bground if self.bground != "" else "#FFFFFF")
         if track_darkness:
             lumens = rgba.luminance()
             if self.dark_lumens is None or lumens < self.dark_lumens:

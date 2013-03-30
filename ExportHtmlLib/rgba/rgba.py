@@ -46,7 +46,7 @@ class RGBA(object):
 
     def apply_alpha(self, background="#000000AA"):
         def tx_alpha(cf, af, cb, ab):
-            return abs(cf * af + cb * ab * (1 - af)) & 0xFF
+            return int(abs(cf * (af / 255.0) + cb * (ab / 255.0) * (1 - (af / 255.0)))) & 0xFF
 
         if self.a < 0xFF:
             r, g, b, a = self._split_channels(background)

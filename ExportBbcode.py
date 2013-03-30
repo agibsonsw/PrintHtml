@@ -194,10 +194,9 @@ class ExportBbcode(object):
     def strip_transparency(self, color, track_darkness=False, simple_strip=False):
         if color is None:
             return color
-        ba = "AA"
         rgba = RGBA(color.replace(" ", ""))
         if not simple_strip:
-            rgba.apply_alpha(self.bground + ba if self.bground != "" else "#FFFFFF%s" % ba)
+            rgba.apply_alpha(self.bground if self.bground != "" else "#FFFFFF")
         return rgba.get_rgb()
 
     def setup_print_block(self, curr_sel, multi=False):
