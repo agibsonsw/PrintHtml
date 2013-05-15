@@ -53,13 +53,13 @@ ANNOTATE_CLOSE = '''</span>'''
 
 BODY_START = '''<body class="code_page code_text"><pre class="code_page">'''
 
-FILE_INFO = '''<tr><td colspan="2"><div id="file_info"><span style="color: %(color)s">%(date_time)s %(file)s\n\n</span></div></td></tr>'''
+FILE_INFO = '''<tr><td colspan="2" style="background: %(bgcolor)s"><div id="file_info"><span style="color: %(color)s">%(date_time)s %(file)s\n\n</span></div></td></tr>'''
 
 TABLE_START = '''<table cellspacing="0" cellpadding="0" class="code_page">'''
 
 LINE = (
     '<tr>' +
-    '<td valign="top" id="L_%(table)d_%(line_id)d" class="code_text code_gutter">' +
+    '<td valign="top" id="L_%(table)d_%(line_id)d" class="code_text code_gutter" style="background: %(bgcolor)s">' +
     '<span style="color: %(color)s;">%(line)s&nbsp;</span>' +
     '</td>' +
     '<td valign="top" class="code_text code_line" style="background-color: %(pad_color)s;">' +
@@ -517,6 +517,7 @@ class ExportHtml(object):
         html_line = LINE % {
             "line_id": num,
             "color": self.gfground,
+            "bgcolor": self.gbground,
             "line": str(num).rjust(self.gutter_pad).replace(" ", '&nbsp;'),
             "code_id": num,
             "code": line,
@@ -806,6 +807,7 @@ class ExportHtml(object):
             date_time = time.strftime(self.date_time_format, self.time)
             the_html.write(
                 FILE_INFO % {
+                    "bgcolor": self.bground,
                     "color": self.fground,
                     "date_time": date_time,
                     "file": self.file_name if self.show_full_path else path.basename(self.file_name)
