@@ -18,7 +18,9 @@ This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml
 - Configurable toolbar to appear in the generated webpage
 
 # Installation on Sublime Text 3
-If you want to install this on ST3, you will have to use git first and Package Control later. Clone this repository to the packages directory ("Browse packages"). Then make sure to switch to the ST3 branch (`git checkout -b ST3 origin/ST3`). Finally, using package control, choose "Create package file" and then "ExportHtml" and copy the resulting archive into the Installed Packages directory (sibling of the Packages directory), then restart ST. You're done!
+If you want to install this on ST3, you will have to use git first and Package Control later. Clone this repository to the packages directory ("Browse packages"). Then make sure to switch to the ST3 branch (`git checkout -b ST3 origin/ST3`).
+
+Alternatively, you can use Package Control's "Add repository" to add and install from the ST3 branch.
 
 # Usage: Exporting HTML
 ExportHtml comes with a number of default commands available, but these can be overridden in the settings file.  Or you can create commands directly outside of the settings file bound to the command palette, key bindings, or even the menu.
