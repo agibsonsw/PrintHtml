@@ -596,12 +596,17 @@ class ExportHtml(object):
             '&':  '&amp;',
             '>':  '&gt;',
             '<':  '&lt;',
-            '\t': '&nbsp;' * self.tab_size,
-            ' ':  '&nbsp;',
+            '\t': ' ' * self.tab_size,
             '\n': ''
         }
 
-        return ''.join(encode_table.get(c, c) for c in text).encode('ascii', 'xmlcharrefreplace').decode("utf-8")
+        return re.sub(
+            r'(?!\s($|\S))\s',
+            '&nbsp;',
+            ''.join(
+                encode_table.get(c, c) for c in text
+            ).encode('ascii', 'xmlcharrefreplace').decode("utf-8")
+        )
 
     def get_annotations(self):
         annotations = get_annotations(self.view)
