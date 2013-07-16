@@ -48,8 +48,8 @@ The name of the command is the key value, and then you add the parameters you wi
 
 - numbers (boolean): Display line numbers in the gutter.
 - style_gutter (boolean): Style gutter with theme backgrounds and foregrounds, or just use the default background/foreground.  Default is `true`.
-- multi_select (boolean): If multiple regions are selected in a document, only export what is under those selections. By default only the first selection is recognized.  Default is `false```
-- highlight_selections (boolean): Highlights all selections in HTML output using the themes selection colors.  Multi-select option will be ignored if this is set `true`.  Default is `false```
+- multi_select (boolean): If multiple regions are selected in a document, only export what is under those selections. By default only the first selection is recognized.  Default is `false`
+- highlight_selections (boolean): Highlights all selections in HTML output using the themes selection colors.  Multi-select option will be ignored if this is set `true`.  Default is `false`
 - wrap (integer): Define the allowable size in px to wrap lines at.  By default wrapping is not used.
 - color_scheme (string): The color scheme (tmTheme) file you would like to use.  By default the current color scheme file is used, or the the alternate default color scheme if defined in the setting `alternate_scheme`.
 - clipboard_copy (boolean): Copy html to the clipboard after generation. Default is `false`.
@@ -57,7 +57,7 @@ The name of the command is the key value, and then you add the parameters you wi
 - view_open (boolean): Open HTML in a Sublime Text tab instead of the web browser.  Default is `false`.
 - no_header (boolean): Do not display file name, date, and time at the top of the HTML document. Default is `false`.
 - date_time_format (string): String denoting the format for date and time when displaying header.  Please see Python's documentation on `time.strftime` for detailed info on formatting syntax.  Default is `"%m/%d/%y %I:%M:%S"`
-- show_full_path (boolean): Show full path for filename when displaying header. Default is `true```
+- show_full_path (boolean): Show full path for filename when displaying header. Default is `true`
 - save_location (string): Path to save html file.  If the file is wanted in the same file as the original, use ".".  Otherwise, use the absolute path to where the file is desired.  If there is an issue determining where to save the file, or the path does not exist, the OS temp folder will be used. Default is `None` (use temp folder).
 - time_stamp (string): Configure the time stamp of saved html when using `save_location`.  To remove time stamps, just set to an empty string `""`.  Please see Python's documentation on `time.strftime` for detailed info on formatting syntax.  Default is `"_%m%d%y%H%M%S"`.
 - toolbar (array of strings): Option to display a toolbar with to access features in a generated HTML.  This setting is an array of keywords that represent the icons in the toolbar to show.  Valid keywords include `gutter`, `print`, `plain_text`, `annotation`, `theme`, and `wrapping`.  Toolbar will appear when you mouse over the uppert right corner of the window of the generated html.  Default enables all.
