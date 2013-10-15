@@ -8,6 +8,7 @@ import webbrowser
 import re
 from HtmlAnnotations import get_annotations
 import ExportHtmlLib.desktop as desktop
+
 import json
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
@@ -19,10 +20,9 @@ if sublime.platform() == "linux":
     linux_lib = sublime.load_settings(PACKAGE_SETTINGS).get("linux_python2.6_lib", "/usr/lib/python2.6/lib-dynload")
     if not linux_lib in sys.path and path.exists(linux_lib):
         sys.path.append(linux_lib)
-from plistlib import readPlist
-from ExportHtmlLib.rgba.rgba import RGBA
 
-FILTER_MATCH = re.compile(r'^(?:(brightness|saturation|hue|colorize)\((-?[\d]+|[\d]*\.[\d]+)\)|(sepia|grayscale|invert))$')
+from ExportHtmlLib.color_scheme_matcher import ColorSchemeMatcher
+from ExportHtmlLib.color_scheme_tweaker import ColorSchemeTweaker
 
 # HTML Code
 HTML_HEADER = \
@@ -259,8 +259,6 @@ class ExportHtml(object):
         }
 
     def setup(self, **kwargs):
-        path_packages = sublime.packages_path()
-
         # Get get general document preferences from sublime preferences
         eh_settings = sublime.load_settings(PACKAGE_SETTINGS)
         settings = sublime.load_settings('Preferences.sublime-settings')
@@ -307,16 +305,13 @@ class ExportHtml(object):
         self.toolbar_orientation = "block" if eh_settings.get("toolbar_orientation", "horizontal") == "vertical" else "inline-block"
         self.matched = {}
         self.ebground = self.bground
-        self.dark_lumens = None
         self.lumens_limit = float(eh_settings.get("bg_min_lumen_threshold", 62))
-        self.filter = []
-        for f in kwargs["filter"].split(";"):
-            m = FILTER_MATCH.match(f)
-            if m:
-                if m.group(1):
-                    self.filter.append((m.group(1), float(m.group(2))))
-                else:
-                    self.filter.append((m.group(3), 0.0))
+
+        self.highlights = []
+        if self.highlight_selections:
+            for sel in self.view.sel():
+                if not sel.empty():
+                    self.highlights.append(sel)
 
         fname = self.view.file_name()
         if fname == None or not path.exists(fname):
@@ -329,117 +324,20 @@ class ExportHtml(object):
         else:
             alt_scheme = eh_settings.get("alternate_scheme", False)
         scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
-        colour_scheme = path.normpath(scheme_file)
-        self.scheme_file = path.basename(colour_scheme)
-        self.plist_file = self.apply_filters(readPlist(path_packages + colour_scheme.replace('Packages', '')))
-        colour_settings = self.plist_file["settings"][0]["settings"]
 
-        # Get general theme colors from color scheme file
-        self.bground = self.strip_transparency(colour_settings.get("background", '#FFFFFF'), True, True)
-        self.fground = self.strip_transparency(colour_settings.get("foreground", '#000000'))
-        self.sbground = self.strip_transparency(colour_settings.get("selection", self.fground), True)
-        self.sfground = self.strip_transparency(colour_settings.get("selectionForeground", None))
-        self.gbground = self.strip_transparency(colour_settings.get("gutter", self.bground)) if kwargs["style_gutter"] else self.bground
-        self.gfground = self.strip_transparency(colour_settings.get("gutterForeground", self.fground), True) if kwargs["style_gutter"] else self.fground
-
-        self.highlights = []
-        if self.highlight_selections:
-            for sel in self.view.sel():
-                if not sel.empty():
-                    self.highlights.append(sel)
-
-        # Create scope colors mapping from color scheme file
-        self.colours = {self.view.scope_name(self.end).split(' ')[0]: {"color": self.fground, "bgcolor": None, "style": None}}
-        for item in self.plist_file["settings"]:
-            scope = item.get('scope', None)
-            colour = None
-            style = []
-            if 'scope' in item:
-                scope = item['scope']
-            if 'settings' in item:
-                colour = item['settings'].get('foreground', None)
-                bgcolour = item['settings'].get('background', None)
-                if 'fontStyle' in item['settings']:
-                    for s in item['settings']['fontStyle'].split(' '):
-                        if s == "bold" or s == "italic":  # or s == "underline":
-                            style.append(s)
-
-            if scope != None and (colour != None or bgcolour != None):
-                self.colours[scope] = {
-                    "color": self.strip_transparency(colour),
-                    "bgcolor": self.strip_transparency(bgcolour, True),
-                    "style": style
-                }
-
-        self.shift_brightness = kwargs["shift_brightness"] and self.dark_lumens is not None and self.dark_lumens < self.lumens_limit
-        if self.shift_brightness:
-            self.color_adjust()
-
-    def apply_filters(self, tmtheme):
-        def filter_color(color):
-            rgba = RGBA(color)
-            for f in self.filter:
-                name = f[0]
-                value = f[1]
-                if name == "grayscale":
-                    rgba.grayscale()
-                elif name == "sepia":
-                    rgba.sepia()
-                elif name == "saturation":
-                    rgba.saturation(value)
-                elif name == "invert":
-                    rgba.invert()
-                elif name == "brightness":
-                    rgba.brightness(value)
-                elif name == "hue":
-                    rgba.hue(value)
-                elif name == "colorize":
-                    rgba.colorize(value)
-            return rgba.get_rgba()
-
-        if len(self.filter):
-            general_settings_read = False
-            for settings in tmtheme["settings"]:
-                if not general_settings_read:
-                    for k, v in settings["settings"].items():
-                        try:
-                            settings["settings"][k] = filter_color(v)
-                        except:
-                            pass
-                    general_settings_read = True
-                    continue
-
-                try:
-                    settings["settings"]["foreground"] = filter_color(settings["settings"]["foreground"])
-                except:
-                    pass
-                try:
-                    settings["settings"]["background"] = filter_color(settings["settings"]["background"])
-                except:
-                    pass
-        return tmtheme
-
-    def color_adjust(self):
-        factor = 1 + ((self.lumens_limit - self.dark_lumens) / 255.0) if self.shift_brightness else None
-        for k, v in self.colours.items():
-            fg, bg = v["color"], v["bgcolor"]
-            if v["color"] is not None:
-                self.colours[k]["color"] = self.apply_color_change(v["color"], factor)
-            if v["bgcolor"] is not None:
-                self.colours[k]["bgcolor"] = self.apply_color_change(v["bgcolor"], factor)
-        self.bground = self.apply_color_change(self.bground, factor)
-        self.fground = self.apply_color_change(self.fground, factor)
-        self.sbground = self.apply_color_change(self.sbground, factor)
-        if self.sfground is not None:
-            self.sfground = self.apply_color_change(self.sfground, factor)
-        self.gbground = self.apply_color_change(self.gbground, factor)
-        self.gfground = self.apply_color_change(self.gfground, factor)
-
-    def apply_color_change(self, color, shift_factor):
-        rgba = RGBA(color)
-        if shift_factor is not None:
-            rgba.brightness(shift_factor)
-        return rgba.get_rgb()
+        self.csm = ColorSchemeMatcher(
+            scheme_file,
+            strip_trans=True,
+            ignore_gutter=(not kwargs["style_gutter"]),
+            track_dark_background=True,
+            filter=(lambda x: ColorSchemeTweaker().tweak(x, kwargs["filter"]))
+        )
+        if kwargs["shift_brightness"]:
+            self.csm.shift_background_brightness(self.lumens_limit)
+        (
+            self.bground, self.fground, self.sbground,
+            self.sfground, self.gbground, self.gfground
+        ) = self.csm.get_general_colors()
 
     def get_tools(self, tools, use_annotation, use_wrapping):
         toolbar_options = {
@@ -459,18 +357,6 @@ class ExportHtml(object):
                     t_opt += toolbar_options[t]
             toolbar_element = TOOLBAR % {"options": t_opt}
         return toolbar_element
-
-    def strip_transparency(self, color, track_darkness=False, simple_strip=False):
-        if color is None:
-            return color
-        rgba = RGBA(color.replace(" ", ""))
-        if not simple_strip:
-            rgba.apply_alpha(self.bground if self.bground != "" else "#FFFFFF")
-        if track_darkness:
-            lumens = rgba.luminance()
-            if self.dark_lumens is None or lumens < self.dark_lumens:
-                self.dark_lumens = lumens
-        return rgba.get_rgb()
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
@@ -510,37 +396,6 @@ class ExportHtml(object):
 
         return html_line
 
-    def guess_colour(self, pt, the_key):
-        the_colour = self.fground
-        the_bgcolour = None
-        the_style = set([])
-        if the_key in self.matched:
-            the_colour = self.matched[the_key]["color"]
-            the_style = self.matched[the_key]["style"]
-            the_bgcolour = self.matched[the_key]["bgcolor"]
-        else:
-            best_match_bg = 0
-            best_match_fg = 0
-            best_match_style = 0
-            for key in self.colours:
-                match = self.view.score_selector(pt, key)
-                if self.colours[key]["color"] is not None and match > best_match_fg:
-                    best_match_fg = match
-                    the_colour = self.colours[key]["color"]
-                if self.colours[key]["style"] is not None and match > best_match_style:
-                    best_match_style = match
-                    for s in self.colours[key]["style"]:
-                        the_style.add(s)
-                if self.colours[key]["bgcolor"] is not None and match > best_match_bg:
-                    best_match_bg = match
-                    the_bgcolour = self.colours[key]["bgcolor"]
-            self.matched[the_key] = {"color": the_colour, "bgcolor": the_bgcolour, "style": the_style}
-        if len(the_style) == 0:
-            the_style = "normal"
-        else:
-            the_style = ' '.join(the_style)
-        return the_colour, the_style, the_bgcolour
-
     def write_header(self, the_html):
         header = HTML_HEADER % {
             "title": path.basename(self.file_name),
@@ -559,8 +414,8 @@ class ExportHtml(object):
             ),
             "js": INCLUDE_THEME % {
                 "jscode": getjs('plist.js'),
-                "theme": json.dumps(self.plist_file, sort_keys=True, indent=4, separators=(',', ': ')).encode('raw_unicode_escape'),
-                "name": self.scheme_file,
+                "theme": json.dumps(self.csm.get_plist_file(), sort_keys=True, indent=4, separators=(',', ': ')).encode('raw_unicode_escape'),
+                "name": self.csm.get_scheme_file(),
             }
         }
         the_html.write(header)
@@ -722,9 +577,9 @@ class ExportHtml(object):
                 else:
                     hl_done = True
                 if hl_done and empty:
-                    the_colour, the_style, the_bgcolour = self.guess_colour(self.pt, scope_name)
+                    the_colour, the_style, the_bgcolour, _, _, _ = self.csm.guess_color(self.view, self.pt, scope_name)
                 elif self.sfground is None:
-                    the_colour, the_style, _ = self.guess_colour(self.pt, scope_name)
+                    the_colour, the_style, _, _, _, _ = self.csm.guess_color(self.view, self.pt, scope_name)
                     the_bgcolour = self.sbground
                 else:
                     the_colour, the_style = self.sfground, "normal"
@@ -737,7 +592,7 @@ class ExportHtml(object):
                     if self.curr_hl != None and self.end == self.curr_hl.begin():
                         break
                     self.end += 1
-                the_colour, the_style, the_bgcolour = self.guess_colour(self.pt, scope_name)
+                the_colour, the_style, the_bgcolour, _, _, _ = self.csm.guess_color(self.view, self.pt, scope_name)
 
             # Get new annotation
             if (self.curr_annot == None or self.curr_annot.end() < self.pt) and len(self.annotations):
@@ -780,7 +635,7 @@ class ExportHtml(object):
         # Get the color for the space at the end of a line
         if self.end < self.view.size():
             end_key = self.view.scope_name(self.pt)
-            _, _, self.ebground = self.guess_colour(self.pt, end_key)
+            _, _, self.ebground, _, _, _ = self.csm.guess_color(self.view, self.pt, end_key)
 
         # Join line segments
         return ''.join(line)
