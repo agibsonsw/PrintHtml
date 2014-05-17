@@ -122,7 +122,7 @@ class ShowAnnotationCommentCommand(sublime_plugin.TextCommand):
 
     def run(self, edit):
         comment = get_annotation_comment(self.view)
-        if comment != None:
+        if comment is not None:
             sublime.message_dialog("Annotation Comment:\n\n%s" % comment)
             sublime.set_clipboard(comment)
 
@@ -211,15 +211,15 @@ class AnnotateHtml(object):
             elif region.intersects(self.sel):
                 intersect = True
                 break
-        if subset != None:
+        if subset is not None:
             self.sel = subset
         return comment, parent, intersect
 
     def add_annotation(self, s, view_id, subset):
         window = sublime.active_window()
-        view = window.active_view() if window != None else None
-        if s != "" and view != None and view_id == view.id():
-            if subset == None:
+        view = window.active_view() if window is not None else None
+        if s != "" and view is not None and view_id == view.id():
+            if subset is None:
                 idx = self.annotations["count"]
                 key_name = ("html_annotation_%d" % idx)
             else:
@@ -229,7 +229,7 @@ class AnnotateHtml(object):
                 "region": [self.sel.begin(), self.sel.end()],
                 "comment": s
             }
-            if subset == None:
+            if subset is None:
                 self.annotations["count"] += 1
             self.view.settings().set("annotation_comments", self.annotations)
 

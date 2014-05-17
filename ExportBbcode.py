@@ -1,8 +1,6 @@
 import sublime
 import sublime_plugin
-from os import path
 import tempfile
-import sys
 import re
 from ExportHtml.ExportHtmlLib.color_scheme_matcher import ColorSchemeMatcher
 from ExportHtml.ExportHtmlLib.color_scheme_tweaker import ColorSchemeTweaker
@@ -30,7 +28,7 @@ BBCODE_MATCH = re.compile(r"""(\[/?)((?:code|pre|table|tr|td|th|b|i|u|sup|color|
 
 def sublime_format_path(pth):
     m = re.match(r"^([A-Za-z]{1}):(?:/|\\)(.*)", pth)
-    if sublime.platform() == "windows" and m != None:
+    if sublime.platform() == "windows" and m is not None:
         pth = m.group(1) + "/" + m.group(2)
     return pth.replace("\\", "/")
 
@@ -39,7 +37,7 @@ class ExportBbcodePanelCommand(sublime_plugin.WindowCommand):
     def execute(self, value):
         if value >= 0:
             view = self.window.active_view()
-            if view != None:
+            if view is not None:
                 ExportBbcode(view).run(**self.args[value])
 
     def run(self):
@@ -61,7 +59,7 @@ class ExportBbcodePanelCommand(sublime_plugin.WindowCommand):
 class ExportBbcodeCommand(sublime_plugin.WindowCommand):
     def run(self, **kwargs):
         view = self.window.active_view()
-        if view != None:
+        if view is not None:
             ExportBbcode(view).run(**kwargs)
 
 
@@ -80,8 +78,6 @@ class ExportBbcode(object):
         }
 
     def setup(self, **kwargs):
-        path_packages = sublime.packages_path()
-
         # Get get general document preferences from sublime preferences
         settings = sublime.load_settings('Preferences.sublime-settings')
         eh_settings = sublime.load_settings(PACKAGE_SETTINGS)
@@ -105,11 +101,11 @@ class ExportBbcode(object):
         self.empty_space = None
 
         # Get color scheme
-        if kwargs["color_scheme"] != None:
+        if kwargs["color_scheme"] is not None:
             alt_scheme = kwargs["color_scheme"]
         else:
             alt_scheme = eh_settings.get("alternate_scheme", False)
-        scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
+        scheme_file = settings.get('color_scheme') if alt_scheme is False else alt_scheme
         self.csm = ColorSchemeMatcher(
             scheme_file,
             strip_trans=True,
@@ -176,7 +172,7 @@ class ExportBbcode(object):
 
     def format_text(self, line, text, the_colour, the_style):
         text = text.replace('\t', ' ' * self.tab_size).replace('\n', '')
-        if self.empty_space != None:
+        if self.empty_space is not None:
             text = self.empty_space + text
             self.empty_space = None
         if text.strip(' ') == '':

@@ -2,7 +2,6 @@ import sublime
 import sublime_plugin
 from os import path
 import tempfile
-import sys
 import time
 import webbrowser
 import re
@@ -12,11 +11,13 @@ import json
 from ExportHtml.ExportHtmlLib.color_scheme_matcher import ColorSchemeMatcher
 from ExportHtml.ExportHtmlLib.color_scheme_tweaker import ColorSchemeTweaker
 
+JS_DIR = ""
+CSS_DIR = ""
+
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
 
 # HTML Code
-HTML_HEADER = \
-'''<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+HTML_HEADER = '''<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 <title>%(title)s</title>
@@ -115,8 +116,7 @@ ANNOTATION_FOOTER = (
 
 BODY_END = '''</pre>%(toolbar)s\n%(js)s\n</body>\n</html>\n'''
 
-INCLUDE_THEME = \
-'''
+INCLUDE_THEME = '''
 <script type="text/javascript">
 %(jscode)s
 plist.color_scheme = %(theme)s;
@@ -127,8 +127,7 @@ function dump_theme() {
 </script>
 '''
 
-TOGGLE_LINE_OPTIONS = \
-'''
+TOGGLE_LINE_OPTIONS = '''
 <script type="text/javascript">
 %(jscode)s
 
@@ -141,22 +140,19 @@ page_line_info.gutter    = %(gutter)s;
 </script>
 '''
 
-AUTO_PRINT = \
-'''
+AUTO_PRINT = '''
 <script type="text/javascript">
 document.getElementsByTagName('body')[0].onload = function (e) { page_print(); self.onload = null; };
 </script>
 '''
 
-WRAP = \
-'''
+WRAP = '''
 <script type="text/javascript">
 toggle_wrapping();
 </script>
 '''
 
-HTML_JS_WRAP = \
-'''
+HTML_JS_WRAP = '''
 <script type="text/javascript">
 %(jscode)s
 </script>
@@ -165,7 +161,7 @@ HTML_JS_WRAP = \
 
 def sublime_format_path(pth):
     m = re.match(r"^([A-Za-z]{1}):(?:/|\\)(.*)", pth)
-    if sublime.platform() == "windows" and m != None:
+    if sublime.platform() == "windows" and m is not None:
         pth = m.group(1) + "/" + m.group(2)
     return pth.replace("\\", "/")
 
@@ -210,7 +206,7 @@ class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
     def execute(self, value):
         if value >= 0:
             view = self.window.active_view()
-            if view != None:
+            if view is not None:
                 ExportHtml(view).run(**self.args[value])
 
     def run(self):
@@ -232,7 +228,7 @@ class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
 class ExportHtmlCommand(sublime_plugin.WindowCommand):
     def run(self, **kwargs):
         view = self.window.active_view()
-        if view != None:
+        if view is not None:
             ExportHtml(view).run(**kwargs)
 
 
@@ -262,15 +258,13 @@ class ExportHtml(object):
         }
 
     def setup(self, **kwargs):
-        path_packages = sublime.packages_path()
-
         # Get get general document preferences from sublime preferences
         eh_settings = sublime.load_settings(PACKAGE_SETTINGS)
         settings = sublime.load_settings('Preferences.sublime-settings')
         alternate_font_size = eh_settings.get("alternate_font_size", False)
         alternate_font_face = eh_settings.get("alternate_font_face", False)
-        self.font_size = settings.get('font_size', 10) if alternate_font_size == False else alternate_font_size
-        self.font_face = settings.get('font_face', 'Consolas') if alternate_font_face == False else alternate_font_face
+        self.font_size = settings.get('font_size', 10) if alternate_font_size is False else alternate_font_size
+        self.font_face = settings.get('font_face', 'Consolas') if alternate_font_face is False else alternate_font_face
         self.tab_size = settings.get('tab_size', 4)
         self.padd_top = settings.get('line_padding_top', 0)
         self.padd_bottom = settings.get('line_padding_bottom', 0)
@@ -287,7 +281,7 @@ class ExportHtml(object):
         self.show_full_path = kwargs["show_full_path"]
         self.highlight_selections = kwargs["highlight_selections"]
         self.browser_print = kwargs["browser_print"]
-        self.auto_wrap = kwargs["wrap"] != None and int(kwargs["wrap"]) > 0
+        self.auto_wrap = kwargs["wrap"] is not None and int(kwargs["wrap"]) > 0
         self.wrap = 900 if not self.auto_wrap else int(kwargs["wrap"])
         self.hl_continue = None
         self.curr_hl = None
@@ -313,16 +307,16 @@ class ExportHtml(object):
         self.lumens_limit = float(eh_settings.get("bg_min_lumen_threshold", 62))
 
         fname = self.view.file_name()
-        if fname == None or not path.exists(fname):
+        if fname is None or not path.exists(fname):
             fname = "Untitled"
         self.file_name = fname
 
         # Get color scheme
-        if kwargs["color_scheme"] != None:
+        if kwargs["color_scheme"] is not None:
             alt_scheme = kwargs["color_scheme"]
         else:
             alt_scheme = eh_settings.get("alternate_scheme", False)
-        scheme_file = settings.get('color_scheme') if alt_scheme == False else alt_scheme
+        scheme_file = settings.get('color_scheme') if alt_scheme is False else alt_scheme
 
         self.highlights = []
         if self.highlight_selections:
@@ -405,16 +399,16 @@ class ExportHtml(object):
     def write_header(self, the_html):
         header = HTML_HEADER % {
             "title": path.basename(self.file_name),
-            "css":   getcss(
+            "css": getcss(
                 'export.css',
                 {
-                    "font_size":           str(self.font_size),
-                    "font_face":           '"' + self.font_face + '"',
-                    "page_bg":             self.bground,
-                    "gutter_bg":           self.gbground,
-                    "body_fg":             self.fground,
-                    "display_mode":        'table-cell' if self.numbers else 'none',
-                    "dot_color":           self.fground,
+                    "font_size": str(self.font_size),
+                    "font_face": '"' + self.font_face + '"',
+                    "page_bg": self.bground,
+                    "gutter_bg": self.gbground,
+                    "body_fg": self.fground,
+                    "display_mode": 'table-cell' if self.numbers else 'none',
+                    "dot_color": self.fground,
                     "toolbar_orientation": self.toolbar_orientation
                 }
             ),
@@ -437,9 +431,9 @@ class ExportHtml(object):
     def html_encode(self, text):
         # Format text to HTML
         encode_table = {
-            '&':  '&amp;',
-            '>':  '&gt;',
-            '<':  '&lt;',
+            '&': '&amp;',
+            '>': '&gt;',
+            '<': '&lt;',
             '\t': ' ' * self.tab_size,
             '\n': ''
         }
@@ -491,13 +485,13 @@ class ExportHtml(object):
             self.curr_annot = sublime.Region(self.end, self.curr_annot.end())
 
         # Print the separate parts pre text, annotation, post text
-        if pre_text != None:
+        if pre_text is not None:
             self.format_text(line, pre_text, the_colour, the_bgcolour, the_style, empty)
-        if annot_text != None:
+        if annot_text is not None:
             self.format_text(line, annot_text, the_colour, the_bgcolour, the_style, empty, annotate=True)
-            if self.curr_annot == None:
+            if self.curr_annot is None:
                 self.curr_comment = None
-        if post_text != None:
+        if post_text is not None:
             self.format_text(line, post_text, the_colour, the_bgcolour, the_style, empty)
 
     def add_annotation_table_entry(self):
@@ -525,23 +519,23 @@ class ExportHtml(object):
             code = CODE % {"highlight": the_bgcolour, "color": the_colour, "content": text, "class": the_style}
 
         if annotate:
-            if self.curr_annot != None and not self.open_annot:
+            if self.curr_annot is not None and not self.open_annot:
                 # Open an annotation
-                if self.annot_pt != None:
+                if self.annot_pt is not None:
                     self.add_annotation_table_entry()
                 if self.new_annot:
                     self.annot_num += 1
                     self.new_annot = False
                 code = ANNOTATE_OPEN % {"code": code, "comment": str(self.annot_num)}
                 self.open_annot = True
-            elif self.curr_annot == None:
+            elif self.curr_annot is None:
                 if self.open_annot:
                     # Close an annotation
                     code += ANNOTATE_CLOSE
                     self.open_annot = False
                 else:
                     # Do a complete annotation
-                    if self.annot_pt != None:
+                    if self.annot_pt is not None:
                         self.add_annotation_table_entry()
                     if self.new_annot:
                         self.annot_num += 1
@@ -557,17 +551,17 @@ class ExportHtml(object):
         hl_done = False
 
         # Continue highlight form last line
-        if self.hl_continue != None:
+        if self.hl_continue is not None:
             self.curr_hl = self.hl_continue
             self.hl_continue = None
 
         while self.end <= self.size:
             # Get next highlight region
-            if self.highlight_selections and self.curr_hl == None and len(self.highlights) > 0:
+            if self.highlight_selections and self.curr_hl is None and len(self.highlights) > 0:
                 self.curr_hl = self.highlights.pop(0)
 
             # See if we are starting a highlight region
-            if self.curr_hl != None and self.pt == self.curr_hl.begin():
+            if self.curr_hl is not None and self.pt == self.curr_hl.begin():
                 # Get text of like scope up to a highlight
                 scope_name = self.view.scope_name(self.pt)
                 while self.view.scope_name(self.end) == scope_name and self.end < self.size:
@@ -595,13 +589,13 @@ class ExportHtml(object):
                 scope_name = self.view.scope_name(self.pt)
                 while self.view.scope_name(self.end) == scope_name and self.end < self.size:
                     # Kick out if we hit a highlight region
-                    if self.curr_hl != None and self.end == self.curr_hl.begin():
+                    if self.curr_hl is not None and self.end == self.curr_hl.begin():
                         break
                     self.end += 1
                 the_colour, the_style, the_bgcolour, _, _, _ = self.csm.guess_color(self.view, self.pt, scope_name)
 
             # Get new annotation
-            if (self.curr_annot == None or self.curr_annot.end() < self.pt) and len(self.annotations):
+            if (self.curr_annot is None or self.curr_annot.end() < self.pt) and len(self.annotations):
                 self.curr_annot, self.curr_comment = self.annotations.pop(0)
                 self.annot_pt = self.curr_annot[0]
                 while self.pt > self.curr_annot[1]:
@@ -616,7 +610,7 @@ class ExportHtml(object):
                 self.curr_annot = sublime.Region(self.curr_annot[0], self.curr_annot[1])
 
             region = sublime.Region(self.pt, self.end)
-            if self.curr_annot != None and region.intersects(self.curr_annot):
+            if self.curr_annot is not None and region.intersects(self.curr_annot):
                 # Apply annotation within the text and format the text
                 self.annotate_text(line, the_colour, the_bgcolour, the_style, empty)
             else:
@@ -704,13 +698,14 @@ class ExportHtml(object):
         # Write javascript snippets
         js_options.append(HTML_JS_WRAP % {"jscode": getjs('print.js')})
         js_options.append(HTML_JS_WRAP % {"jscode": getjs('plaintext.js')})
-        js_options.append(TOGGLE_LINE_OPTIONS % {
-                "jscode":    getjs('lines.js'),
+        js_options.append(
+            TOGGLE_LINE_OPTIONS % {
+                "jscode": getjs('lines.js'),
                 "wrap_size": self.wrap,
-                "ranges":    processed_rows.rstrip(','),
-                "tables":    self.tables,
-                "header":    ("false" if self.no_header else "true"),
-                "gutter":    ('true' if self.numbers else 'false')
+                "ranges": processed_rows.rstrip(','),
+                "tables": self.tables,
+                "header": ("false" if self.no_header else "true"),
+                "gutter": ('true' if self.numbers else 'false')
             }
         )
         if self.auto_wrap:
@@ -738,7 +733,7 @@ class ExportHtml(object):
         if save_location is not None:
             fname = self.view.file_name()
             if (
-                ((fname == None or not path.exists(fname)) and save_location == ".") or
+                ((fname is None or not path.exists(fname)) and save_location == ".") or
                 not path.exists(save_location)
                 or not path.isdir(save_location)
             ):
@@ -756,7 +751,7 @@ class ExportHtml(object):
         if save_location is not None:
             open_html = lambda x: open(x, "w")
         else:
-            open_html = lambda x: tempfile.NamedTemporaryFile(mode = 'w+', delete=False, suffix=x)
+            open_html = lambda x: tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=x)
 
         with open_html(html_file) as the_html:
             self.write_header(the_html)
@@ -773,6 +768,7 @@ class ExportHtml(object):
             status = desktop.open(the_html.name, status=True)
             if not status:
                 webbrowser.open(the_html.name, new=2)
+
 
 def plugin_loaded():
     global JS_DIR
