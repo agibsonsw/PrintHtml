@@ -17,6 +17,10 @@ This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml
 - Enable/disable configurable word wrapping
 - Configurable toolbar to appear in the generated webpage
 
+# Basic Usage
+
+Once installed, open up any file in Sublime Text and right-click anywhere in the editing area. On the context menu that appears, choose Export -> HTML. Choose one of the formatting options in the list that follows, and you'll see your formatted file opened in a browser, ready for printing.
+
 # Usage: Exporting HTML
 ExportHtml comes with a number of default commands available, but these can be overridden in the settings file.  Or you can create commands directly outside of the settings file bound to the command palette, key bindings, or even the menu.
 
