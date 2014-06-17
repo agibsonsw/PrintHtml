@@ -6,10 +6,11 @@ import time
 import webbrowser
 import re
 from ExportHtml.HtmlAnnotations import get_annotations
-import ExportHtml.ExportHtmlLib.desktop as desktop
+import ExportHtml.lib.desktop as desktop
 import json
-from ExportHtml.ExportHtmlLib.color_scheme_matcher import ColorSchemeMatcher
-from ExportHtml.ExportHtmlLib.color_scheme_tweaker import ColorSchemeTweaker
+from ExportHtml.lib.color_scheme_matcher import ColorSchemeMatcher
+from ExportHtml.lib.color_scheme_tweaker import ColorSchemeTweaker
+from ExportHtml.lib.notify import notify
 
 JS_DIR = ""
 CSS_DIR = ""
@@ -759,7 +760,7 @@ class ExportHtml(object):
             if inputs["clipboard_copy"]:
                 the_html.seek(0)
                 sublime.set_clipboard(the_html.read())
-                sublime.status_message("Export to HTML: copied to clipboard")
+                notify("HTML copied to clipboard")
 
         if inputs["view_open"]:
             self.view.window().open_file(the_html.name)

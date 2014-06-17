@@ -1,5 +1,6 @@
 import sublime
 import sublime_plugin
+from ExportHtml.lib.notify import error
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
 
@@ -259,4 +260,4 @@ class AnnotateHtml(object):
         if not intersects:
             self.annotation_panel(comment, subset)
         else:
-            sublime.error_message("Cannot have intersecting annotation regions!")
+            error("Cannot have intersecting annotation regions!")
