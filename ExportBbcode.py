@@ -2,8 +2,9 @@ import sublime
 import sublime_plugin
 import tempfile
 import re
-from ExportHtml.ExportHtmlLib.color_scheme_matcher import ColorSchemeMatcher
-from ExportHtml.ExportHtmlLib.color_scheme_tweaker import ColorSchemeTweaker
+from ExportHtml.lib.color_scheme_matcher import ColorSchemeMatcher
+from ExportHtml.lib.color_scheme_tweaker import ColorSchemeTweaker
+from ExportHtml.lib.notify import notify
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
 
@@ -248,7 +249,7 @@ class ExportBbcode(object):
             if inputs["clipboard_copy"]:
                 the_bbcode.seek(0)
                 sublime.set_clipboard(the_bbcode.read())
-                sublime.status_message("Export to BBCode: copied to clipboard")
+                notify("BBCode copied to clipboard")
 
         if inputs["view_open"]:
             self.view.window().open_file(the_bbcode.name)
