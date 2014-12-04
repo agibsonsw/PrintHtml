@@ -580,7 +580,7 @@ class ExportHtml(object):
                 if hl_done and empty:
                     the_colour, the_style, the_bgcolour, _, _, _ = self.csm.guess_color(self.view, self.pt, scope_name)
                 elif self.sfground is None:
-                    the_colour, the_style, _, _, _ = self.csm.guess_color(self.view, self.pt, scope_name)
+                    the_colour, the_style, _, _, _, _ = self.csm.guess_color(self.view, self.pt, scope_name)
                     the_bgcolour = self.sbground
                 else:
                     the_colour, the_style = self.sfground, "normal"
