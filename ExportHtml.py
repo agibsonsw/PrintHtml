@@ -246,6 +246,7 @@ class ExportHtml(object):
             "wrap": kwargs.get("wrap", None),
             "multi_select": bool(kwargs.get("multi_select", False)),
             "style_gutter": bool(kwargs.get("style_gutter", True)),
+            "ignore_selections": bool(kwargs.get("ignore_selections", False)),
             "no_header": bool(kwargs.get("no_header", False)),
             "date_time_format": kwargs.get("date_time_format", "%m/%d/%y %I:%M:%S"),
             "show_full_path": bool(kwargs.get("show_full_path", True)),
@@ -280,14 +281,19 @@ class ExportHtml(object):
         self.date_time_format = kwargs["date_time_format"]
         self.time = time.localtime()
         self.show_full_path = kwargs["show_full_path"]
-        self.highlight_selections = kwargs["highlight_selections"]
+        self.sels = []
+        self.ignore_selections = kwargs["ignore_selections"]
+        if self.ignore_selections:
+            self.multi_select = False
+            self.highlight_selections = False
+        else:
+            self.highlight_selections = kwargs["highlight_selections"]
+            self.multi_select = self.check_sel() if kwargs["multi_select"] and not kwargs["highlight_selections"] else False
         self.browser_print = kwargs["browser_print"]
         self.auto_wrap = kwargs["wrap"] is not None and int(kwargs["wrap"]) > 0
         self.wrap = 900 if not self.auto_wrap else int(kwargs["wrap"])
         self.hl_continue = None
         self.curr_hl = None
-        self.sels = []
-        self.multi_select = self.check_sel() if kwargs["multi_select"] and not kwargs["highlight_selections"] else False
         self.size = self.view.size()
         self.pt = 0
         self.end = 0
@@ -361,7 +367,16 @@ class ExportHtml(object):
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
-        if not multi and (curr_sel.empty() or self.highlight_selections or curr_sel.size() <= self.char_limit):
+        if (
+            self.ignore_selections or
+            (
+                not multi and
+                (
+                    curr_sel.empty() or self.highlight_selections or
+                    curr_sel.size() <= self.char_limit
+                )
+            )
+        ):
             self.size = self.view.size()
             self.pt = 0
             self.end = 1

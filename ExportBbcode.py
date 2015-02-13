@@ -73,6 +73,7 @@ class ExportBbcode(object):
             "numbers": bool(kwargs.get("numbers", False)),
             "color_scheme": kwargs.get("color_scheme", None),
             "multi_select": bool(kwargs.get("multi_select", False)),
+            "ignore_selections": bool(kwargs.get("ignore_selections", False)),
             "clipboard_copy": bool(kwargs.get("clipboard_copy", True)),
             "view_open": bool(kwargs.get("view_open", False)),
             "filter": kwargs.get("filter", "")
@@ -94,7 +95,11 @@ class ExportBbcode(object):
         self.hl_continue = None
         self.curr_hl = None
         self.sels = []
-        self.multi_select = self.check_sel() if kwargs["multi_select"] else False
+        self.ignore_selections = kwargs["ignore_selections"]
+        if self.ignore_selections:
+            self.multi_select = False
+        else:
+            self.multi_select = self.check_sel() if kwargs["multi_select"] else False
         self.size = self.view.size()
         self.pt = 0
         self.end = 0
@@ -120,7 +125,13 @@ class ExportBbcode(object):
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
-        if not multi and (curr_sel.empty() or curr_sel.size() <= self.char_limit):
+        if (
+            self.ignore_selections or
+            (
+                not multi and
+                (curr_sel.empty() or curr_sel.size() <= self.char_limit)
+            )
+        ):
             self.size = self.view.size()
             self.pt = 0
             self.end = 1
