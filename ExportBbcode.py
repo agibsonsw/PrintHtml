@@ -114,14 +114,13 @@ class ExportBbcode(object):
         scheme_file = settings.get('color_scheme') if alt_scheme is False else alt_scheme
         self.csm = ColorSchemeMatcher(
             scheme_file,
-            strip_trans=True,
             ignore_gutter=True,
             filter=(lambda x: ColorSchemeTweaker().tweak(x, kwargs["filter"]))
         )
         (
             self.bground, self.fground, self.sbground,
             self.sfground, self.gbground, self.gfground
-        ) = self.csm.get_general_colors()
+        ) = self.csm.get_general_colors(strip_transparency=True)
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
@@ -214,7 +213,9 @@ class ExportBbcode(object):
             scope_name = self.view.scope_name(self.pt)
             while self.view.scope_name(self.end) == scope_name and self.end < self.size:
                 self.end += 1
-            the_colour, the_style, _, _, _, _ = self.csm.guess_color(self.view, self.pt, scope_name)
+            color_match = self.csm.guess_color(self.view, self.pt, scope_name)
+            the_colour = color_match.fg_simulated
+            the_style = color_match.style
 
             region = sublime.Region(self.pt, self.end)
             # Normal text formatting

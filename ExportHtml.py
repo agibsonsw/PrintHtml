@@ -333,7 +333,6 @@ class ExportHtml(object):
 
         self.csm = ColorSchemeMatcher(
             scheme_file,
-            strip_trans=True,
             ignore_gutter=(not kwargs["style_gutter"]),
             track_dark_background=True,
             filter=(lambda x: ColorSchemeTweaker().tweak(x, kwargs["filter"]))
@@ -344,7 +343,7 @@ class ExportHtml(object):
         (
             self.bground, self.fground, self.sbground,
             self.sfground, self.gbground, self.gfground
-        ) = self.csm.get_general_colors()
+        ) = self.csm.get_general_colors(simulate_transparency=True)
 
     def get_tools(self, tools, use_annotation, use_wrapping):
         toolbar_options = {
@@ -593,9 +592,14 @@ class ExportHtml(object):
                 else:
                     hl_done = True
                 if hl_done and empty:
-                    the_colour, the_style, the_bgcolour, _, _, _ = self.csm.guess_color(self.view, self.pt, scope_name)
+                    color_match = self.csm.guess_color(self.view, self.pt, scope_name)
+                    the_colour = color_match.fg_simulated
+                    the_style = color_match.style
+                    the_bgcolour = color_match.bg_simulated
                 elif self.sfground is None:
-                    the_colour, the_style, _, _, _, _ = self.csm.guess_color(self.view, self.pt, scope_name)
+                    color_match = self.csm.guess_color(self.view, self.pt, scope_name)
+                    the_colour = color_match.fg_simulated
+                    the_style = color_match.style
                     the_bgcolour = self.sbground
                 else:
                     the_colour, the_style = self.sfground, "normal"
@@ -608,7 +612,10 @@ class ExportHtml(object):
                     if self.curr_hl is not None and self.end == self.curr_hl.begin():
                         break
                     self.end += 1
-                the_colour, the_style, the_bgcolour, _, _, _ = self.csm.guess_color(self.view, self.pt, scope_name)
+                color_match = self.csm.guess_color(self.view, self.pt, scope_name)
+                the_colour = color_match.fg_simulated
+                the_style = color_match.style
+                the_bgcolour = color_match.bg_simulated
 
             # Get new annotation
             if (self.curr_annot is None or self.curr_annot.end() < self.pt) and len(self.annotations):
@@ -651,7 +658,8 @@ class ExportHtml(object):
         # Get the color for the space at the end of a line
         if self.end < self.view.size():
             end_key = self.view.scope_name(self.pt)
-            _, _, self.ebground, _, _, _ = self.csm.guess_color(self.view, self.pt, end_key)
+            color_match = self.csm.guess_color(self.view, self.pt, end_key)
+            self.ebground = color_match.bg_simulated
 
         # Join line segments
         return ''.join(line)
