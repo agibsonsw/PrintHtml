@@ -120,7 +120,7 @@ class ExportBbcode(object):
         (
             self.bground, self.fground, self.sbground,
             self.sfground, self.gbground, self.gfground
-        ) = self.csm.get_general_colors(strip_transparency=True)
+        ) = self.csm.get_general_colors(simulate_transparency=True)
 
     def setup_print_block(self, curr_sel, multi=False):
         # Determine start and end points and whether to parse whole file or selection
