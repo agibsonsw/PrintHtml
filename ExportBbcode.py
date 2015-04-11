@@ -193,16 +193,16 @@ class ExportBbcode(object):
             text = BBCODE_MATCH.sub(lambda m: self.repl(m, the_colour), text)
             bold = False
             italic = False
-            for s in the_style:
+            for s in the_style.split(' '):
                 if s == "bold":
                     bold = True
                 if s == "italic":
                     italic = True
             code += (BBCODE_CODE % {"color": the_colour, "content": text})
             if italic:
-                code = (BBCODE_ITALIC % {"color": the_colour, "content": code})
+                code = (BBCODE_ITALIC % {"content": code})
             if bold:
-                code = (BBCODE_BOLD % {"color": the_colour, "content": code})
+                code = (BBCODE_BOLD % {"content": code})
             line.append(code)
 
     def convert_line_to_bbcode(self):
