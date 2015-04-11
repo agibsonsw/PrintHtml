@@ -171,7 +171,7 @@
         },
         {
             "Sublime View - Show BBCode in View (show gutter)": {
-                "numbers": false,
+                "numbers": true,
                 "multi_select": true,
                 "view_open": true
             }
