@@ -411,7 +411,7 @@ class ExportHtml(object):
 
         return html_line
 
-    def write_header(self, the_html):
+    def write_header(self, html):
         header = HTML_HEADER % {
             "title": path.basename(self.file_name),
             "css": getcss(
@@ -433,14 +433,14 @@ class ExportHtml(object):
                 "name": self.csm.get_scheme_file(),
             }
         }
-        the_html.write(header)
+        html.write(header)
 
-    def convert_view_to_html(self, the_html):
+    def convert_view_to_html(self, html):
         for line in self.view.split_by_newlines(sublime.Region(self.pt, self.size)):
             self.size = line.end()
             empty = not bool(line.size())
-            line = self.convert_line_to_html(the_html, empty)
-            the_html.write(self.print_line(line, self.curr_row))
+            line = self.convert_line_to_html(html, empty)
+            html.write(self.print_line(line, self.curr_row))
             self.curr_row += 1
 
     def html_encode(self, text):
@@ -470,7 +470,7 @@ class ExportHtml(object):
         comments.sort()
         return comments
 
-    def annotate_text(self, line, the_colour, the_bgcolour, the_style, empty):
+    def annotate_text(self, line, color, bgcolour, style, empty):
         pre_text = None
         annot_text = None
         post_text = None
@@ -501,13 +501,13 @@ class ExportHtml(object):
 
         # Print the separate parts pre text, annotation, post text
         if pre_text is not None:
-            self.format_text(line, pre_text, the_colour, the_bgcolour, the_style, empty)
+            self.format_text(line, pre_text, color, bgcolour, style, empty)
         if annot_text is not None:
-            self.format_text(line, annot_text, the_colour, the_bgcolour, the_style, empty, annotate=True)
+            self.format_text(line, annot_text, color, bgcolour, style, empty, annotate=True)
             if self.curr_annot is None:
                 self.curr_comment = None
         if post_text is not None:
-            self.format_text(line, post_text, the_colour, the_bgcolour, the_style, empty)
+            self.format_text(line, post_text, color, bgcolour, style, empty)
 
     def add_annotation_table_entry(self):
         row, col = self.view.rowcol(self.annot_pt)
@@ -519,19 +519,19 @@ class ExportHtml(object):
         )
         self.annot_pt = None
 
-    def format_text(self, line, text, the_colour, the_bgcolour, the_style, empty, annotate=False):
+    def format_text(self, line, text, color, bgcolor, style, empty, annotate=False):
         if empty:
             text = '&nbsp;'
         else:
-            the_style += " real_text"
+            style += " real_text"
 
-        if the_bgcolour is None:
-            the_bgcolour = self.bground
+        if bgcolor is None:
+            bgcolor = self.bground
 
         if annotate:
-            code = ANNOTATION_CODE % {"highlight": the_bgcolour, "color": the_colour, "content": text, "class": the_style}
+            code = ANNOTATION_CODE % {"highlight": bgcolor, "color": color, "content": text, "class": style}
         else:
-            code = CODE % {"highlight": the_bgcolour, "color": the_colour, "content": text, "class": the_style}
+            code = CODE % {"highlight": bgcolor, "color": color, "content": text, "class": style}
 
         if annotate:
             if self.curr_annot is not None and not self.open_annot:
@@ -561,7 +561,7 @@ class ExportHtml(object):
                     )
         line.append(code)
 
-    def convert_line_to_html(self, the_html, empty):
+    def convert_line_to_html(self, html, empty):
         line = []
         hl_done = False
 
@@ -593,17 +593,17 @@ class ExportHtml(object):
                     hl_done = True
                 if hl_done and empty:
                     color_match = self.csm.guess_color(self.view, self.pt, scope_name)
-                    the_colour = color_match.fg_simulated
-                    the_style = color_match.style
-                    the_bgcolour = color_match.bg_simulated
+                    color = color_match.fg_simulated
+                    style = color_match.style
+                    bgcolor = color_match.bg_simulated
                 elif self.sfground is None:
                     color_match = self.csm.guess_color(self.view, self.pt, scope_name)
-                    the_colour = color_match.fg_simulated
-                    the_style = color_match.style
-                    the_bgcolour = self.sbground
+                    color = color_match.fg_simulated
+                    style = color_match.style
+                    bgcolor = self.sbground
                 else:
-                    the_colour, the_style = self.sfground, "normal"
-                    the_bgcolour = self.sbground
+                    color, style = self.sfground, "normal"
+                    bgcolor = self.sbground
             else:
                 # Get text of like scope up to a highlight
                 scope_name = self.view.scope_name(self.pt)
@@ -613,9 +613,9 @@ class ExportHtml(object):
                         break
                     self.end += 1
                 color_match = self.csm.guess_color(self.view, self.pt, scope_name)
-                the_colour = color_match.fg_simulated
-                the_style = color_match.style
-                the_bgcolour = color_match.bg_simulated
+                color = color_match.fg_simulated
+                style = color_match.style
+                bgcolor = color_match.bg_simulated
 
             # Get new annotation
             if (self.curr_annot is None or self.curr_annot.end() < self.pt) and len(self.annotations):
@@ -635,11 +635,11 @@ class ExportHtml(object):
             region = sublime.Region(self.pt, self.end)
             if self.curr_annot is not None and region.intersects(self.curr_annot):
                 # Apply annotation within the text and format the text
-                self.annotate_text(line, the_colour, the_bgcolour, the_style, empty)
+                self.annotate_text(line, color, bgcolor, style, empty)
             else:
                 # Normal text formatting
                 tidied_text = self.html_encode(self.view.substr(region))
-                self.format_text(line, tidied_text, the_colour, the_bgcolour, the_style, empty)
+                self.format_text(line, tidied_text, color, bgcolor, style, empty)
 
             if hl_done:
                 # Clear highlight flags and variables
@@ -664,15 +664,15 @@ class ExportHtml(object):
         # Join line segments
         return ''.join(line)
 
-    def write_body(self, the_html):
+    def write_body(self, html):
         processed_rows = ""
-        the_html.write(BODY_START)
+        html.write(BODY_START)
 
-        the_html.write(TABLE_START)
+        html.write(TABLE_START)
         if not self.no_header:
             # Write file name
             date_time = time.strftime(self.date_time_format, self.time)
-            the_html.write(
+            html.write(
                 FILE_INFO % {
                     "bgcolor": self.bground,
                     "color": self.fground,
@@ -681,8 +681,8 @@ class ExportHtml(object):
                 }
             )
 
-        the_html.write(ROW_START)
-        the_html.write(TABLE_START)
+        html.write(ROW_START)
+        html.write(TABLE_START)
         # Convert view to HTML
         if self.multi_select:
             count = 0
@@ -690,33 +690,33 @@ class ExportHtml(object):
             for sel in self.sels:
                 self.setup_print_block(sel, multi=True)
                 processed_rows += "[" + str(self.curr_row) + ","
-                self.convert_view_to_html(the_html)
+                self.convert_view_to_html(html)
                 count += 1
                 self.tables = count
                 processed_rows += str(self.curr_row) + "],"
 
                 if count < total:
-                    the_html.write(TABLE_END)
-                    the_html.write(ROW_END)
-                    the_html.write(ROW_START)
-                    the_html.write(DIVIDER % {"color": self.fground})
-                    the_html.write(ROW_END)
-                    the_html.write(ROW_START)
-                    the_html.write(TABLE_START)
+                    html.write(TABLE_END)
+                    html.write(ROW_END)
+                    html.write(ROW_START)
+                    html.write(DIVIDER % {"color": self.fground})
+                    html.write(ROW_END)
+                    html.write(ROW_START)
+                    html.write(TABLE_START)
         else:
             self.setup_print_block(self.view.sel()[0])
             processed_rows += "[" + str(self.curr_row) + ","
-            self.convert_view_to_html(the_html)
+            self.convert_view_to_html(html)
             processed_rows += str(self.curr_row) + "],"
             self.tables += 1
 
-        the_html.write(TABLE_END)
-        the_html.write(ROW_END)
-        the_html.write(TABLE_END)
+        html.write(TABLE_END)
+        html.write(ROW_END)
+        html.write(TABLE_END)
 
         js_options = []
         if len(self.annot_tbl):
-            self.add_comments_table(the_html)
+            self.add_comments_table(html)
             js_options.append(HTML_JS_WRAP % {"jscode": getjs('annotation.js')})
 
         # Write javascript snippets
@@ -739,13 +739,13 @@ class ExportHtml(object):
             js_options.append(AUTO_PRINT)
 
         # Write empty line to allow copying of last line and line number without issue
-        the_html.write(BODY_END % {"js": ''.join(js_options), "toolbar": self.get_tools(self.toolbar, len(self.annot_tbl), self.auto_wrap)})
+        html.write(BODY_END % {"js": ''.join(js_options), "toolbar": self.get_tools(self.toolbar, len(self.annot_tbl), self.auto_wrap)})
 
-    def add_comments_table(self, the_html):
-        the_html.write(ANNOTATION_TBL_START)
-        the_html.write(''.join([ANNOTATION_ROW % {"table": t, "row": r, "link": l, "comment": c} for t, r, l, c in self.annot_tbl]))
-        the_html.write(ANNOTATION_FOOTER)
-        the_html.write(ANNOTATION_TBL_END)
+    def add_comments_table(self, html):
+        html.write(ANNOTATION_TBL_START)
+        html.write(''.join([ANNOTATION_ROW % {"table": t, "row": r, "link": l, "comment": c} for t, r, l, c in self.annot_tbl]))
+        html.write(ANNOTATION_FOOTER)
+        html.write(ANNOTATION_TBL_END)
 
     def run(self, **kwargs):
         inputs = self.process_inputs(**kwargs)
@@ -777,21 +777,21 @@ class ExportHtml(object):
         else:
             open_html = lambda x: tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=x)
 
-        with open_html(html_file) as the_html:
-            self.write_header(the_html)
-            self.write_body(the_html)
+        with open_html(html_file) as html:
+            self.write_header(html)
+            self.write_body(html)
             if inputs["clipboard_copy"]:
-                the_html.seek(0)
-                sublime.set_clipboard(the_html.read())
+                html.seek(0)
+                sublime.set_clipboard(html.read())
                 notify("HTML copied to clipboard")
 
         if inputs["view_open"]:
-            self.view.window().open_file(the_html.name)
+            self.view.window().open_file(html.name)
         else:
             # Open in web browser; check return code, if failed try webbrowser
-            status = desktop.open(the_html.name, status=True)
+            status = desktop.open(html.name, status=True)
             if not status:
-                webbrowser.open(the_html.name, new=2)
+                webbrowser.open(html.name, new=2)
 
 
 def plugin_loaded():

@@ -164,24 +164,24 @@ class ExportBbcode(object):
 
         return bbcode_line
 
-    def convert_view_to_bbcode(self, the_bbcode):
+    def convert_view_to_bbcode(self, bbcode):
         for line in self.view.split_by_newlines(sublime.Region(self.end, self.size)):
             self.empty_space = None
             self.size = line.end()
             line = self.convert_line_to_bbcode()
-            the_bbcode.write(self.print_line(line, self.curr_row))
+            bbcode.write(self.print_line(line, self.curr_row))
             self.curr_row += 1
 
-    def repl(self, m, the_colour):
+    def repl(self, m, color):
         return m.group(1) + (
             BBCODE_ESCAPE % {
-                "color_open": the_colour,
-                "color_close": the_colour,
+                "color_open": color,
+                "color_close": color,
                 "content": m.group(2)
             }
         ) + m.group(3)
 
-    def format_text(self, line, text, the_colour, the_style):
+    def format_text(self, line, text, color, style):
         text = text.replace('\t', ' ' * self.tab_size).replace('\n', '')
         if self.empty_space is not None:
             text = self.empty_space + text
@@ -190,15 +190,15 @@ class ExportBbcode(object):
             self.empty_space = text
         else:
             code = ""
-            text = BBCODE_MATCH.sub(lambda m: self.repl(m, the_colour), text)
+            text = BBCODE_MATCH.sub(lambda m: self.repl(m, color), text)
             bold = False
             italic = False
-            for s in the_style.split(' '):
+            for s in style.split(' '):
                 if s == "bold":
                     bold = True
                 if s == "italic":
                     italic = True
-            code += (BBCODE_CODE % {"color": the_colour, "content": text})
+            code += (BBCODE_CODE % {"color": color, "content": text})
             if italic:
                 code = (BBCODE_ITALIC % {"content": code})
             if bold:
@@ -214,13 +214,13 @@ class ExportBbcode(object):
             while self.view.scope_name(self.end) == scope_name and self.end < self.size:
                 self.end += 1
             color_match = self.csm.guess_color(self.view, self.pt, scope_name)
-            the_colour = color_match.fg_simulated
-            the_style = color_match.style
+            color = color_match.fg_simulated
+            style = color_match.style
 
             region = sublime.Region(self.pt, self.end)
             # Normal text formatting
             text = self.view.substr(region)
-            self.format_text(line, text, the_colour, the_style)
+            self.format_text(line, text, color, style)
 
             # Continue walking through line
             self.pt = self.end
@@ -229,8 +229,8 @@ class ExportBbcode(object):
         # Join line segments
         return ''.join(line)
 
-    def write_body(self, the_bbcode):
-        the_bbcode.write(POST_START % {"bg_color": self.bground})
+    def write_body(self, bbcode):
+        bbcode.write(POST_START % {"bg_color": self.bground})
 
         # Convert view to HTML
         if self.multi_select:
@@ -238,17 +238,17 @@ class ExportBbcode(object):
             total = len(self.sels)
             for sel in self.sels:
                 self.setup_print_block(sel, multi=True)
-                self.convert_view_to_bbcode(the_bbcode)
+                self.convert_view_to_bbcode(bbcode)
                 count += 1
 
                 if count < total:
-                    the_bbcode.write("\n" + (BBCODE_CODE % {"color": self.fground, "content": "..."}) + "\n\n")
+                    bbcode.write("\n" + (BBCODE_CODE % {"color": self.fground, "content": "..."}) + "\n\n")
 
         else:
             self.setup_print_block(self.view.sel()[0])
-            self.convert_view_to_bbcode(the_bbcode)
+            self.convert_view_to_bbcode(bbcode)
 
-        the_bbcode.write(POST_END)
+        bbcode.write(POST_END)
 
     def run(self, **kwargs):
         inputs = self.process_inputs(**kwargs)
@@ -256,12 +256,12 @@ class ExportBbcode(object):
 
         delete = False if inputs["view_open"] else True
 
-        with tempfile.NamedTemporaryFile(mode='w+', delete=delete, suffix='.txt', encoding='utf-8') as the_bbcode:
-            self.write_body(the_bbcode)
+        with tempfile.NamedTemporaryFile(mode='w+', delete=delete, suffix='.txt', encoding='utf-8') as bbcode:
+            self.write_body(bbcode)
             if inputs["clipboard_copy"]:
-                the_bbcode.seek(0)
-                sublime.set_clipboard(the_bbcode.read())
+                bbcode.seek(0)
+                sublime.set_clipboard(bbcode.read())
                 notify("BBCode copied to clipboard")
 
         if inputs["view_open"]:
-            self.view.window().open_file(the_bbcode.name)
+            self.view.window().open_file(bbcode.name)
