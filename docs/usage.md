@@ -1,28 +1,5 @@
-# About
-This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml) plugin.  This plugin allows the exporting of a document in ST2 to an HTML file or to BBCode.  It duplicates ST2's theme colors and font styles.  You can play with the demo page that has actual html pages generated with this plugin [here](http://facelessuser.github.com/ExportHtml).
-
-<img src="http://dl.dropbox.com/u/342698/ExportHtml/preview.png" border="0"/>
-
-# Features
-- Export to HTML using any tmTheme for syntax highlighting
-- Can handle any language supported by ST2
-- Supports bold and italic theme font styles as well
-- Configurable output
-- Format suitable for copying and pasting in emails
-- 2 included tmTheme files for color and grayscale printing (but any can be used)
-- Export only selections (multi-select supported)
-- Export and show highlights (multi-select supported)
-- Toggle gutter on/off in browser view
-- Automatically open browser print dialog (optional)
-- Enable/disable configurable word wrapping
-- Configurable toolbar to appear in the generated webpage
-
-# Installation on Sublime Text 3
-If you want to install this on ST3, you will have to use git first and Package Control later. Clone this repository to the packages directory ("Browse packages"). Then make sure to switch to the ST3 branch (`git checkout -b ST3 origin/ST3`).
-
-Alternatively, you can use Package Control's "Add repository" to add and install from the ST3 branch.
-
-# Usage: Exporting HTML
+# Usage
+## Exporting HTML
 ExportHtml comes with a number of default commands available, but these can be overridden in the settings file.  Or you can create commands directly outside of the settings file bound to the command palette, key bindings, or even the menu.
 
 If adding a command to the settings file, it goes under the `html_panel` setting.  These configurations will appear under the `Export to HTML: Show Export Menu` command palette command.
@@ -88,7 +65,7 @@ Example:
 
 When viewing the HTML in your web browser, regardless of the gutter settings, the gutter can be toggled to show or be hidden using the toolbar.
 
-# Usage: Exporting BBCode
+## Exporting BBCode
 ExportHtml can also export selected code as BBCode for posting in forums. Exporting BBCode is very similar to exporting HTML code.
 
 If adding a command to the settings file, it goes under the `bbcode_panel` setting.  These configurations will appear under the `Export to BBCode: Show Export Menu` command palette command.
@@ -132,7 +109,7 @@ Example:
 }
 ```
 
-# Usage: Annotations (HTML only)
+# Annotations (HTML only)
 Annotations are comments you can make on selected text.  When the HTML is generated, the selected text will be underlined, and when the mouse hovers over them, a tooltip will appear with your comment.
 
 <img src="http://dl.dropbox.com/u/342698/ExportHtml/annotation_preview.png" border="0"/>
@@ -157,7 +134,7 @@ You can navigate the annotations in the generate HTML by using a jump table.  Yo
 <img src="http://dl.dropbox.com/u/342698/ExportHtml/annotation_table_preview.png" border="0"/>
 
 
-# Settings File options
+## Settings File options
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -167,9 +144,3 @@ You can navigate the annotations in the generate HTML by using a jump table.  Yo
 | valid_selection_size | integer | Minimum allowable size for a selection to be accepted for only the selection to be printed. |
 | html_panel | array of commands | Define export configurations to appear under the `Export to HTML: Show Export Menu` command palette command. |
 | bbcode_panel | array of commands | Define export configurations to appear under the `Export to BBCode: Show Export Menu` command palette command. |
-
-#Credits
-- agibsonsw: Original idea and algorithm for the plugin
-- Paul Boddie: Desktop module for open files in web browser cross platform
-- Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright
-- Thanks to castles_made_of_sand a.k.a sublimator for package_resources.py (https://github.com/sublimator/PackageResources) and skuroda for his contributions to said library.
