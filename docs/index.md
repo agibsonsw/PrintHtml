@@ -1,4 +1,10 @@
-# ExportHtml
+# ExportHtml {: .doctitle}
+Convert and view source code in HTML or BBCODE.
+{: .doctitle-info}
+
+---
+
+# Overview
 This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml) plugin.  This plugin allows the exporting of a document in Sublime Text to a HTML file or to BBCode.  It duplicates Sublime's theme colors and font styles.
 
 <img src="http://dl.dropbox.com/u/342698/ExportHtml/preview.png" border="0"/>
@@ -19,9 +25,6 @@ This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml
 
 # Installation
 Use package control.
-
-# Documentation
-http://facelessuser.github.com/ExportHtml
 
 #Credits
 - agibsonsw: Original idea and algorithm for the plugin

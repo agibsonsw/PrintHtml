@@ -1,5 +1,10 @@
-# Usage
-## Exporting HTML
+# User Guide {: .doctitle}
+Configuring and using ExportHtml
+{: .doctitle-info}
+
+---
+
+# Exporting HTML
 ExportHtml comes with a number of default commands available, but these can be overridden in the settings file.  Or you can create commands directly outside of the settings file bound to the command palette, key bindings, or even the menu.
 
 If adding a command to the settings file, it goes under the `html_panel` setting.  These configurations will appear under the `Export to HTML: Show Export Menu` command palette command.
@@ -33,16 +38,16 @@ The name of the command is the key value, and then you add the parameters you wi
 | wrap | integer | Define the allowable size in px to wrap lines at.  By default wrapping is not used. |
 | color_scheme | string | The color scheme (tmTheme) file you would like to use.  By default the current color scheme file is used, or the the alternate default color scheme if defined in the setting `alternate_scheme`. |
 | clipboard_copy | boolean | Copy html to the clipboard after generation. Default is `false`. |
-| browser_print | boolean | When opening in the web browser, also open the brower's print dialog. This will be ignored if `view_open` is `true`.  Default is `false`. |
+| browser_print | boolean | When opening in the web browser, also open the browser's print dialog. This will be ignored if `view_open` is `true`.  Default is `false`. |
 | view_open | boolean | Open HTML in a Sublime Text tab instead of the web browser.  Default is `false`. |
 | no_header | boolean | Do not display file name, date, and time at the top of the HTML document. Default is `false`. |
 | date_time_format | string | String denoting the format for date and time when displaying header.  Please see Python's documentation on `time.strftime` for detailed info on formatting syntax.  Default is `"%m/%d/%y %I:%M:%S"`. |
 | show_full_path | boolean | Show full path for filename when displaying header. Default is `true`. |
 | save_location | string | Path to save html file.  If the file is wanted in the same file as the original, use ".".  Otherwise, use the absolute path to where the file is desired.  If there is an issue determining where to save the file, or the path does not exist, the OS temp folder will be used. Default is `None` (use temp folder). |
 | time_stamp | string | Configure the time stamp of saved html when using `save_location`.  To remove time stamps, just set to an empty string `""`.  Please see Python's documentation on `time.strftime` for detailed info on formatting syntax.  Default is `"_%m%d%y%H%M%S"`. |
-| toolbar | array of strings | Option to display a toolbar with to access features in a generated HTML.  This setting is an array of keywords that represent the icons in the toolbar to show.  Valid keywords include `gutter`, `print`, `plain_text`, `annotation`, `theme`, and `wrapping`.  Toolbar will appear when you mouse over the uppert right corner of the window of the generated html.  Default enables all. |
+| toolbar | array of strings | Option to display a toolbar with to access features in a generated HTML.  This setting is an array of keywords that represent the icons in the toolbar to show.  Valid keywords include `gutter`, `print`, `plain_text`, `annotation`, `theme`, and `wrapping`.  Toolbar will appear when you mouse over the upper right corner of the window of the generated html.  Default enables all. |
 | filter | string | Filters to use on the theme's colors.  The string is a sequence of filters separated by `;`.  The accepted filters are `grayscale`, `invert`, `sepia`, `brightness`, `glow`, `saturation`, `hue`, and `colorize`.  `brightness` and `saturation` requires a float parameter to specify to what magnitude the filter should be applied at.  `glow` requires a float for intensity (usually something like .1 or .2 is sufficient).  `hue` and `colorize` take a float that represents a degree.  `hue` shifts the hue via the degree given (can accept negative degrees); hues will wrap if they extend past 0 degrees or 360 degrees.  Example: `"filter": "sepia;invert;brightness(1.1);saturation(1.3);"`.  Default is `""`. |
-| shift_brightness | bool | This setting shifts the entire theme's brightness if a background color's luminace is below the global setting `bg_min_lumen_threshold`.  This was added to solve an issue that I had when copying dark themes into an outlook email; if a html span had a background that was too dark, the foreground would just be white.  This allows me to not have to worry about how dark the theme is, and probably serves very little use besides that. |
+| shift_brightness | bool | This setting shifts the entire theme's brightness if a background color's luminance is below the global setting `bg_min_lumen_threshold`.  This was added to solve an issue that I had when copying dark themes into an outlook email; if a html span had a background that was too dark, the foreground would just be white.  This allows me to not have to worry about how dark the theme is, and probably serves very little use besides that. |
 
 If you wish to bind a command to a key combination etc., the same settings as above can be used.
 
@@ -124,7 +129,7 @@ The commands are as follows:
 |---------|-------------|
 | Enable Annotation Mode | Turn annotation mode on. |
 | Disable Annotation Mode | Turn annotation mode off. |
-| Annotate Selection | Annote the given selection (no multi-select support currently). |
+| Annotate Selection | Annotate the given selection (no multi-select support currently). |
 | Delete Annotation(s) | Delete the annotation region the the cursor resides in (multi-select support). |
 | Delete All Annotations | Delete all annotation regions. |
 | Show Annotation Comment | Show the annotation comment of the region under the cursor. |
