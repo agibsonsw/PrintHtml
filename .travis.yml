@@ -1,0 +1,12 @@
+language: python
+python:
+  - "3.3"
+install:
+  - pip install flake8
+  - pip install flake8_docstrings
+  - pip install nose
+  - npm install -g jshint
+script:
+  - nosetests .
+  - flake8 --ignore=D202 --max-line-length=120 --exclude=desktop .
+  - jshint .

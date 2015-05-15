@@ -1,6 +1,3 @@
-/*jshint globalstrict: true*/
-"use strict";
-
 var plain_text_clone = null;
 
 function toggle_plain_text() {

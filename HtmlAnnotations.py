@@ -1,3 +1,4 @@
+"""HtmlAnnotations."""
 import sublime
 import sublime_plugin
 from ExportHtml.lib.notify import error
@@ -6,6 +7,8 @@ PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
 
 
 def get_highlight_style():
+    """Get the highlight style."""
+
     style_flag = 0
     settings = sublime.load_settings(PACKAGE_SETTINGS)
     scope = settings.get("annotation_highlight_scope", "comment")
@@ -16,6 +19,8 @@ def get_highlight_style():
 
 
 def clean_invalid_regions(view, annotations):
+    """Cleanup regions that are no longer valid."""
+
     deletions = 0
     for x in range(0, int(annotations["count"])):
         key_name = "html_annotation_%d" % x
@@ -47,12 +52,16 @@ def clean_invalid_regions(view, annotations):
 
 
 def get_annotations(view):
+    """Get annotations."""
+
     annotations = view.settings().get("annotation_comments", {"count": 0, "annotations": {}})
     clean_invalid_regions(view, annotations)
     return annotations
 
 
 def clear_annotations(view):
+    """Clear annotations."""
+
     annotations = view.settings().get("annotation_comments", {"count": 0, "annotations": {}})
     for x in range(0, int(annotations["count"])):
         view.erase_regions("html_annotation_%d" % x)
@@ -60,6 +69,8 @@ def clear_annotations(view):
 
 
 def delete_annotations(view):
+    """Delete annotations."""
+
     annotations = view.settings().get("annotation_comments", {"count": 0, "annotations": {}})
     for sel in view.sel():
         for x in range(0, int(annotations["count"])):
@@ -72,6 +83,8 @@ def delete_annotations(view):
 
 
 def get_annotation_comment(view):
+    """Get the annotation comment."""
+
     comment = None
     annotations = view.settings().get("annotation_comments", {"count": 0, "annotations": {}})
     if len(view.sel()):
@@ -85,6 +98,8 @@ def get_annotation_comment(view):
 
 
 def is_selection_in_annotation(view, first_only=False):
+    """Check if the current selection contains an annotation."""
+
     mode = view.settings().get("annotation_mode", False)
     selection = False
     if mode:
@@ -102,6 +117,8 @@ def is_selection_in_annotation(view, first_only=False):
 
 
 def annotations_exist(view):
+    """See if annotations exist."""
+
     mode = view.settings().get("annotation_mode", False)
     found = False
     if mode:
@@ -112,16 +129,25 @@ def annotations_exist(view):
 
 
 def is_selected(view):
+    """See text for annotation is selected."""
+
     mode = view.settings().get("annotation_mode", False)
     selected = not view.sel()[0].empty()
     return mode and selected
 
 
 class ShowAnnotationCommentCommand(sublime_plugin.TextCommand):
+
+    """Show the annotation."""
+
     def is_visible(self):
+        """Check if command should be visible in menus."""
+
         return is_selection_in_annotation(self.view)
 
     def run(self, edit):
+        """Run command."""
+
         comment = get_annotation_comment(self.view)
         if comment is not None:
             sublime.message_dialog("Annotation Comment:\n\n%s" % comment)
@@ -129,42 +155,77 @@ class ShowAnnotationCommentCommand(sublime_plugin.TextCommand):
 
 
 class ClearAnnotationsCommand(sublime_plugin.TextCommand):
+
+    """Clear the annotations."""
+
     def is_visible(self):
+        """Check if command should be visible in menus."""
+
         return annotations_exist(self.view)
 
     def run(self, edit):
+        """Run command."""
+
         clear_annotations(self.view)
 
 
 class DeleteAnnotationsCommand(sublime_plugin.TextCommand):
+
+    """Delete the annotations."""
+
     def is_visible(self):
+        """Check if command should be visible in menus."""
+
         return is_selection_in_annotation(self.view)
 
     def run(self, edit):
+        """Run command."""
+
         delete_annotations(self.view)
 
 
 class EnableAnnotationModeCommand(sublime_plugin.TextCommand):
+
+    """Enable annotation mode."""
+
     def is_visible(self):
+        """Check if command should be visible in menus."""
+
         return not self.view.settings().get("annotation_mode", False)
 
     def run(self, edit):
+        """Run command."""
+
         self.view.run_command("toggle_annotation_html_mode")
 
 
 class DisableAnnotationModeCommand(sublime_plugin.TextCommand):
+
+    """Disable annotation mode."""
+
     def is_visible(self):
+        """Check if command should be visible in menus."""
+
         return self.view.settings().get("annotation_mode", False)
 
     def run(self, edit):
+        """Run command."""
+
         self.view.run_command("toggle_annotation_html_mode")
 
 
 class ToggleAnnotationHtmlModeCommand(sublime_plugin.TextCommand):
+
+    """Toggle annotation mode."""
+
     def is_enabled(self):
+        """Check if command is enabled."""
+
         return not self.view.settings().get('is_widget')
 
     def run(self, edit):
+        """Run command."""
+
         mode = False if self.view.settings().get("annotation_mode", False) else True
         self.view.settings().set("annotation_mode", mode)
         if mode:
@@ -178,26 +239,47 @@ class ToggleAnnotationHtmlModeCommand(sublime_plugin.TextCommand):
 
 
 class AddAnnotationCommand(sublime_plugin.TextCommand):
+
+    """Add an annotation."""
+
     def is_visible(self):
+        """Check if command should be visible in menus."""
+
         return is_selected(self.view)
 
     def run(self, edit):
+        """Run command."""
+
         AnnotateHtml(self.view).run()
 
 
 class EditAnnotationCommand(sublime_plugin.TextCommand):
+
+    """Edit the current annotation."""
+
     def is_visible(self):
+        """Check if command should be visible in menus."""
+
         return is_selection_in_annotation(self.view, first_only=True)
 
     def run(self, edit):
+        """Run command."""
+
         AnnotateHtml(self.view).run()
 
 
 class AnnotateHtml(object):
+
+    """AnnotateHtml."""
+
     def __init__(self, view):
+        """Initialize."""
+
         self.view = view
 
     def subset_annotation_adjust(self):
+        """Show annotation at selection if exists."""
+
         subset = None
         comment = ""
         parent = None
@@ -217,6 +299,8 @@ class AnnotateHtml(object):
         return comment, parent, intersect
 
     def add_annotation(self, s, view_id, subset):
+        """Add the annotation."""
+
         window = sublime.active_window()
         view = window.active_view() if window is not None else None
         if s != "" and view is not None and view_id == view.id():
@@ -244,6 +328,8 @@ class AnnotateHtml(object):
             )
 
     def annotation_panel(self, default_comment, subset):
+        """Show annotation input panel."""
+
         view_id = self.view.id()
         self.view.window().show_input_panel(
             ("Annotate region (%d, %d)" % (self.sel.begin(), self.sel.end())),
@@ -254,6 +340,8 @@ class AnnotateHtml(object):
         )
 
     def run(self):
+        """Run command."""
+
         self.sel = self.view.sel()[0]
         self.annotations = get_annotations(self.view)
         comment, subset, intersects = self.subset_annotation_adjust()

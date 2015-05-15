@@ -1,6 +1,3 @@
-/*jshint globalstrict: true*/
-"use strict";
-
 var page_line_info = {
         wrap:      false,
         ranges:    null,
@@ -11,8 +8,9 @@ var page_line_info = {
     };
 
 function wrap_code() {
-    var start, end, i, j, mode, idx,
-        width = 0, el;
+    var start, end, i, j, idx, el,
+        width = 0,
+        mode = null;
     if (page_line_info.header) {
         document.getElementById("file_info").style.width = page_line_info.wrap_size + "px";
     }
@@ -21,7 +19,7 @@ function wrap_code() {
         start = page_line_info.ranges[idx][0];
         end = page_line_info.ranges[idx][1];
         for(j = start; j < end; j++) {
-            if (mode == null) {
+            if (isNull(mode)) {
                 mode = true;
                 if (page_line_info.gutter) {
                     width = document.getElementById("L_" + idx + "_" + j).offsetWidth;
@@ -35,14 +33,15 @@ function wrap_code() {
 }
 
 function toggle_gutter() {
-    var i, j, mode, rows, r, tbls, cells;
+    var i, j, rows, r, tbls, cells,
+        mode = null;
     tbls  = document.getElementsByTagName('table');
     for (i = 1; i <= page_line_info.tables; i++) {
         rows = tbls[i].getElementsByTagName('tr');
         r = rows.length;
         for (j = 0; j < r; j++) {
             cells = rows[j].getElementsByTagName('td');
-            if (mode == null) {
+            if (isNull(mode)) {
                 if (page_line_info.gutter) {
                     mode = 'none';
                     page_line_info.gutter = false;
@@ -54,7 +53,7 @@ function toggle_gutter() {
             cells[0].style.display = mode;
         }
     }
-    if (page_line_info.wrap && mode != null) {
+    if (page_line_info.wrap && !isNull(mode)) {
         setTimeout(function() {wrap_code();}, 500);
     }
 }

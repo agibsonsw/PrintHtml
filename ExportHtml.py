@@ -48,36 +48,90 @@ TOOL_GUTTER = (
 
 TOOL_PLAIN_TEXT = (
     '<img onclick="toggle_plain_text();" alt="" title="Toggle Plain" '
-    'src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAA'
-    'f8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJT'
-    'UUH3AofFg8dF9eGSAAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAANRJREFUOMvdkTF'
-    'OgkEQhResaeQScAsplIRGDgKttnsIOYIUm1hQa/HfQiMFcIBt9k/UTWa/sRkbspKfz'
-    'viS7eZ7M/uec39WbdsOgU/gI6V0ebZBKeVeTaWUu7PgpmkugD3wZW8XQuh3NhCRuao'
-    'q8AisVVVF5LazAfBi0JWITMzsuROccx4b8O6cc977HrAFyDmPumxfHQf3EyjwcBKOM'
-    'Q6ApL8ISDHGwanqljb4VLlsY5ctqrD99c3Cm1aamZn5q/e+V6vuxgb2tc5DCH3gYAu'
-    'u3f/RNzmJ99G3cZ53AAAAAElFTkSuQmCC"'
+    'src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAA'
+    'AAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB'
+    '3RJTUUH3AofFg8dF9eGSAAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAANRJREFUO'
+    'MvdkTFOgkEQhResaeQScAsplIRGDgKttnsIOYIUm1hQa/HfQiMFcIBt9k/UTWa/s'
+    'RkbspKfzviS7eZ7M/uec39WbdsOgU/gI6V0ebZBKeVeTaWUu7PgpmkugD3wZW8XQ'
+    'uh3NhCRuaoq8AisVVVF5LazAfBi0JWITMzsuROccx4b8O6cc977HrAFyDmPumxfH'
+    'Qf3EyjwcBKOMQ6ApL8ISDHGwanqljb4VLlsY5ctqrD99c3Cm1aamZn5q/e+V6vux'
+    'gb2tc5DCH3gYAuu3f/RNzmJ99G3cZ53AAAAAElFTkSuQmCC"'
     ' />'
 )
 
-TOOL_PRINT = '''<img onclick="page_print();" alt="" title="Print" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAl8o8wSAAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAQZJREFUOMulkzFSgjEUhL8X/xJ/iBegkAtQ6A08gIUehFthYykOw9BzBmwcaxGoZW1eZjIx/sC4TTJv8ja7mxfDIcmAAWDUIeDLzJQXm2w/AFZOkB8yoAU+gHtJ7yVJUnAlaS1pJOm6WN8kjSUtJQ1dLQChIvMATIEXXw9e3wMT4NnV/rKQsAcegAvgG9g5wcwv7OU51QgugSegD2yBO+DWmyLw+leINQXyW5VeoQj4qIIcW+CxPFwjSLKtEnAZOkGSSYruL3QMUxq0AERJUZKl5pV7bjsmMR+qHfAJ3DReDB4cwKLiv0R0S5Yy6ANz37ecgSZ7nui1zYm9G0B2wi+k63fyX/wA0b9vjF8iB3oAAAAASUVORK5CYII=" />'''
+TOOL_PRINT = (
+    '<img onclick="page_print();" alt="" title="Print" '
+    'src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgA'
+    'AABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAAC'
+    'XBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAl8o8wSAA'
+    'AAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAQZJREFUOMulkzFSg'
+    'jEUhL8X/xJ/iBegkAtQ6A08gIUehFthYykOw9BzBmwcaxGoZW1'
+    'eZjIx/sC4TTJv8ja7mxfDIcmAAWDUIeDLzJQXm2w/AFZOkB8yo'
+    'AU+gHtJ7yVJUnAlaS1pJOm6WN8kjSUtJQ1dLQChIvMATIEXXw9'
+    'e3wMT4NnV/rKQsAcegAvgG9g5wcwv7OU51QgugSegD2yBO+DWm'
+    'yLw+leINQXyW5VeoQj4qIIcW+CxPFwjSLKtEnAZOkGSSYruL3Q'
+    'MUxq0AERJUZKl5pV7bjsmMR+qHfAJ3DReDB4cwKLiv0R0S5Yy6'
+    'ANz37ecgSZ7nui1zYm9G0B2wi+k63fyX/wA0b9vjF8iB3oAAAA'
+    'ASUVORK5CYII="'
+    ' />'
+)
 
-TOOL_ANNOTATION = '''<img onclick="toggle_annotations();" alt="" title="Toggle Annotations" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAIt1BsPQAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAALVJREFUOMvNkkESgjAUQ/Or+8IN9A7ewHN7FRgvwIB7eW6+WGsRRjZm05n+Jn+aRNoIyy8Ak1QVZkjqzYyiQEKsJF0kxUxgkHSW1Eu6mdn9bStwABqgA0Y+MfqsBU7ALie3M8SS0NU5JqD2zWvIqUgD1MF9iCVDF8yPkixsjTF4PIOfa/Hi/GhiO5mYJHH0mL4ROzdvIu+TAoW8ddm30iJNjTQgevOqpMLPx8NilWe6X3z8n3gAfmBJ5rRJVyQAAAAASUVORK5CYII=" />'''
+TOOL_ANNOTATION = (
+    '<img onclick="toggle_annotations();" alt="" title="Toggle Annotations" '
+    'src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9h'
+    'AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhA'
+    'It1BsPQAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAALVJREFUOMvNkkESgjAUQ/Or+8IN9A'
+    '7ewHN7FRgvwIB7eW6+WGsRRjZm05n+Jn+aRNoIyy8Ak1QVZkjqzYyiQEKsJF0kxUxgkHSW1'
+    'Eu6mdn9bStwABqgA0Y+MfqsBU7ALie3M8SS0NU5JqD2zWvIqUgD1MF9iCVDF8yPkixsjTF4'
+    'PIOfa/Hi/GhiO5mYJHH0mL4ROzdvIu+TAoW8ddm30iJNjTQgevOqpMLPx8NilWe6X3z8n3g'
+    'AfmBJ5rRJVyQAAAAASUVORK5CYII="'
+    ' />'
+)
 
-TOOL_DUMP_THEME = '''<img onclick="dump_theme();" alt="" title="Download" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAWTV9RXgAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAJtJREFUOMvdk9ENwyAQQ5+rDBA6QZbI/gN0h3YE2gXi/lykhABN1b9aQkh3+CEwiEK2BYyAyhbwlORtceCoEbgBqahnYI65C1CYr43eThd+1B8Ahkp0qXZZa8/2LlIFIG2i676DmDMwS8pDcZzW7tt4DbwOr8/2ZPthe3FbS6yZ4thfQdrmE5DP5g7kvLkCucdomtWDRJzUvvGqN6JK1cOooSjlAAAAAElFTkSuQmCC" />'''
+TOOL_DUMP_THEME = (
+    '<img onclick="dump_theme();" alt="" title="Download" '
+    'src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB'
+    'AAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXM'
+    'AAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAWTV9RXgAAAAxpVFh0'
+    'Q29tbWVudAAAAAAAvK6ymQAAAJtJREFUOMvdk9ENwyAQQ5+rDBA6Q'
+    'ZbI/gN0h3YE2gXi/lykhABN1b9aQkh3+CEwiEK2BYyAyhbwlORtce'
+    'CoEbgBqahnYI65C1CYr43eThd+1B8Ahkp0qXZZa8/2LlIFIG2i676'
+    'DmDMwS8pDcZzW7tt4DbwOr8/2ZPthe3FbS6yZ4thfQdrmE5DP5g7k'
+    'vLkCucdomtWDRJzUvvGqN6JK1cOooSjlAAAAAElFTkSuQmCC"'
+    ' />'
+)
 
-TOOL_WRAPPING = '''<img onclick="toggle_wrapping();" alt="" title="Toggle Wrapping" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AsBFiYl9jWoIQAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAP1JREFUOMudk0FuwkAMRZ+jbCGZXADlKvS8HKG9Qa8Q1K5LSLpG+ixwUmdKQMLSSDOeb/v7e8bITJIBNWD5FTCYmaLT7gTWwDtQZQlG4A0YYiILwTvgwxNsgV+vOuEm3wDsga+ZjaQkqZN0kdT7vpXU+Grd1zumk5Rm6g44STr6PjmriEl+d3RsK8li9T/nimXFOkmp8P4mwcZc5YXit7vRjxVgBQ/MK1aPWBWu9Jw1A9c+mZ0nW7AFdLevwKCR9BPE/SdiaWaSNADntdb9jXz6eQt8L15lGFM+vsarRevjtMqg7pkXrHghZiFs+QS8xmwDHIC9PXsHK197/t5XQswlGeOCYgkAAAAASUVORK5CYII=" />'''
+TOOL_WRAPPING = (
+    '<img onclick="toggle_wrapping();" alt="" title="Toggle Wrapping" '
+    'src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAA'
+    'Af8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3R'
+    'JTUUH3AsBFiYl9jWoIQAAAAxpVFh0Q29tbWVudAAAAAAAvK6ymQAAAP1JREFUOMud'
+    'k0FuwkAMRZ+jbCGZXADlKvS8HKG9Qa8Q1K5LSLpG+ixwUmdKQMLSSDOeb/v7e8bIT'
+    'JIBNWD5FTCYmaLT7gTWwDtQZQlG4A0YYiILwTvgwxNsgV+vOuEm3wDsga+ZjaQkqZ'
+    'N0kdT7vpXU+Grd1zumk5Rm6g44STr6PjmriEl+d3RsK8li9T/nimXFOkmp8P4mwcZ'
+    'c5YXit7vRjxVgBQ/MK1aPWBWu9Jw1A9c+mZ0nW7AFdLevwKCR9BPE/SdiaWaSNADn'
+    'tdb9jXz6eQt8L15lGFM+vsarRevjtMqg7pkXrHghZiFs+QS8xmwDHIC9PXsHK197/'
+    't5XQswlGeOCYgkAAAAASUVORK5CYII="'
+    ' />'
+)
 
-TOOLBAR = '''<div id="toolbarhide"><div id="toolbar">%(options)s</div></div>'''
+TOOLBAR = '<div id="toolbarhide"><div id="toolbar">%(options)s</div></div>'
 
-ANNOTATE_OPEN = '''<span onclick="toggle_annotations();" class="tooltip_hotspot" onmouseover="tooltip.show(%(comment)s);" onmouseout="tooltip.hide();">%(code)s'''
+ANNOTATE_OPEN = (
+    '<span onclick="toggle_annotations();" class="tooltip_hotspot" onmouseover="tooltip.show(%(comment)s);" '
+    'onmouseout="tooltip.hide();">%(code)s'
+)
 
-ANNOTATE_CLOSE = '''</span>'''
+ANNOTATE_CLOSE = '</span>'
 
-BODY_START = '''<body class="code_page code_text"><pre class="code_page">'''
+BODY_START = '<body class="code_page code_text"><pre class="code_page">'
 
-FILE_INFO = '''<tr><td colspan="2" style="background: %(bgcolor)s"><div id="file_info"><span style="color: %(color)s">%(date_time)s %(file)s\n\n</span></div></td></tr>'''
+FILE_INFO = (
+    '<tr><td colspan="2" style="background: %(bgcolor)s"><div id="file_info">'
+    '<span style="color: %(color)s">%(date_time)s %(file)s\n\n</span></div></td></tr>'
+)
 
-TABLE_START = '''<table cellspacing="0" cellpadding="0" class="code_page">'''
+TABLE_START = '<table cellspacing="0" cellpadding="0" class="code_page">'
 
 LINE = (
     '<tr>' +
@@ -90,16 +144,19 @@ LINE = (
     '</tr>'
 )
 
-CODE = '''<span class="%(class)s" style="background-color: %(highlight)s; color: %(color)s;">%(content)s</span>'''
-ANNOTATION_CODE = '''<span style="background-color: %(highlight)s;"><a href="javascript:void();" class="annotation"><span class="%(class)s annotation" style="color: %(color)s;">%(content)s</span></a></span>'''
+CODE = '<span class="%(class)s" style="background-color: %(highlight)s; color: %(color)s;">%(content)s</span>'
+ANNOTATION_CODE = (
+    '<span style="background-color: %(highlight)s;"><a href="javascript:void();" class="annotation">'
+    '<span class="%(class)s annotation" style="color: %(color)s;">%(content)s</span></a></span>'
+)
 
-TABLE_END = '''</table>'''
+TABLE_END = '</table>'
 
-ROW_START = '''<tr><td>'''
+ROW_START = '<tr><td>'
 
-ROW_END = '''</td></tr>'''
+ROW_END = '</td></tr>'
 
-DIVIDER = '''<span style="color: %(color)s">\n...\n\n</span>'''
+DIVIDER = '<span style="color: %(color)s">\n...\n\n</span>'
 
 ANNOTATION_TBL_START = (
     '<div id="comment_list" style="display:none"><div id="comment_wrapper">' +
@@ -138,9 +195,12 @@ ANNOTATION_FOOTER = (
     '</td></tr>'
 )
 
-BODY_END = '''</pre>%(toolbar)s\n%(js)s\n</body>\n</html>\n'''
+BODY_END = '</pre>%(toolbar)s\n%(js)s\n</body>\n</html>\n'
 
 INCLUDE_THEME = '''
+<script type="text/javascript">
+%(jshelper)s
+</script>
 <script type="text/javascript">
 %(jscode)s
 plist.color_scheme = %(theme)s;
@@ -184,6 +244,8 @@ HTML_JS_WRAP = '''
 
 
 def sublime_format_path(pth):
+    """Format path for SublimeText."""
+
     m = re.match(r"^([A-Za-z]{1}):(?:/|\\)(.*)", pth)
     if sublime.platform() == "windows" and m is not None:
         pth = m.group(1) + "/" + m.group(2)
@@ -191,6 +253,8 @@ def sublime_format_path(pth):
 
 
 def getjs(file_name):
+    """Get JS file."""
+
     code = ""
     try:
         if int(sublime.version()) >= 3013:
@@ -200,10 +264,12 @@ def getjs(file_name):
                 code = f.read()
     except:
         pass
-    return code
+    return code.replace('\r', '')
 
 
 def getcss(file_name, options):
+    """Get CSS file."""
+
     code = ""
     final_code = ""
     last_pt = 0
@@ -223,17 +289,24 @@ def getcss(file_name, options):
     except:
         pass
 
-    return final_code
+    return final_code.replace('\r', '')
 
 
 class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
+
+    """Show ExportHtml panel."""
+
     def execute(self, value):
+        """Execute command from th equick panel."""
+
         if value >= 0:
             view = self.window.active_view()
             if view is not None:
                 ExportHtml(view).run(**self.args[value])
 
     def run(self):
+        """Run command."""
+
         options = sublime.load_settings(PACKAGE_SETTINGS).get("html_panel", {})
         menu = []
         self.args = []
@@ -250,17 +323,29 @@ class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
 
 
 class ExportHtmlCommand(sublime_plugin.WindowCommand):
+
+    """ExportHtml command."""
+
     def run(self, **kwargs):
+        """Run command."""
+
         view = self.window.active_view()
         if view is not None:
             ExportHtml(view).run(**kwargs)
 
 
 class ExportHtml(object):
+
+    """ExportHtml."""
+
     def __init__(self, view):
+        """Initialization."""
+
         self.view = view
 
     def process_inputs(self, **kwargs):
+        """Process the user inputs."""
+
         return {
             "numbers": bool(kwargs.get("numbers", False)),
             "highlight_selections": bool(kwargs.get("highlight_selections", False)),
@@ -283,7 +368,8 @@ class ExportHtml(object):
         }
 
     def setup(self, **kwargs):
-        # Get get general document preferences from sublime preferences
+        """Get get general document preferences from sublime preferences."""
+
         eh_settings = sublime.load_settings(PACKAGE_SETTINGS)
         settings = sublime.load_settings('Preferences.sublime-settings')
         alternate_font_size = eh_settings.get("alternate_font_size", False)
@@ -311,7 +397,10 @@ class ExportHtml(object):
             self.highlight_selections = False
         else:
             self.highlight_selections = kwargs["highlight_selections"]
-            self.multi_select = self.check_sel() if kwargs["multi_select"] and not kwargs["highlight_selections"] else False
+            if kwargs["multi_select"] and not kwargs["highlight_selections"]:
+                self.multi_select = self.check_sel()
+            else:
+                self.multi_select = False
         self.browser_print = kwargs["browser_print"]
         self.auto_wrap = kwargs["wrap"] is not None and int(kwargs["wrap"]) > 0
         self.wrap = 900 if not self.auto_wrap else int(kwargs["wrap"])
@@ -331,7 +420,10 @@ class ExportHtml(object):
         self.no_header = kwargs["no_header"]
         self.annot_tbl = []
         self.toolbar = kwargs["toolbar"]
-        self.toolbar_orientation = "block" if eh_settings.get("toolbar_orientation", "horizontal") == "vertical" else "inline-block"
+        if eh_settings.get("toolbar_orientation", "horizontal") == "vertical":
+            self.toolbar_orientation = "block"
+        else:
+            self.toolbar_orientation = "inline-block"
         self.matched = {}
         self.ebground = self.bground
         self.lumens_limit = float(eh_settings.get("bg_min_lumen_threshold", 62))
@@ -369,6 +461,8 @@ class ExportHtml(object):
         ) = self.csm.get_general_colors(simulate_transparency=True)
 
     def get_tools(self, tools, use_annotation, use_wrapping):
+        """Get tools for toolbar."""
+
         toolbar_options = {
             "gutter": TOOL_GUTTER,
             "print": TOOL_PRINT,
@@ -388,7 +482,8 @@ class ExportHtml(object):
         return toolbar_element
 
     def setup_print_block(self, curr_sel, multi=False):
-        # Determine start and end points and whether to parse whole file or selection
+        """Determine start and end points and whether to parse whole file or selection."""
+
         if (
             self.ignore_selections or
             (
@@ -413,6 +508,8 @@ class ExportHtml(object):
         self.gutter_pad = len(str(self.view.rowcol(self.size)[0])) + 1
 
     def check_sel(self):
+        """Check if selection is a multi-selection."""
+
         multi = False
         for sel in self.view.sel():
             if not sel.empty() and sel.size() >= self.char_limit:
@@ -421,6 +518,8 @@ class ExportHtml(object):
         return multi
 
     def print_line(self, line, num):
+        """Print the line."""
+
         html_line = LINE % {
             "line_id": num,
             "color": self.gfground,
@@ -435,6 +534,8 @@ class ExportHtml(object):
         return html_line
 
     def write_header(self, html):
+        """Write the HTML header."""
+
         header = HTML_HEADER % {
             "title": path.basename(self.file_name),
             "css": getcss(
@@ -451,14 +552,20 @@ class ExportHtml(object):
                 }
             ),
             "js": INCLUDE_THEME % {
+                "jshelper": getjs('jshelper.js'),
                 "jscode": getjs('plist.js'),
-                "theme": json.dumps(self.csm.get_plist_file(), sort_keys=True, indent=4, separators=(',', ': ')).encode('raw_unicode_escape').decode("utf-8"),
+                "theme": json.dumps(
+                    self.csm.get_plist_file(),
+                    sort_keys=True, indent=4, separators=(',', ': ')
+                ).encode('raw_unicode_escape').decode("utf-8"),
                 "name": self.csm.get_scheme_file(),
             }
         }
         html.write(header)
 
     def convert_view_to_html(self, html):
+        """Begin conversion of the view to HTML."""
+
         for line in self.view.split_by_newlines(sublime.Region(self.pt, self.size)):
             self.size = line.end()
             empty = not bool(line.size())
@@ -467,7 +574,7 @@ class ExportHtml(object):
             self.curr_row += 1
 
     def html_encode(self, text):
-        # Format text to HTML
+        """Format text to HTML."""
         encode_table = {
             '&': '&amp;',
             '>': '&gt;',
@@ -485,6 +592,8 @@ class ExportHtml(object):
         )
 
     def get_annotations(self):
+        """Get annotation."""
+
         annotations = get_annotations(self.view)
         comments = []
         for x in range(0, int(annotations["count"])):
@@ -494,6 +603,8 @@ class ExportHtml(object):
         return comments
 
     def annotate_text(self, line, color, bgcolour, style, empty):
+        """Handle annotation text."""
+
         pre_text = None
         annot_text = None
         post_text = None
@@ -533,6 +644,8 @@ class ExportHtml(object):
             self.format_text(line, post_text, color, bgcolour, style, empty)
 
     def add_annotation_table_entry(self):
+        """Add entry to the annotation table."""
+
         row, col = self.view.rowcol(self.annot_pt)
         self.annot_tbl.append(
             (
@@ -543,6 +656,8 @@ class ExportHtml(object):
         self.annot_pt = None
 
     def format_text(self, line, text, color, bgcolor, style, empty, annotate=False):
+        """Format the text."""
+
         if empty:
             text = '&nbsp;'
         else:
@@ -585,6 +700,8 @@ class ExportHtml(object):
         line.append(code)
 
     def convert_line_to_html(self, html, empty):
+        """Convert the line to its HTML representation."""
+
         line = []
         hl_done = False
 
@@ -688,6 +805,8 @@ class ExportHtml(object):
         return ''.join(line)
 
     def write_body(self, html):
+        """Write the body of the HTML."""
+
         processed_rows = ""
         html.write(BODY_START)
 
@@ -762,15 +881,26 @@ class ExportHtml(object):
             js_options.append(AUTO_PRINT)
 
         # Write empty line to allow copying of last line and line number without issue
-        html.write(BODY_END % {"js": ''.join(js_options), "toolbar": self.get_tools(self.toolbar, len(self.annot_tbl), self.auto_wrap)})
+        html.write(
+            BODY_END % {
+                "js": ''.join(js_options),
+                "toolbar": self.get_tools(self.toolbar, len(self.annot_tbl), self.auto_wrap)
+            }
+        )
 
     def add_comments_table(self, html):
+        """Add comments/annotation table."""
+
         html.write(ANNOTATION_TBL_START)
-        html.write(''.join([ANNOTATION_ROW % {"table": t, "row": r, "link": l, "comment": c} for t, r, l, c in self.annot_tbl]))
+        html.write(
+            ''.join([ANNOTATION_ROW % {"table": t, "row": r, "link": l, "comment": c} for t, r, l, c in self.annot_tbl])
+        )
         html.write(ANNOTATION_FOOTER)
         html.write(ANNOTATION_TBL_END)
 
     def run(self, **kwargs):
+        """Run command."""
+
         inputs = self.process_inputs(**kwargs)
         self.setup(**inputs)
 
@@ -791,7 +921,9 @@ class ExportHtml(object):
             elif fname is None or not path.exists(fname):
                 html_file = path.join(save_location, "Untitled%s.html" % time.strftime(time_stamp, self.time))
             else:
-                html_file = path.join(save_location, "%s%s.html" % (path.basename(fname), time.strftime(time_stamp, self.time)))
+                html_file = path.join(
+                    save_location, "%s%s.html" % (path.basename(fname), time.strftime(time_stamp, self.time))
+                )
         else:
             html_file = ".html"
 
@@ -818,6 +950,8 @@ class ExportHtml(object):
 
 
 def plugin_loaded():
+    """Setup plugin."""
+
     global JS_DIR
     global CSS_DIR
     if int(sublime.version()) >= 3013:

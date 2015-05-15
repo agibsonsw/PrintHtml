@@ -1,6 +1,3 @@
-/*jshint globalstrict: true*/
-"use strict";
-
 var win_attr = {
     get_center : function (dim) {
         var c = {
@@ -27,15 +24,15 @@ position_el = {
         var c = win_attr.get_center(),
             top    = (c.y - (el.offsetHeight/2)),
             left   = (c.x - (el.offsetWidth/2));
-        if (dim == null || dim === 'y') el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
-        if (dim == null || dim === 'x') el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
+        if (isUndef(dim) || isNull(dim) || dim === 'y') el.style.top  = (top < 0)  ? 0 + 'px' : top  + 'px';
+        if (isUndef(dim) || isNull(dim) || dim === 'x') el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
     },
 
     set : function (el, x, y) {
         var left, top;
 
-        if (typeof x === "undefined") x = null;
-        if (typeof y === "undefined") y = null;
+        if (isUndef(x)) x = null;
+        if (isUndef(y)) y = null;
 
         if (y === 'center') {
             position_el.center(el, 'y');
@@ -44,7 +41,7 @@ position_el = {
         } else if (y === 'bottom') {
             top = (win_attr.get_size('y') - (el.offsetHeight));
             el.style.top = (top < 0) ? 0 + 'px' : top + 'px';
-        } else if (y.match(/^[\d]+(%|px|em|mm|cm|in|pt|pc)$/) != null) {
+        } else if (isNull(y.match(/^[\d]+(%|px|em|mm|cm|in|pt|pc)$/))) {
             el.style.top = y;
         }
 
@@ -55,7 +52,7 @@ position_el = {
         } else if (x === 'right') {
             left = (win_attr.get_size('x') - (el.offsetWidth));
             el.style.left = (left < 0) ? 0 + 'px' : left + 'px';
-        } else if (x.match(/^[\d]+(%|px|em|mm|cm|in|pt|pc)$/) != null) {
+        } else if (isNull(x.match(/^[\d]+(%|px|em|mm|cm|in|pt|pc)$/))) {
             el.style.left = x;
         }
     }
@@ -123,7 +120,8 @@ var tooltip = function() {
         endalpha = 95,
         alpha = 0,
         ie = document.all ? true : false,
-        tt, t, c, b, h;
+        tt = null,
+        t, c, b, h;
     return{
         annotation_list: {},
         init: function() {
@@ -140,7 +138,7 @@ var tooltip = function() {
             }
         },
         show:function(v, w) {
-            if(tt == null) {
+            if(isNull(tt)) {
                 tt = document.createElement('div');
                 tt.setAttribute('id', id);
                 document.body.appendChild(tt);

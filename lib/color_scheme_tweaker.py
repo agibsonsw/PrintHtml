@@ -2,7 +2,7 @@
 Color Scheme Tweaker (for sublime text).
 
 Licensed under MIT
-Copyright (c) 2013 Isaac Muse <isaacmuse@gmail.com>
+Copyright (c) 2013 - 2015 Isaac Muse <isaacmuse@gmail.com>
 """
 from __future__ import absolute_import
 from .rgba import RGBA
@@ -34,6 +34,7 @@ class ColorSchemeTweaker(object):
 
     def _filter_colors(self, *args, **kwargs):
         """Filter the colors."""
+
         global_settings = kwargs.get("global_settings", False)
         dual_colors = False
         if len(args) == 1:

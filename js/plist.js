@@ -1,6 +1,3 @@
-/*jshint globalstrict: true*/
-"use strict";
-
 var plist = {
     color_scheme: {},
     content: "",
@@ -113,14 +110,14 @@ function extract_theme(name) {
         a = document.createElement('a');
     window.URL = window.URL || window.webkitURL;
 
-    if (window.Blob != null && a.download != null) {
+    if (isUndef(window.Blob) && isUndef(a.download)) {
         text = new Blob([plist.get(name)], {'type':'application/octet-stream'});
         a.href = window.URL.createObjectURL(text);
         a.download = name;
         a.click();
     } else {
-        text = '<pre>' + escape_html.escape(plist.get(name)) + '</pre>',
-        wnd  = window.open('', '_blank', "status=1,toolbar=0,scrollbars=1"),
+        text = '<pre>' + escape_html.escape(plist.get(name)) + '</pre>';
+        wnd  = window.open('', '_blank', "status=1,toolbar=0,scrollbars=1");
         doc  = wnd.document;
         doc.write(text);
         doc.close();
