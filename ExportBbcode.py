@@ -1,3 +1,4 @@
+"""ExportBbcode."""
 import sublime
 import sublime_plugin
 import tempfile
@@ -24,10 +25,25 @@ POST_START = '[pre=%(bg_color)s]'
 
 POST_END = '[/pre]\n'
 
-BBCODE_MATCH = re.compile(r"""(\[/?)((?:code|pre|table|tr|td|th|b|i|u|sup|color|url|img|list|trac|center|quote|size|li|ul|ol|youtube|gvideo)(?:=[^\]]+)?)(\])""")
+BBCODE_MATCH = re.compile(
+    r'''(?x)
+    (\[/?)
+    (
+        (?:
+            code|pre|table|tr|td|th|b|i|u|sup|color|
+            url|img|list|trac|center|quote|size|li|ul|
+            ol|youtube|gvideo
+        )
+        (?:=[^\]]+)?
+    )
+    (\])
+    '''
+)
 
 
 def sublime_format_path(pth):
+    """Format path for internal Sublime use."""
+
     m = re.match(r"^([A-Za-z]{1}):(?:/|\\)(.*)", pth)
     if sublime.platform() == "windows" and m is not None:
         pth = m.group(1) + "/" + m.group(2)
@@ -35,13 +51,20 @@ def sublime_format_path(pth):
 
 
 class ExportBbcodePanelCommand(sublime_plugin.WindowCommand):
+
+    """Show export BBCode panel."""
+
     def execute(self, value):
+        """Execute command."""
+
         if value >= 0:
             view = self.window.active_view()
             if view is not None:
                 ExportBbcode(view).run(**self.args[value])
 
     def run(self):
+        """Run command."""
+
         options = sublime.load_settings(PACKAGE_SETTINGS).get("bbcode_panel", {})
         menu = []
         self.args = []
@@ -58,17 +81,29 @@ class ExportBbcodePanelCommand(sublime_plugin.WindowCommand):
 
 
 class ExportBbcodeCommand(sublime_plugin.WindowCommand):
+
+    """Export BBCode."""
+
     def run(self, **kwargs):
+        """Run command."""
+
         view = self.window.active_view()
         if view is not None:
             ExportBbcode(view).run(**kwargs)
 
 
 class ExportBbcode(object):
+
+    """Take the content of a Sublime view and export BBCode representation."""
+
     def __init__(self, view):
+        """Initialize."""
+
         self.view = view
 
     def process_inputs(self, **kwargs):
+        """Handle the inputs."""
+
         return {
             "numbers": bool(kwargs.get("numbers", False)),
             "color_scheme": kwargs.get("color_scheme", None),
@@ -80,6 +115,8 @@ class ExportBbcode(object):
         }
 
     def setup(self, **kwargs):
+        """Setup for export."""
+
         # Get get general document preferences from sublime preferences
         settings = sublime.load_settings('Preferences.sublime-settings')
         eh_settings = sublime.load_settings(PACKAGE_SETTINGS)
@@ -123,7 +160,8 @@ class ExportBbcode(object):
         ) = self.csm.get_general_colors(simulate_transparency=True)
 
     def setup_print_block(self, curr_sel, multi=False):
-        # Determine start and end points and whether to parse whole file or selection
+        """Determine start and end points and whether to parse whole file or selection."""
+
         if (
             self.ignore_selections or
             (
@@ -145,6 +183,8 @@ class ExportBbcode(object):
         self.gutter_pad = len(str(self.view.rowcol(self.size)[0])) + 1
 
     def check_sel(self):
+        """Check if multi-selection."""
+
         multi = False
         for sel in self.view.sel():
             if not sel.empty() and sel.size() >= self.char_limit:
@@ -153,6 +193,7 @@ class ExportBbcode(object):
         return multi
 
     def print_line(self, line, num):
+        """Format a line for output."""
         if self.numbers:
             bbcode_line = NUMBERED_BBCODE_LINE % {
                 "color": self.gfground,
@@ -165,6 +206,8 @@ class ExportBbcode(object):
         return bbcode_line
 
     def convert_view_to_bbcode(self, bbcode):
+        """Begin converting the view to BBCode."""
+
         for line in self.view.split_by_newlines(sublime.Region(self.end, self.size)):
             self.empty_space = None
             self.size = line.end()
@@ -173,6 +216,8 @@ class ExportBbcode(object):
             self.curr_row += 1
 
     def repl(self, m, color):
+        """Replace method to escape BBCode content."""
+
         return m.group(1) + (
             BBCODE_ESCAPE % {
                 "color_open": color,
@@ -182,6 +227,8 @@ class ExportBbcode(object):
         ) + m.group(3)
 
     def format_text(self, line, text, color, style):
+        """Format the text for output."""
+
         text = text.replace('\t', ' ' * self.tab_size).replace('\n', '')
         if self.empty_space is not None:
             text = self.empty_space + text
@@ -206,6 +253,8 @@ class ExportBbcode(object):
             line.append(code)
 
     def convert_line_to_bbcode(self):
+        """Conver the line to BBCode."""
+
         line = []
 
         while self.end <= self.size:
@@ -230,6 +279,7 @@ class ExportBbcode(object):
         return ''.join(line)
 
     def write_body(self, bbcode):
+        """Write the body of the BBCode output."""
         bbcode.write(POST_START % {"bg_color": self.bground})
 
         # Convert view to HTML
@@ -251,6 +301,8 @@ class ExportBbcode(object):
         bbcode.write(POST_END)
 
     def run(self, **kwargs):
+        """Run the command."""
+
         inputs = self.process_inputs(**kwargs)
         self.setup(**inputs)
 

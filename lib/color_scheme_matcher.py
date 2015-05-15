@@ -1,5 +1,6 @@
 """
-Color Scheme Matcher (for sublime text)
+Color Scheme Matcher (for sublime text).
+
 Licensed under MIT
 Copyright (c) 2013 Isaac Muse <isaacmuse@gmail.com>
 """
@@ -17,16 +18,18 @@ from collections import namedtuple
 
 
 class SchemeColors(namedtuple('SchemeColors', ['fg', 'fg_simulated', 'bg', "bg_simulated", "style", "fg_selector", "bg_selector", "style_selectors"], verbose=False)):
+
     """
-    SchemeColors
+    SchemeColors.
     """
 
     pass
 
 
 class SchemeSelectors(namedtuple('SchemeSelectors', ['name', 'scope'], verbose=False)):
+
     """
-    SchemeSelectors
+    SchemeSelectors.
     """
 
     pass

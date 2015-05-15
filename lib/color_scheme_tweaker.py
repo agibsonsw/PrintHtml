@@ -1,5 +1,6 @@
 """
-Color Scheme Tweaker (for sublime text)
+Color Scheme Tweaker (for sublime text).
+
 Licensed under MIT
 Copyright (c) 2013 Isaac Muse <isaacmuse@gmail.com>
 """
@@ -7,11 +8,24 @@ from __future__ import absolute_import
 from .rgba import RGBA
 import re
 
-FILTER_MATCH = re.compile(r'^(?:(brightness|saturation|hue|colorize|glow)\((-?[\d]+|[\d]*\.[\d]+)\)|(sepia|grayscale|invert))(?:@(fg|bg))?$')
+FILTER_MATCH = re.compile(
+    r'''(?x)
+    ^(?:
+        (brightness|saturation|hue|colorize|glow)\((-?[\d]+|[\d]*\.[\d]+)\)|
+        (sepia|grayscale|invert)
+    )
+    (?:@(fg|bg))?$
+    '''
+)
 
 
 class ColorSchemeTweaker(object):
+
+    """Tweak the color scheme with the provided filter(s)."""
+
     def _apply_filter(self, color, f_name, value=None):
+        """Apply the filter."""
+
         if isinstance(color, RGBA):
             if value is None:
                 color.__getattribute__(f_name)()
@@ -19,6 +33,7 @@ class ColorSchemeTweaker(object):
                 color.__getattribute__(f_name)(value)
 
     def _filter_colors(self, *args, **kwargs):
+        """Filter the colors."""
         global_settings = kwargs.get("global_settings", False)
         dual_colors = False
         if len(args) == 1:
@@ -71,6 +86,8 @@ class ColorSchemeTweaker(object):
         )
 
     def tweak(self, tmtheme, filters):
+        """Tweak the theme with the provided filters."""
+
         self.filters = []
         for f in filters.split(";"):
             m = FILTER_MATCH.match(f)
@@ -106,6 +123,8 @@ class ColorSchemeTweaker(object):
         return tmtheme
 
     def _get_filters(self):
+        """Get the filters."""
+
         filters = []
         for f in self.filters:
             if f[0] in ["invert", "grayscale", "sepia"]:
