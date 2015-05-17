@@ -2,11 +2,14 @@ site_name: ExportHtml Documentation
 repo_url: https://github.com/facelessuser/ExportHtml
 site_description: Sublime Text plugin that exports code to HTML or BBCODE for copying, printing, or saving.
 pages:
-- ['index.md', 'Home']
-- ['usage.md', 'User Guide']
+- About ExportHtml: index.md
+- Installation: installation.md
+- User Guide: usage.md
+- Contributing & Support: contributing.md
 theme: readthedocs
 theme_dir: doc_theme
 markdown_extensions:
+- markdown.extensions.toc
 - markdown.extensions.extra
 - markdown.extensions.admonition
 - markdown.extensions.smarty
