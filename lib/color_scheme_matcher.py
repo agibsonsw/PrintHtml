@@ -74,6 +74,11 @@ class ColorSchemeMatcher(object):
 
         self.parse_scheme()
 
+    def filter(self, plist):
+        """Dummy filter call that does nothing."""
+
+        return plist
+
     def parse_scheme(self):
         """Parse the color scheme."""
 
