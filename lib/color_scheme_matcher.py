@@ -1,9 +1,4 @@
-"""
-Color Scheme Matcher (for sublime text).
-
-Licensed under MIT
-Copyright (c) 2013 - 2015 Isaac Muse <isaacmuse@gmail.com>
-"""
+"""Color Scheme Matcher (for sublime text)."""
 from __future__ import absolute_import
 import sublime
 import re
