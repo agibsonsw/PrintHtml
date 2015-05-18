@@ -4,7 +4,7 @@ Convert and view source code in HTML or BBCODE.
 ---
 
 # Overview
-This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml) plugin.  This plugin allows the exporting of a document in Sublime Text to a HTML file or to BBCode.  It duplicates Sublime's theme colors and font styles.
+This is a fork of [Andrew Gibson](https://github.com/agibsonsw)'s [PrintHtml](https://github.com/agibsonsw/PrintHtml) plugin.  This plugin allows the exporting of a document in Sublime Text to a HTML file or to BBCode.  It duplicates Sublime's theme colors and font styles.
 
 <img src="http://dl.dropbox.com/u/342698/ExportHtml/preview.png" border="0"/>
 
@@ -23,6 +23,5 @@ This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml
 - Configurable toolbar to appear in the generated webpage.
 
 #Credits
-- agibsonsw: Original idea and base code from which this project forked.
-- Paul Boddie: Desktop module for cross platform opening of files in web browser.
+- [Andrew Gibson](https://github.com/agibsonsw): Original idea and base code for converting Sublime view to HTML and allowing me to build off it to make ExportHtml.
 - Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright.

@@ -1,5 +1,7 @@
+[![Unix Build Status][travis-image]][travis-link]
+![License][license-image]
 # About
-This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml) plugin.  This plugin allows the exporting of a document in Sublime Text to a HTML file or to BBCode.  It duplicates Sublime's theme colors and font styles.
+This is a fork of [Andrew Gibson](https://github.com/agibsonsw)'s [PrintHtml](https://github.com/agibsonsw/PrintHtml) plugin.  This plugin allows the exporting of a document in Sublime Text to a HTML file or to BBCode.  It duplicates Sublime's theme colors and font styles.
 
 <img src="http://dl.dropbox.com/u/342698/ExportHtml/preview.png" border="0"/>
 
@@ -21,6 +23,20 @@ This is a fork of agibsonsw's [PrintHtml](https://github.com/agibsonsw/PrintHtml
 http://facelessuser.github.com/ExportHtml
 
 #Credits
-- agibsonsw: Original idea and base code from which this project forked.
-- Paul Boddie: Desktop module for cross platform opening of files in web browser.
+- [Andrew Gibson](https://github.com/agibsonsw): Original idea and base code for converting Sublime view to HTML and allowing me to build off it to make ExportHtml.
 - Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright.
+
+# License
+ExportHtml is released under the MIT license.
+
+Copyright (c) 2012 - 2015 Isaac Muse <isaacmuse@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+[travis-image]: https://img.shields.io/travis/facelessuser/ExportHtml.svg
+[travis-link]: https://travis-ci.org/facelessuser/ExportHtml
+[license-image]: https://img.shields.io/badge/license-MIT-blue.svg
