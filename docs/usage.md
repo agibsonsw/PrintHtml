@@ -7,6 +7,12 @@ Configuring and using ExportHtml
 # Exporting HTML
 ExportHtml comes with a number of default commands available, but these can be overridden in the settings file.  Or you can create commands directly outside of the settings file bound to the command palette, key bindings, or even the menu.
 
+!!! tip "Tip"
+    | Parameter | Type |Description |
+    |-----------|------|------------|
+    | numbers | boolean | Display line numbers in the gutter. |
+    | multi_select | boolean | If multiple regions are selected in a document, only export what is under those selections. By default only the first selection is recognized.  Default is `false`. |
+
 If adding a command to the settings file, it goes under the `html_panel` setting.  These configurations will appear under the `Export to HTML: Show Export Menu` command palette command.
 
 ```javascript

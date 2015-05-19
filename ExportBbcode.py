@@ -176,7 +176,7 @@ class ExportBbcode(object):
         self.csm = ColorSchemeMatcher(
             scheme_file,
             ignore_gutter=True,
-            filter=(lambda x: ColorSchemeTweaker().tweak(x, kwargs["filter"]))
+            color_filter=(lambda x: ColorSchemeTweaker().tweak(x, kwargs["filter"]))
         )
         (
             self.bground, self.fground, self.sbground,

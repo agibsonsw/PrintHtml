@@ -51,12 +51,12 @@ class ColorSchemeTweaker(object):
         try:
             assert(fg is not None)
             rgba_fg = RGBA(fg)
-        except:
+        except Exception:
             rgba_fg = fg
         try:
             assert(bg is not None)
             rgba_bg = RGBA(bg)
-        except:
+        except Exception:
             rgba_bg = bg
 
         for f in self.filters:
@@ -79,7 +79,7 @@ class ColorSchemeTweaker(object):
                 bg = rgba.get_rgb() + ("%02X" % int((255.0 * value)))
                 try:
                     rgba_bg = RGBA(bg)
-                except:
+                except Exception:
                     rgba_bg = bg
         return (
             rgba_fg.get_rgba() if isinstance(rgba_fg, RGBA) else rgba_fg,

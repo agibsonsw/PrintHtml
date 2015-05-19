@@ -29,9 +29,9 @@ import tempfile
 import time
 import webbrowser
 import re
+import json
 from ExportHtml.HtmlAnnotations import get_annotations
 import ExportHtml.lib.desktop as desktop
-import json
 from ExportHtml.lib.color_scheme_matcher import ColorSchemeMatcher
 from ExportHtml.lib.color_scheme_tweaker import ColorSchemeTweaker
 from ExportHtml.lib.notify import notify
@@ -285,7 +285,7 @@ def getjs(file_name):
         else:
             with open(path.join(JS_DIR, file_name), "r") as f:
                 code = f.read()
-    except:
+    except Exception:
         pass
     return code.replace('\r', '')
 
@@ -309,7 +309,7 @@ def getcss(file_name, options):
             final_code += code[last_pt:m.start()] + options[m.group(1)]
             last_pt = m.end()
         final_code += code[last_pt:]
-    except:
+    except Exception:
         pass
 
     return final_code.replace('\r', '')
@@ -355,6 +355,31 @@ class ExportHtmlCommand(sublime_plugin.WindowCommand):
         view = self.window.active_view()
         if view is not None:
             ExportHtml(view).run(**kwargs)
+
+
+class OpenHtml:
+
+    """Open either a temporary HTML or one at the save location."""
+
+    def __init__(self, file_name, save_location=None):
+        """Initialize."""
+
+        self.file_name = file_name
+        self.save_location = save_location
+
+    def __enter__(self):
+        """Setup HTML file."""
+
+        if self.save_location is not None:
+            self.file = open(self.file_name, "w")
+        else:
+            self.file = tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=self.file_name)
+        return self.file
+
+    def __exit__(self, type, value, traceback):
+        """Tear down HTML file."""
+
+        self.file.close()
 
 
 class ExportHtml(object):
@@ -473,7 +498,7 @@ class ExportHtml(object):
             scheme_file,
             ignore_gutter=(not kwargs["style_gutter"]),
             track_dark_background=True,
-            filter=(lambda x: ColorSchemeTweaker().tweak(x, kwargs["filter"]))
+            color_filter=(lambda x: ColorSchemeTweaker().tweak(x, kwargs["filter"]))
         )
 
         if kwargs["shift_brightness"]:
@@ -592,7 +617,7 @@ class ExportHtml(object):
         for line in self.view.split_by_newlines(sublime.Region(self.pt, self.size)):
             self.size = line.end()
             empty = not bool(line.size())
-            line = self.convert_line_to_html(html, empty)
+            line = self.convert_line_to_html(empty)
             html.write(self.print_line(line, self.curr_row))
             self.curr_row += 1
 
@@ -722,7 +747,7 @@ class ExportHtml(object):
                     )
         line.append(code)
 
-    def convert_line_to_html(self, html, empty):
+    def convert_line_to_html(self, empty):
         """Convert the line to its HTML representation."""
 
         line = []
@@ -921,6 +946,13 @@ class ExportHtml(object):
         html.write(ANNOTATION_FOOTER)
         html.write(ANNOTATION_TBL_END)
 
+    def open_html(self, x, save_location):
+        """Open html file."""
+        if save_location is not None:
+            return open(x, "w")
+        else:
+            return tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=x)
+
     def run(self, **kwargs):
         """Run command."""
 
@@ -934,8 +966,8 @@ class ExportHtml(object):
             fname = self.view.file_name()
             if (
                 ((fname is None or not path.exists(fname)) and save_location == ".") or
-                not path.exists(save_location)
-                or not path.isdir(save_location)
+                not path.exists(save_location) or
+                not path.isdir(save_location)
             ):
                 html_file = ".html"
                 save_location = None
@@ -950,12 +982,7 @@ class ExportHtml(object):
         else:
             html_file = ".html"
 
-        if save_location is not None:
-            open_html = lambda x: open(x, "w")
-        else:
-            open_html = lambda x: tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=x)
-
-        with open_html(html_file) as html:
+        with OpenHtml(html_file, save_location) as html:
             self.write_header(html)
             self.write_body(html)
             if inputs["clipboard_copy"]:
