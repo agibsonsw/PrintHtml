@@ -132,7 +132,7 @@ def is_selected(view):
     """See text for annotation is selected."""
 
     mode = view.settings().get("annotation_mode", False)
-    selected = not view.sel()[0].empty()
+    selected = len(view.sel()) and not view.sel()[0].empty()
     return mode and selected
 
 

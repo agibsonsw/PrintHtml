@@ -123,7 +123,7 @@ class ColorSchemeTweaker(object):
 
         return tmtheme
 
-    def _get_filters(self):
+    def get_filters(self):
         """Get the filters."""
 
         filters = []
