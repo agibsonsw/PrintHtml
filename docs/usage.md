@@ -4,14 +4,8 @@ Configuring and using ExportHtml
 
 ---
 
-# Exporting HTML
+## Exporting HTML
 ExportHtml comes with a number of default commands available, but these can be overridden in the settings file.  Or you can create commands directly outside of the settings file bound to the command palette, key bindings, or even the menu.
-
-!!! tip "Tip"
-    | Parameter | Type |Description |
-    |-----------|------|------------|
-    | numbers | boolean | Display line numbers in the gutter. |
-    | multi_select | boolean | If multiple regions are selected in a document, only export what is under those selections. By default only the first selection is recognized.  Default is `false`. |
 
 If adding a command to the settings file, it goes under the `html_panel` setting.  These configurations will appear under the `Export to HTML: Show Export Menu` command palette command.
 
@@ -120,7 +114,7 @@ Example:
 }
 ```
 
-# Annotations (HTML only)
+## Annotations (HTML only)
 Annotations are comments you can make on selected text.  When the HTML is generated, the selected text will be underlined, and when the mouse hovers over them, a tooltip will appear with your comment.
 
 <img src="http://dl.dropbox.com/u/342698/ExportHtml/annotation_preview.png" border="0"/>
