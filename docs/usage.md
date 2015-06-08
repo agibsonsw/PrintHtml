@@ -5,7 +5,7 @@ Configuring and using ExportHtml
 ---
 
 ## Exporting HTML
-ExportHtml comes with a number of default commands available, but these can be overridden in the settings file.  Or you can create commands directly outside of the settings file bound to the command palette, key bindings, or even the menu.
+ExportHtml comes with a number of default commands available, but these can be overridden in the settings file.  You can also create commands directly outside of the settings file bound to the command palette, key bindings, or even the menu.
 
 If adding a command to the settings file, it goes under the `html_panel` setting.  These configurations will appear under the `Export to HTML: Show Export Menu` command palette command.
 
@@ -53,7 +53,7 @@ If you wish to bind a command to a key combination etc., the same settings as ab
 
 Example:
 
-```javascript
+```js
 {
     "keys": ["ctrl+alt+n"],
     "command": "export_html",
@@ -68,14 +68,14 @@ Example:
 }
 ```
 
-When viewing the HTML in your web browser, regardless of the gutter settings, the gutter can be toggled to show or be hidden using the toolbar.
+When viewing the HTML in your web browser, regardless of the gutter settings, the gutter can be toggled to show or be hidden using the toolbar in the upper right corner of the page.
 
 ## Exporting BBCode
-ExportHtml can also export selected code as BBCode for posting in forums. Exporting BBCode is very similar to exporting HTML code.
+ExportHtml can also export selected code as BBCode for posting in forums. Exporting BBCode is very similar to exporting HTML code.  But keep in mind, not all forums have all the BBCode support needed to view ExportHtmls BBCode format, so your mileage may vary.
 
 If adding a command to the settings file, it goes under the `bbcode_panel` setting.  These configurations will appear under the `Export to BBCode: Show Export Menu` command palette command.
 
-```javascript
+```js
 // Define configurations for the drop down export menu
 "bbcode_panel": [
     {
@@ -103,7 +103,7 @@ If you wish to bind a command to a key combination etc., the same settings as ab
 
 Example:
 
-```javascript
+```js
 {
     "keys": ["ctrl+alt+n"],
     "command": "export_bbcode",
@@ -119,7 +119,7 @@ Annotations are comments you can make on selected text.  When the HTML is genera
 
 <img src="http://dl.dropbox.com/u/342698/ExportHtml/annotation_preview.png" border="0"/>
 
-In order to use annotations, you must enter into an "Annotation Mode".  This puts your file in a read only state.  At this point, you can select text and create annotations using the annotation commands provided.  When you leave the "Annotation Mode", all annotations will be lost.  So you must print before leaving annotation mode.
+In order to use annotations, you must enter into an "Annotation Mode".  This puts your file in a read only state.  At this point, you can select text and create annotations using the annotation commands provided.  When you leave the "Annotation Mode", all annotations will be lost.  So you must export before leaving annotation mode.
 
 You can access the annotation commands from the command palette or from the context menu.
 
@@ -134,7 +134,7 @@ The commands are as follows:
 | Delete All Annotations | Delete all annotation regions. |
 | Show Annotation Comment | Show the annotation comment of the region under the cursor. |
 
-You can navigate the annotations in the generate HTML by using a jump table.  You can show the jump table at any time by selecting the annotation button in the toolbar.  You can also click any annotation to show the jump table as well.  If it gets in the way, you can dock it in a different location.
+You can navigate the annotations in the generated HTML by using a jump table.  You can show the jump table at any time by selecting the annotation button in the toolbar.  You can also click any annotation to show the jump table as well.  If it gets in the way, you can dock it in a different location.
 
 <img src="http://dl.dropbox.com/u/342698/ExportHtml/annotation_table_preview.png" border="0"/>
 
