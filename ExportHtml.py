@@ -585,7 +585,7 @@ class ExportHtml(object):
         """Write the HTML header."""
 
         header = HTML_HEADER % {
-            "title": path.basename(self.file_name),
+            "title": self.html_encode(path.basename(self.file_name)),
             "css": getcss(
                 'export.css',
                 {
@@ -867,7 +867,7 @@ class ExportHtml(object):
                     "bgcolor": self.bground,
                     "color": self.fground,
                     "date_time": date_time,
-                    "file": self.file_name if self.show_full_path else path.basename(self.file_name)
+                    "file": self.html_encode(self.file_name if self.show_full_path else path.basename(self.file_name))
                 }
             )
 
