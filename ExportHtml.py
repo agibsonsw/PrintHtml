@@ -316,7 +316,6 @@ def getcss(file_name, options):
 
 
 class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
-
     """Show ExportHtml panel."""
 
     def execute(self, value):
@@ -346,7 +345,6 @@ class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
 
 
 class ExportHtmlCommand(sublime_plugin.WindowCommand):
-
     """ExportHtml command."""
 
     def run(self, **kwargs):
@@ -358,7 +356,6 @@ class ExportHtmlCommand(sublime_plugin.WindowCommand):
 
 
 class OpenHtml:
-
     """Open either a temporary HTML or one at the save location."""
 
     def __init__(self, file_name, save_location=None):
@@ -383,7 +380,6 @@ class OpenHtml:
 
 
 class ExportHtml(object):
-
     """ExportHtml."""
 
     def __init__(self, view):

@@ -4,7 +4,6 @@ try:
     from SubNotify.sub_notify import SubNotifyIsReadyCommand as Notify
 except Exception:
     class Notify(object):
-
         """Fallback Notify for when SubNotify is not defined."""
 
         @classmethod

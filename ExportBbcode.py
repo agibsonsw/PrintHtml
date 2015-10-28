@@ -75,7 +75,6 @@ def sublime_format_path(pth):
 
 
 class ExportBbcodePanelCommand(sublime_plugin.WindowCommand):
-
     """Show export BBCode panel."""
 
     def execute(self, value):
@@ -105,7 +104,6 @@ class ExportBbcodePanelCommand(sublime_plugin.WindowCommand):
 
 
 class ExportBbcodeCommand(sublime_plugin.WindowCommand):
-
     """Export BBCode."""
 
     def run(self, **kwargs):
@@ -117,7 +115,6 @@ class ExportBbcodeCommand(sublime_plugin.WindowCommand):
 
 
 class ExportBbcode(object):
-
     """Take the content of a Sublime view and export BBCode representation."""
 
     def __init__(self, view):

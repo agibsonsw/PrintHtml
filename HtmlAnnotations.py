@@ -137,7 +137,6 @@ def is_selected(view):
 
 
 class ShowAnnotationCommentCommand(sublime_plugin.TextCommand):
-
     """Show the annotation."""
 
     def is_visible(self):
@@ -155,7 +154,6 @@ class ShowAnnotationCommentCommand(sublime_plugin.TextCommand):
 
 
 class ClearAnnotationsCommand(sublime_plugin.TextCommand):
-
     """Clear the annotations."""
 
     def is_visible(self):
@@ -170,7 +168,6 @@ class ClearAnnotationsCommand(sublime_plugin.TextCommand):
 
 
 class DeleteAnnotationsCommand(sublime_plugin.TextCommand):
-
     """Delete the annotations."""
 
     def is_visible(self):
@@ -185,7 +182,6 @@ class DeleteAnnotationsCommand(sublime_plugin.TextCommand):
 
 
 class EnableAnnotationModeCommand(sublime_plugin.TextCommand):
-
     """Enable annotation mode."""
 
     def is_visible(self):
@@ -200,7 +196,6 @@ class EnableAnnotationModeCommand(sublime_plugin.TextCommand):
 
 
 class DisableAnnotationModeCommand(sublime_plugin.TextCommand):
-
     """Disable annotation mode."""
 
     def is_visible(self):
@@ -215,7 +210,6 @@ class DisableAnnotationModeCommand(sublime_plugin.TextCommand):
 
 
 class ToggleAnnotationHtmlModeCommand(sublime_plugin.TextCommand):
-
     """Toggle annotation mode."""
 
     def is_enabled(self):
@@ -239,7 +233,6 @@ class ToggleAnnotationHtmlModeCommand(sublime_plugin.TextCommand):
 
 
 class AddAnnotationCommand(sublime_plugin.TextCommand):
-
     """Add an annotation."""
 
     def is_visible(self):
@@ -254,7 +247,6 @@ class AddAnnotationCommand(sublime_plugin.TextCommand):
 
 
 class EditAnnotationCommand(sublime_plugin.TextCommand):
-
     """Edit the current annotation."""
 
     def is_visible(self):
@@ -269,7 +261,6 @@ class EditAnnotationCommand(sublime_plugin.TextCommand):
 
 
 class AnnotateHtml(object):
-
     """AnnotateHtml."""
 
     def __init__(self, view):
