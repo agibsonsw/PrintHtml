@@ -497,8 +497,6 @@ class ExportHtml(object):
             color_filter=(lambda x: ColorSchemeTweaker().tweak(x, kwargs["filter"]))
         )
 
-        if kwargs["shift_brightness"]:
-            self.csm.shift_background_brightness(self.lumens_limit)
         (
             self.bground, self.fground, self.sbground,
             self.sfground, self.gbground, self.gfground
