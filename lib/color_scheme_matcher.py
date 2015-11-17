@@ -90,7 +90,10 @@ class ColorSchemeMatcher(object):
     def parse_scheme(self):
         """Parse the color scheme."""
 
-        color_settings = self.plist_file["settings"][0]["settings"]
+        color_settings = {}
+        for item in self.plist_file["settings"]:
+            if item.get('scope', None) is None:
+                color_settings = item["settings"]
 
         # Get general theme colors from color scheme file
         self.bground, self.bground_sim = self.strip_color(
@@ -122,7 +125,7 @@ class ColorSchemeMatcher(object):
         # Create scope colors mapping from color scheme file
         self.colors = {}
         for item in self.plist_file["settings"]:
-            name = item.get('name', None)
+            name = item.get('name', '')
             scope = item.get('scope', None)
             color = None
             style = []
@@ -134,7 +137,7 @@ class ColorSchemeMatcher(object):
                         if s == "bold" or s == "italic":  # or s == "underline":
                             style.append(s)
 
-            if scope is not None and name is not None and (color is not None or bgcolor is not None):
+            if scope is not None and (color is not None or bgcolor is not None):
                 fg, fg_sim = self.strip_color(color)
                 bg, bg_sim = self.strip_color(bgcolor, bg=True)
                 self.colors[scope] = {
