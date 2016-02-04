@@ -482,7 +482,7 @@ class ExportHtml(object):
             alt_scheme = kwargs["color_scheme"]
         else:
             alt_scheme = eh_settings.get("alternate_scheme", False)
-        scheme_file = settings.get('color_scheme') if alt_scheme is False else alt_scheme
+        scheme_file = self.view.settings().get('color_scheme') if alt_scheme is False else alt_scheme
 
         self.highlights = []
         if self.highlight_selections:
