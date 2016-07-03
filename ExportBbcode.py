@@ -147,8 +147,6 @@ class ExportBbcode(object):
         self.fground = ''
         self.gbground = ''
         self.gfground = ''
-        self.sbground = ''
-        self.sfground = ''
         self.numbers = kwargs["numbers"]
         self.hl_continue = None
         self.curr_hl = None
@@ -172,13 +170,13 @@ class ExportBbcode(object):
         scheme_file = self.view.settings().get('color_scheme') if alt_scheme is False else alt_scheme
         self.csm = ColorSchemeMatcher(
             scheme_file,
-            ignore_gutter=True,
             color_filter=(lambda x: ColorSchemeTweaker().tweak(x, kwargs["filter"]))
         )
-        (
-            self.bground, self.fground, self.sbground,
-            self.sfground, self.gbground, self.gfground
-        ) = self.csm.get_general_colors(simulate_transparency=True)
+
+        self.fground = self.csm.get_special_color('foreground', simulate_transparency=True)
+        self.bground = self.csm.get_special_color('background', simulate_transparency=True)
+        self.gfground = self.fground
+        self.gbground = self.bground
 
     def setup_print_block(self, curr_sel, multi=False):
         """Determine start and end points and whether to parse whole file or selection."""
@@ -283,7 +281,7 @@ class ExportBbcode(object):
             scope_name = self.view.scope_name(self.pt)
             while self.view.scope_name(self.end) == scope_name and self.end < self.size:
                 self.end += 1
-            color_match = self.csm.guess_color(self.view, self.pt, scope_name)
+            color_match = self.csm.guess_color(scope_name)
             color = color_match.fg_simulated
             style = color_match.style
 

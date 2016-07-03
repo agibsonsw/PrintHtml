@@ -428,8 +428,6 @@ class ExportHtml(object):
         self.fground = ''
         self.gbground = ''
         self.gfground = ''
-        self.sbground = ''
-        self.sfground = ''
         self.numbers = kwargs["numbers"]
         self.date_time_format = kwargs["date_time_format"]
         self.time = time.localtime()
@@ -468,7 +466,6 @@ class ExportHtml(object):
             self.toolbar_orientation = "block"
         else:
             self.toolbar_orientation = "inline-block"
-        self.matched = {}
         self.ebground = self.bground
         self.lumens_limit = float(eh_settings.get("bg_min_lumen_threshold", 62))
 
@@ -492,15 +489,17 @@ class ExportHtml(object):
 
         self.csm = ColorSchemeMatcher(
             scheme_file,
-            ignore_gutter=(not kwargs["style_gutter"]),
-            track_dark_background=True,
             color_filter=(lambda x: ColorSchemeTweaker().tweak(x, kwargs["filter"]))
         )
 
-        (
-            self.bground, self.fground, self.sbground,
-            self.sfground, self.gbground, self.gfground
-        ) = self.csm.get_general_colors(simulate_transparency=True)
+        self.fground = self.csm.get_special_color('foreground', simulate_transparency=True)
+        self.bground = self.csm.get_special_color('background', simulate_transparency=True)
+        if kwargs["style_gutter"]:
+            self.gfground = self.csm.get_special_color('gutterForeground', simulate_transparency=True)
+            self.gbground = self.csm.get_special_color('gutter', simulate_transparency=True)
+        else:
+            self.gfground = self.fground
+            self.gbground = self.bground
 
     def get_tools(self, tools, use_annotation, use_wrapping):
         """Get tools for toolbar."""
@@ -700,6 +699,9 @@ class ExportHtml(object):
     def format_text(self, line, text, color, bgcolor, style, empty, annotate=False):
         """Format the text."""
 
+        if not style:
+            style == 'normal'
+
         if empty:
             text = '&nbsp;'
         else:
@@ -773,19 +775,12 @@ class ExportHtml(object):
                         self.curr_hl = sublime.Region(self.end, self.curr_hl.end())
                 else:
                     hl_done = True
-                if hl_done and empty:
-                    color_match = self.csm.guess_color(self.view, self.pt, scope_name)
-                    color = color_match.fg_simulated
-                    style = color_match.style
-                    bgcolor = color_match.bg_simulated
-                elif self.sfground is None:
-                    color_match = self.csm.guess_color(self.view, self.pt, scope_name)
-                    color = color_match.fg_simulated
-                    style = color_match.style
-                    bgcolor = self.sbground
-                else:
-                    color, style = self.sfground, "normal"
-                    bgcolor = self.sbground
+
+                color_match = self.csm.guess_color(scope_name, selected=not (hl_done and empty))
+                color = color_match.fg_simulated
+                style = color_match.style
+                bgcolor = color_match.bg_simulated
+
             else:
                 # Get text of like scope up to a highlight
                 scope_name = self.view.scope_name(self.pt)
@@ -794,7 +789,7 @@ class ExportHtml(object):
                     if self.curr_hl is not None and self.end == self.curr_hl.begin():
                         break
                     self.end += 1
-                color_match = self.csm.guess_color(self.view, self.pt, scope_name)
+                color_match = self.csm.guess_color(scope_name)
                 color = color_match.fg_simulated
                 style = color_match.style
                 bgcolor = color_match.bg_simulated
@@ -840,7 +835,7 @@ class ExportHtml(object):
         # Get the color for the space at the end of a line
         if self.end < self.view.size():
             end_key = self.view.scope_name(self.pt)
-            color_match = self.csm.guess_color(self.view, self.pt, end_key)
+            color_match = self.csm.guess_color(end_key)
             self.ebground = color_match.bg_simulated
 
         # Join line segments
