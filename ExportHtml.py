@@ -35,9 +35,9 @@ import ExportHtml.lib.desktop as desktop
 from ExportHtml.lib.color_scheme_matcher import ColorSchemeMatcher
 from ExportHtml.lib.color_scheme_tweaker import ColorSchemeTweaker
 from ExportHtml.lib.notify import notify
+import jinja2
 
 JS_DIR = ""
-CSS_DIR = ""
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
 
@@ -266,53 +266,32 @@ HTML_JS_WRAP = '''
 '''
 
 
-def sublime_format_path(pth):
-    """Format path for SublimeText."""
-
-    m = re.match(r"^([A-Za-z]{1}):(?:/|\\)(.*)", pth)
-    if sublime.platform() == "windows" and m is not None:
-        pth = m.group(1) + "/" + m.group(2)
-    return pth.replace("\\", "/")
-
-
 def getjs(file_name):
     """Get JS file."""
 
     code = ""
     try:
-        if int(sublime.version()) >= 3013:
-            code = sublime.load_resource(sublime_format_path(path.join(JS_DIR, file_name)))
-        else:
-            with open(path.join(JS_DIR, file_name), "r") as f:
-                code = f.read()
+        code = sublime.load_resource(path.join(JS_DIR, file_name))
     except Exception:
         pass
     return code.replace('\r', '')
 
 
-def getcss(file_name, options):
+def getcss(options):
     """Get CSS file."""
 
     code = ""
-    final_code = ""
-    last_pt = 0
-    keys = '|'.join(options.keys())
-    replace = re.compile("/\\* *%(" + keys + ")% * \\*/")
+    settings = sublime.load_settings(PACKAGE_SETTINGS)
+    # user_vars = settings.get("user_css_vars", {})
+    export_css = settings.get("export_css", 'Packages/ExportHtml/css/export.css')
 
     try:
-        if int(sublime.version()) >= 3013:
-            code = sublime.load_resource(sublime_format_path(path.join(CSS_DIR, file_name)))
-        else:
-            with open(path.join(CSS_DIR, file_name), "r") as f:
-                code = f.read()
-        for m in replace.finditer(code):
-            final_code += code[last_pt:m.start()] + options[m.group(1)]
-            last_pt = m.end()
-        final_code += code[last_pt:]
+        code = sublime.load_resource(export_css)
+        code = jinja2.Environment().from_string(code).render(var=options)
     except Exception:
         pass
 
-    return final_code.replace('\r', '')
+    return code.replace('\r', '')
 
 
 class ExportHtmlPanelCommand(sublime_plugin.WindowCommand):
@@ -580,7 +559,6 @@ class ExportHtml(object):
         header = HTML_HEADER % {
             "title": self.html_encode(path.basename(self.file_name)),
             "css": getcss(
-                'export.css',
                 {
                     "font_size": str(self.font_size),
                     "font_face": '"' + self.font_face + '"',
@@ -992,10 +970,4 @@ def plugin_loaded():
     """Setup plugin."""
 
     global JS_DIR
-    global CSS_DIR
-    if int(sublime.version()) >= 3013:
-        JS_DIR = path.join('Packages', 'ExportHtml', "js")
-        CSS_DIR = path.join('Packages', 'ExportHtml', "css")
-    else:
-        JS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "js")
-        CSS_DIR = path.join(sublime.packages_path(), 'ExportHtml', "css")
+    JS_DIR = path.join('Packages', 'ExportHtml', "js")

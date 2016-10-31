@@ -1,13 +1,13 @@
 /* General */
 * html a:hover { background: transparent; }
-body { color: /* %body_fg% */; }
+body { color: {{ var.body_fg }}; }
 pre { border: 0; margin: 0; padding: 0; }
 td { padding: 0; }
 table { border: 0; margin: 0; padding: 0; border-collapse: collapse; empty-cells: show; }
-.code_text { font: /* %font_size% */pt /* %font_face% */, "Courier", Monospace; }
-.code_page { background-color: /* %page_bg% */; }
+.code_text { font: {{ var.font_size }}pt {{ var.font_face }}, "Courier", Monospace; }
+.code_page { background-color: {{ var.page_bg }}; }
 .simple_code_page { background-color: white; color: black }
-.code_gutter { display: /* %display_mode% */; background-color: /* %gutter_bg% */; padding-right: 10px; }
+.code_gutter { display: {{ var.display_mode }}; background-color: {{ var.gutter_bg }}; padding-right: 10px; }
 td.code_line div { width: 100%; }
 span { display: inline-block; border: 0; margin: 0; }
 span.bold { font-weight: bold; }
@@ -63,7 +63,7 @@ div#toolbarhide:hover div#toolbar {
 }
 
 div#toolbar img {
-    display:  /* %toolbar_orientation% */ ;
+    display: {{ var.toolbar_orientation }};
     vertical-align: middle;
     border: 0;
     cursor: pointer;
@@ -97,7 +97,7 @@ div#toolbar img {
 }
 
 a.annotation {
-    color: /* %body_fg% */;
+    color: {{ var.body_fg }};
     outline: none;
     text-decoration: underline;
 }

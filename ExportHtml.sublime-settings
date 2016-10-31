@@ -36,6 +36,9 @@
     // Use subnotify if available
     "use_sub_notify": true,
 
+    // Export HTML CSS.
+    "export_css": "Packages/ExportHtml/css/export.css",
+
     // Define configurations for the drop down export menu
     "html_panel": [
         // Browser print color (selections and multi-selections allowed)
