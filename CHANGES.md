@@ -1,3 +1,11 @@
+# ExportHtml 2.1.0
+> Released Oct 30, 2016
+
+- **NEW**: New dependencies.
+- **NEW**: Added changelog and support info command in menu.
+- **NEW**: CSS template is now handled by Jinja2.
+- **NEW**: Add `export_css` setting to specify custom CSS.
+
 # ExportHtml 2.0.0
 > Released Feb 4, 2016
 

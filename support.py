@@ -3,7 +3,7 @@ import sublime
 import sublime_plugin
 import textwrap
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 __pc_name__ = 'ExportHtml'
 
 
@@ -82,7 +82,6 @@ class ExportHtmlSupportInfoCommand(sublime_plugin.ApplicationCommand):
             - Plugin ver.: %(plugin_version)s
             - Install via PC: %(pc_install)s
             - mdpopups ver.: %(mdpopups_version)s
-            - backrefs ver.: %(backrefs_version)s
             - markdown ver.: %(markdown_version)s
             - pygments ver.: %(pygments_version)s
             - jinja2 ver.: %(jinja_version)s
