@@ -24,7 +24,18 @@
                                 "command": "open_file",
                                 "args": {"file": "${packages}/User/ExportHtml.sublime-settings"},
                                 "caption": "Settings – User"
-                            }
+                            },
+                            { "caption": "-" },
+                            {
+                                "caption": "Changelog",
+                                "command": "export_html_changes"
+                            },
+                            { "caption": "-" },
+                            {
+                                "caption": "Support Info",
+                                "command": "export_html_support_info"
+                            },
+                            { "caption": "-" }
                         ]
                     }
                 ]
