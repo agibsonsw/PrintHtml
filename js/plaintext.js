@@ -11,15 +11,16 @@ function toggle_plain_text() {
         document.body.appendChild(plain_text_clone);
         document.body.className = "code_page";
     } else {
+        var re = new RegExp(String.fromCharCode(160), "g");
         for (i = 0; i < line_len; i++) {
             spans = lines[i].querySelectorAll("span.real_text");
             span_len = spans.length;
             for (j = 0; j < span_len; j++) {
                 span = spans[j];
                 if ("textContent" in span) {
-                    text += span.textContent;
+                    text += span.textContent.replace(re, ' ');
                 } else {
-                    text += span.innerText;
+                    text += span.innerText.replace(re, ' ');
                 }
             }
             text += "\n";
