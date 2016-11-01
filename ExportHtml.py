@@ -271,7 +271,7 @@ def getjs(file_name):
 
     code = ""
     try:
-        code = sublime.load_resource(path.join(JS_DIR, file_name))
+        code = sublime.load_resource(path.join(JS_DIR, file_name).replace('\\', '/'))
     except Exception:
         pass
     return code.replace('\r', '')
