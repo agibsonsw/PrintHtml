@@ -590,12 +590,15 @@ class ExportHtml(object):
 
         for line in self.view.split_by_newlines(sublime.Region(self.pt, self.size)):
             self.size = line.end()
+            self.line_start = line.begin()
+            if self.curr_row > 1:
+                self.line_start -= 1
             empty = not bool(line.size())
             line = self.convert_line_to_html(empty)
             html.write(self.print_line(line, self.curr_row))
             self.curr_row += 1
 
-    def html_encode(self, text):
+    def html_encode(self, text, start_pt=None):
         """Format text to HTML."""
         encode_table = {
             '&': '&amp;',
@@ -611,7 +614,7 @@ class ExportHtml(object):
             ).encode('ascii', 'xmlcharrefreplace').decode("utf-8")
         else:
             return re.sub(
-                r'(?<= ) {2,}|(?<=^) {1,}',
+                r'(?<=^) | (?= )' if start_pt is not None and start_pt == self.line_start else r' (?= )',
                 lambda m: '&nbsp;' * len(m.group(0)),
                 ''.join(
                     encode_table.get(c, c) for c in text
@@ -643,21 +646,23 @@ class ExportHtml(object):
             start = self.pt
         else:
             # Region has text before annoation
-            pre_text = self.html_encode(self.view.substr(sublime.Region(self.pt, self.curr_annot.begin())))
+            pre_text = self.html_encode(self.view.substr(sublime.Region(self.pt, self.curr_annot.begin())), self.pt)
             start = self.curr_annot.begin()
 
         if self.end == self.curr_annot.end():
             # Region ends annotation
-            annot_text = self.html_encode(self.view.substr(sublime.Region(start, self.end)))
+            annot_text = self.html_encode(self.view.substr(sublime.Region(start, self.end)), start)
             self.curr_annot = None
         elif self.end > self.curr_annot.end():
             # Region has text following annotation
-            annot_text = self.html_encode(self.view.substr(sublime.Region(start, self.curr_annot.end())))
-            post_text = self.html_encode(self.view.substr(sublime.Region(self.curr_annot.end(), self.end)))
+            annot_text = self.html_encode(self.view.substr(sublime.Region(start, self.curr_annot.end())), start)
+            post_text = self.html_encode(
+                self.view.substr(sublime.Region(self.curr_annot.end(), self.end)), self.curr_annot.end()
+            )
             self.curr_annot = None
         else:
             # Region ends but annotation is not finished
-            annot_text = self.html_encode(self.view.substr(sublime.Region(start, self.end)))
+            annot_text = self.html_encode(self.view.substr(sublime.Region(start, self.end)), start)
             self.curr_annot = sublime.Region(self.end, self.curr_annot.end())
 
         # Print the separate parts pre text, annotation, post text
@@ -801,7 +806,7 @@ class ExportHtml(object):
                 self.annotate_text(line, color, bgcolor, style, empty)
             else:
                 # Normal text formatting
-                tidied_text = self.html_encode(self.view.substr(region))
+                tidied_text = self.html_encode(self.view.substr(region), region.begin())
                 self.format_text(line, tidied_text, color, bgcolor, style, empty)
 
             if hl_done:
