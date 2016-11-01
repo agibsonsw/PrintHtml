@@ -159,7 +159,7 @@ TABLE_START = '<table cellspacing="0" cellpadding="0" class="code_page">'
 LINE = (
     '<tr>' +
     '<td valign="top" id="L_%(table)d_%(line_id)d" class="code_text code_gutter" style="background: %(bgcolor)s">' +
-    '<span style="color: %(color)s;">%(line)s&nbsp;</span>' +
+    '<span style="color: %(color)s;">%(line)s</span>' +
     '</td>' +
     '<td valign="top" class="code_text code_line" style="background-color: %(pad_color)s;">' +
     '<div id="C_%(table)d_%(code_id)d">%(code)s\n</div>' +
@@ -387,7 +387,8 @@ class ExportHtml(object):
             "clipboard_copy": bool(kwargs.get("clipboard_copy", False)),
             "view_open": bool(kwargs.get("view_open", False)),
             "shift_brightness": bool(kwargs.get("shift_brightness", False)),
-            "filter": kwargs.get("filter", "")
+            "filter": kwargs.get("filter", ""),
+            "disable_nbsp": kwargs.get('disable_nbsp', False)
         }
 
     def setup(self, **kwargs):
@@ -411,6 +412,7 @@ class ExportHtml(object):
         self.date_time_format = kwargs["date_time_format"]
         self.time = time.localtime()
         self.show_full_path = kwargs["show_full_path"]
+        self.disable_nbsp = kwargs["disable_nbsp"]
         self.sels = []
         self.ignore_selections = kwargs["ignore_selections"]
         if self.ignore_selections:
@@ -540,11 +542,12 @@ class ExportHtml(object):
     def print_line(self, line, num):
         """Print the line."""
 
+        line_text = str(num).rjust(self.gutter_pad) + ' '
         html_line = LINE % {
             "line_id": num,
             "color": self.gfground,
             "bgcolor": self.gbground,
-            "line": str(num).rjust(self.gutter_pad).replace(" ", '&nbsp;'),
+            "line": (line_text.replace(" ", '&nbsp;') if not self.disable_nbsp else line_text),
             "code_id": num,
             "code": line,
             "table": self.tables,
@@ -602,13 +605,18 @@ class ExportHtml(object):
             '\n': ''
         }
 
-        return re.sub(
-            r'(?!\s($|\S))\s',
-            '&nbsp;',
-            ''.join(
+        if self.disable_nbsp:
+            return ''.join(
                 encode_table.get(c, c) for c in text
             ).encode('ascii', 'xmlcharrefreplace').decode("utf-8")
-        )
+        else:
+            return re.sub(
+                r'(?<= ) {2,}|(?<=^) {1,}',
+                lambda m: '&nbsp;' * len(m.group(0)),
+                ''.join(
+                    encode_table.get(c, c) for c in text
+                ).encode('ascii', 'xmlcharrefreplace').decode("utf-8")
+            )
 
     def get_annotations(self):
         """Get annotation."""
@@ -681,7 +689,7 @@ class ExportHtml(object):
             style == 'normal'
 
         if empty:
-            text = '&nbsp;'
+            text = '&nbsp;' if not self.disable_nbsp else ' '
         else:
             style += " real_text"
 
@@ -928,6 +936,7 @@ class ExportHtml(object):
 
         save_location = inputs["save_location"]
         time_stamp = inputs["time_stamp"]
+
 
         if save_location is not None:
             fname = self.view.file_name()
