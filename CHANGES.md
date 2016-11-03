@@ -1,3 +1,8 @@
+# ExportHtml 2.2.1
+> Released Nov 3, 2016
+
+- **Fix**: Fix incorrect changelog title. [#43](https://github.com/facelessuser/ExportHtml/pull/43)
+
 # ExportHtml 2.2.0
 > Released Nov 2, 2016
 
