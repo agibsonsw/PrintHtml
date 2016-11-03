@@ -28,7 +28,7 @@ class ExportHtmlChangesCommand(sublime_plugin.WindowCommand):
 
         text = sublime.load_resource('Packages/ExportHtml/CHANGES.md')
         view = self.window.new_file()
-        view.set_name('BracketHighlighter - Changelog')
+        view.set_name('ExportHtml - Changelog')
         view.settings().set('gutter', False)
         if has_phantom_support:
             mdpopups.add_phantom(
