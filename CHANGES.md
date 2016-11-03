@@ -1,3 +1,9 @@
+# ExportHtml 2.2.0
+> Released Nov 2, 2016
+
+- **NEW**: Add `disable_nbsp` option.
+- **Fix**: JS not loading into HTML.
+
 # ExportHtml 2.1.0
 > Released Oct 30, 2016
 
