@@ -942,7 +942,6 @@ class ExportHtml(object):
         save_location = inputs["save_location"]
         time_stamp = inputs["time_stamp"]
 
-
         if save_location is not None:
             fname = self.view.file_name()
             if (
