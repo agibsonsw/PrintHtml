@@ -32,4 +32,4 @@ The recommended way to install ExportHtml is via [Package Control](https://packa
     git clone https://github.com/facelessuser/ExportHtml.git ExportHtml
     ```
 
-3 Restart Sublime Text.
+3. Restart Sublime Text.
