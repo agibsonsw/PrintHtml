@@ -1,3 +1,8 @@
+# ExportHtml 2.2.2
+> Released Nov 5, 2016
+
+- **FIX**: Fix changelog links
+
 # ExportHtml 2.2.1
 > Released Nov 3, 2016
 
