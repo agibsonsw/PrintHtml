@@ -5,9 +5,9 @@ install:
   - pip install flake8
   - pip install flake8_docstrings
   - pip install pep8-naming
-  - pip install nose
+  - pip install pytest
   - npm install -g jshint
 script:
-  - nosetests .
+  - py.test .
   - flake8 .
   - jshint .
