@@ -1,3 +1,11 @@
+# ExportHtml 2.3.0
+> Released Nov 28, 2016
+
+- **NEW**: Handle X11 named colors in color schemes. [#44](https://github.com/facelessuser/ExportHtml/issues/44)
+- **NEW**: By default, don't include color scheme plist in output (to reduce size of output).
+- **NEW**: Quickstart guide available in menu.
+- **NEW**: Links to repo issues and documentation available in menu.
+
 # ExportHtml 2.2.2
 > Released Nov 5, 2016
 
