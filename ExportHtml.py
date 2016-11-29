@@ -381,7 +381,7 @@ class ExportHtml(object):
             "no_header": bool(kwargs.get("no_header", False)),
             "date_time_format": kwargs.get("date_time_format", "%m/%d/%y %I:%M:%S"),
             "show_full_path": bool(kwargs.get("show_full_path", True)),
-            "toolbar": kwargs.get("toolbar", ["plain_text", "gutter", "wrapping", "print", "annotation", "theme"]),
+            "toolbar": kwargs.get("toolbar", ["plain_text", "gutter", "wrapping", "print", "annotation"]),
             "save_location": kwargs.get("save_location", None),
             "time_stamp": kwargs.get("time_stamp", "_%m%d%y%H%M%S"),
             "clipboard_copy": bool(kwargs.get("clipboard_copy", False)),
@@ -559,7 +559,7 @@ class ExportHtml(object):
     def write_header(self, html):
         """Write the HTML header."""
 
-        header = HTML_HEADER % {
+        header_vars = {
             "title": self.html_encode(path.basename(self.file_name)),
             "css": getcss(
                 {
@@ -572,8 +572,11 @@ class ExportHtml(object):
                     "dot_color": self.fground,
                     "toolbar_orientation": self.toolbar_orientation
                 }
-            ),
-            "js": INCLUDE_THEME % {
+            )
+        }
+
+        if 'theme' in self.toolbar:
+            header_vars['js'] = INCLUDE_THEME % {
                 "jshelper": getjs('jshelper.js'),
                 "jscode": getjs('plist.js'),
                 "theme": json.dumps(
@@ -582,7 +585,12 @@ class ExportHtml(object):
                 ).encode('raw_unicode_escape').decode("utf-8"),
                 "name": self.csm.get_scheme_file(),
             }
-        }
+        else:
+            header_vars['js'] = HTML_JS_WRAP % {
+                "jscode": getjs('jshelper.js')
+            }
+
+        header = HTML_HEADER % header_vars
         html.write(header)
 
     def convert_view_to_html(self, html):
