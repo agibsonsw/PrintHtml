@@ -117,7 +117,7 @@ Example:
 ## Annotations (HTML only)
 Annotations are comments you can make on selected text.  When the HTML is generated, the selected text will be underlined, and when the mouse hovers over them, a tooltip will appear with your comment.
 
-<img src="http://dl.dropbox.com/u/342698/ExportHtml/annotation_preview.png" border="0"/>
+![annotation_preview](images/annotation_preview.png)
 
 In order to use annotations, you must enter into an "Annotation Mode".  This puts your file in a read only state.  At this point, you can select text and create annotations using the annotation commands provided.  When you leave the "Annotation Mode", all annotations will be lost.  So you must export before leaving annotation mode.
 
@@ -136,8 +136,7 @@ The commands are as follows:
 
 You can navigate the annotations in the generated HTML by using a jump table.  You can show the jump table at any time by selecting the annotation button in the toolbar.  You can also click any annotation to show the jump table as well.  If it gets in the way, you can dock it in a different location.
 
-<img src="http://dl.dropbox.com/u/342698/ExportHtml/annotation_table_preview.png" border="0"/>
-
+![annotation_table_preview](images/annotation_table_preview)
 
 ## Settings File options
 

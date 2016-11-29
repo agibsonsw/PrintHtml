@@ -30,10 +30,31 @@
                                 "caption": "Changelog",
                                 "command": "export_html_changes"
                             },
+                            {
+                                "caption": "Documentation",
+                                "command": "export_html_open_site",
+                                "args": {
+                                    "url": "http://facelessuser.github.io/ExportHtml/"
+                                }
+                            },
+                            {
+                                "caption": "Quick Start Guide",
+                                "command": "export_html_doc",
+                                "args": {
+                                    "page": "${packages}/ExportHtml/quickstart.md"
+                                }
+                            },
                             { "caption": "-" },
                             {
                                 "caption": "Support Info",
                                 "command": "export_html_support_info"
+                            },
+                            {
+                                "caption": "Issues",
+                                "command": "export_html_open_site",
+                                "args": {
+                                    "url": "https://github.com/facelessuser/ExportHtml/issues"
+                                }
                             },
                             { "caption": "-" }
                         ]
