@@ -136,7 +136,7 @@ The commands are as follows:
 
 You can navigate the annotations in the generated HTML by using a jump table.  You can show the jump table at any time by selecting the annotation button in the toolbar.  You can also click any annotation to show the jump table as well.  If it gets in the way, you can dock it in a different location.
 
-![annotation_table_preview](images/annotation_table_preview)
+![annotation_table_preview](images/annotation_table_preview.png)
 
 ## Settings File options
 
