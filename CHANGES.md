@@ -1,3 +1,8 @@
+# ExportHtml 2.3.1
+> Released Nov 29, 2016
+
+- **FIX**: Skip processing popupCss and phantomCss.
+
 # ExportHtml 2.3.0
 > Released Nov 28, 2016
 
