@@ -1,5 +1,4 @@
-## Description
-Thanks you for contributing to this project!  Make sure you've read: http://facelessuser.github.io/ExportHtml/contributing/. Also, please read and follow the template.
+Thanks you for contributing to this project!  Make sure you've read: http://facelessuser.github.io/ExportHtml/contributing/.  Please follow the guidelines below.
 
 - Please describe the change in as much detail as possible so I can understand what is being added or modified.
 
