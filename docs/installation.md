@@ -23,7 +23,7 @@ The recommended way to install ExportHtml is via [Package Control](https://packa
 
     If you are forking for a pull request, you should **just** clone ExportHtml and run Package Control's `Satisfy Dependency` command to get all the dependencies.
 
-For those who want to install BH without package control, here are the steps.  It understood that some people for what ever reason will prefer manually and may even have legitimate reasons to do so.  When going this route, you will have to keep all the packages updated yourself.
+For those who want to install ExporthHtml without package control, here are the steps.  It understood that some people for what ever reason will prefer manually and may even have legitimate reasons to do so.  When going this route, you will have to keep all the packages updated yourself.
 
 ---
 
@@ -34,7 +34,6 @@ For those who want to install BH without package control, here are the steps.  I
     - https://github.com/packagecontrol/pygments -> pygments
     - https://github.com/facelessuser/sublime-markdown-popups -> mdpopups
     - https://github.com/facelessuser/sublime-markdown -> python-markdown
-    - https://github.com/facelessuser/sublime-backrefs -> backrefs
 
 2. Download and unpack or git clone the latest ExportHtml release and unpack as `ExportHtml`:
 
@@ -194,7 +193,6 @@ For those who want to install BH without package control, here are the steps.  I
 
 
     add_dependency('pygments')
-    add_dependency('backrefs')
     add_dependency('markupsafe')
     add_dependency('python-markdown')
     add_dependency('python-jinja2')
