@@ -1,6 +1,7 @@
 BBCode
 boolean
 Cmd
+Control's
 Ctrl
 ExportHtml
 ExportHtml
@@ -8,11 +9,15 @@ ExportHtml's
 Grayscale
 grayscale
 installable
+JavaScript
 macOS
 macOS
 MERCHANTABILITY
 MkDocs
 Monokai
+multi
+Multi
+multi
 NONINFRINGEMENT
 plugin
 plugins
@@ -25,3 +30,4 @@ tmTheme
 tmTheme
 tmThemes
 tooltip
+webpage

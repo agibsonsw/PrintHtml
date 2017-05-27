@@ -1,2 +1,3 @@
 site
-doc_theme
+build/docs/site
+docs/theme
