@@ -27,14 +27,13 @@ import sublime_plugin
 from os import path
 import tempfile
 import time
-import webbrowser
 import re
 import json
-from ExportHtml.HtmlAnnotations import get_annotations
-import ExportHtml.lib.desktop as desktop
-from ExportHtml.lib.color_scheme_matcher import ColorSchemeMatcher
-from ExportHtml.lib.color_scheme_tweaker import ColorSchemeTweaker
-from ExportHtml.lib.notify import notify
+from .HtmlAnnotations import get_annotations
+from .lib.browser import open_in_browser
+from .lib.color_scheme_matcher import ColorSchemeMatcher
+from .lib.color_scheme_tweaker import ColorSchemeTweaker
+from .lib.notify import notify
 import jinja2
 
 JS_DIR = ""
@@ -981,10 +980,8 @@ class ExportHtml(object):
         if inputs["view_open"]:
             self.view.window().open_file(html.name)
         else:
-            # Open in web browser; check return code, if failed try webbrowser
-            status = desktop.open(html.name, status=True)
-            if not status:
-                webbrowser.open(html.name, new=2)
+            # Open in web browser
+            open_in_browser(html.name)
 
 
 def plugin_loaded():
