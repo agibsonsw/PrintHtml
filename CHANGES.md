@@ -1,3 +1,9 @@
+#ExportHtml 2.4.1
+
+> Released Jun 4, 2017
+
+- **FIX**: Hopefully more reliable browser opening [#47](https://github.com/facelessuser/ExportHtml/issues/47).
+
 #ExportHtml 2.4.0
 
 > Released May 27, 2017
