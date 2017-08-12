@@ -1,6 +1,6 @@
 # Getting Started
 
-![preview](res://Packages/ExportHtml/docs/images/preview.png){: width=628px, height=559px}
+![preview](res://Packages/ExportHtml/docs/src/markdown/images/preview.png){: width=628px, height=559px}
 
 ExportHtml is a plugin that can take a Sublime Text view (or selection(s) within a view) and generate a HTML output that  
 reproduces the entire selection (text, colors, etc.) and opens the HTML document in your web browser, copies the content  
@@ -16,13 +16,13 @@ These entries are defined in the [settings file](sub://Packages/ExportHtml/Expor
 HTML outputs have a toolbar in the upper right hand corner which should appear on hover.  You can do things like hide  
 line numbers, see a plain text output, initiate a print, etc.  It all depends on what the command has enabled.
 
-![toolbar](res://Packages/ExportHtml/docs/images/toolbar.png){: width=137, height=53}
+![toolbar](res://Packages/ExportHtml/docs/src/markdown/images/toolbar.png){: width=137, height=53}
 
 To create your own list of export options, check out the [documentation](http://facelessuser.github.io/ExportHtml/usage/#exporting-html).
 
 # Annotations
 
-![preview](res://Packages/ExportHtml/docs/images/annotation_preview.png){: width=737px, height=295px}
+![preview](res://Packages/ExportHtml/docs/src/markdown/images/annotation_preview.png){: width=737px, height=295px}
 
 Annotations was just a fun idea.  Not sure how useful it is in practice, but you can enable annotation mode and select  
 words or phrases and add annotations.  On HTML export, the targeted words and phrases will be underlined and on mouseover  
