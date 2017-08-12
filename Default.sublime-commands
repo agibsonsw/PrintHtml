@@ -31,5 +31,27 @@
     {
         "caption": "Export to HTML: Show Annotation Comment",
         "command": "show_annotation_comment"
+    },
+    {
+        "caption": "ExportHtml: Settings",
+        "command": "edit_settings",
+        "args": {
+            "base_file": "${packages}/ExportHtml/ExportHtml.sublime-settings",
+            "default": "{\n$0\n}\n"
+        }
+    },
+    {
+        "caption": "ExportHtml: Documentation",
+        "command": "export_html_open_site",
+        "args": {
+            "url": "http://facelessuser.github.io/ExportHtml/"
+        }
+    },
+    {
+        "caption": "ExportHtml: Quick Start Guide",
+        "command": "export_html_doc",
+        "args": {
+            "page": "${packages}/ExportHtml/quickstart.md"
+        }
     }
 ]
