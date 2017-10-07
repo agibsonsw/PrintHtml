@@ -3,6 +3,7 @@
 Oct 6, 2017
 
 - **NEW**: Upgrade theme_tweaker and rgba lib which adds the ability to adjust contrast.
+- **FIX**: Don't include document build folder.
 
 # ExportHtml 2.5.0
 
