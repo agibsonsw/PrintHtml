@@ -1,3 +1,9 @@
+# ExportHtml 2.6.0
+
+Oct 6, 2017
+
+- **NEW**: Upgrade theme_tweaker and rgba lib which adds the ability to adjust contrast.
+
 # ExportHtml 2.5.0
 
 Released Aug 12, 2017

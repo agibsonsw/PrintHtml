@@ -351,7 +351,7 @@ class OpenHtml:
             self.file = tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=self.file_name)
         return self.file
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type, value, traceback):  # noqa: B002
         """Tear down HTML file."""
 
         self.file.close()

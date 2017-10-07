@@ -24,6 +24,7 @@ plugins
 PrintHtml
 PyMdown
 requesters
+rgba
 sublicense
 Sublime's
 tmTheme
