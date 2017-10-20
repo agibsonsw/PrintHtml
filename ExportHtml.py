@@ -28,7 +28,6 @@ from os import path
 import tempfile
 import time
 import re
-import json
 from .HtmlAnnotations import get_annotations
 from .lib.browser import open_in_browser
 from .lib.color_scheme_matcher import ColorSchemeMatcher
@@ -107,19 +106,6 @@ TOOL_ANNOTATION = (
     'Eu6mdn9bStwABqgA0Y+MfqsBU7ALie3M8SS0NU5JqD2zWvIqUgD1MF9iCVDF8yPkixsjTF4'
     'PIOfa/Hi/GhiO5mYJHH0mL4ROzdvIu+TAoW8ddm30iJNjTQgevOqpMLPx8NilWe6X3z8n3g'
     'AfmBJ5rRJVyQAAAAASUVORK5CYII="'
-    ' />'
-)
-
-TOOL_DUMP_THEME = (
-    '<img onclick="dump_theme();" alt="" title="Download" '
-    'src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB'
-    'AAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXM'
-    'AAAsTAAALEwEAmpwYAAAAB3RJTUUH3AofFhAWTV9RXgAAAAxpVFh0'
-    'Q29tbWVudAAAAAAAvK6ymQAAAJtJREFUOMvdk9ENwyAQQ5+rDBA6Q'
-    'ZbI/gN0h3YE2gXi/lykhABN1b9aQkh3+CEwiEK2BYyAyhbwlORtce'
-    'CoEbgBqahnYI65C1CYr43eThd+1B8Ahkp0qXZZa8/2LlIFIG2i676'
-    'DmDMwS8pDcZzW7tt4DbwOr8/2ZPthe3FbS6yZ4thfQdrmE5DP5g7k'
-    'vLkCucdomtWDRJzUvvGqN6JK1cOooSjlAAAAAElFTkSuQmCC"'
     ' />'
 )
 
@@ -218,20 +204,6 @@ ANNOTATION_FOOTER = (
 )
 
 BODY_END = '</pre>%(toolbar)s\n%(js)s\n</body>\n</html>\n'
-
-INCLUDE_THEME = '''
-<script type="text/javascript">
-%(jshelper)s
-</script>
-<script type="text/javascript">
-%(jscode)s
-plist.color_scheme = %(theme)s;
-
-function dump_theme() {
-    extract_theme('%(name)s');
-}
-</script>
-'''
 
 TOGGLE_LINE_OPTIONS = '''
 <script type="text/javascript">
@@ -489,7 +461,6 @@ class ExportHtml(object):
             "print": TOOL_PRINT,
             "plain_text": TOOL_PLAIN_TEXT,
             "annotation": TOOL_ANNOTATION if use_annotation else "",
-            "theme": TOOL_DUMP_THEME,
             "wrapping": TOOL_WRAPPING if use_wrapping else ""
         }
         t_opt = ""
@@ -507,6 +478,7 @@ class ExportHtml(object):
 
         if (
             self.ignore_selections or
+            curr_sel is None or
             (
                 not multi and
                 (
@@ -574,20 +546,9 @@ class ExportHtml(object):
             )
         }
 
-        if 'theme' in self.toolbar:
-            header_vars['js'] = INCLUDE_THEME % {
-                "jshelper": getjs('jshelper.js'),
-                "jscode": getjs('plist.js'),
-                "theme": json.dumps(
-                    self.csm.get_plist_file(),
-                    sort_keys=True, indent=4, separators=(',', ': ')
-                ).encode('raw_unicode_escape').decode("utf-8"),
-                "name": self.csm.get_scheme_file(),
-            }
-        else:
-            header_vars['js'] = HTML_JS_WRAP % {
-                "jscode": getjs('jshelper.js')
-            }
+        header_vars['js'] = HTML_JS_WRAP % {
+            "jscode": getjs('jshelper.js')
+        }
 
         header = HTML_HEADER % header_vars
         html.write(header)
@@ -881,7 +842,8 @@ class ExportHtml(object):
                     html.write(ROW_START)
                     html.write(TABLE_START)
         else:
-            self.setup_print_block(self.view.sel()[0])
+            sels = self.view.sel()
+            self.setup_print_block(sels[0] if len(sels) else None)
             processed_rows += "[" + str(self.curr_row) + ","
             self.convert_view_to_html(html)
             processed_rows += str(self.curr_row) + "],"
