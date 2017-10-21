@@ -104,6 +104,14 @@ COLOR_MOD_RE = re.compile(
     ''' % COLOR_PARTS
 )
 
+RE_CAMEL_CASE = re.compile('[A-Z]')
+
+
+def to_snake(m):
+    """Convert to snake case."""
+
+    return '_' + m.group(0).lower()
+
 
 def fmt_float(f, p=0):
     """Set float precision and trim precision zeros."""
@@ -346,9 +354,16 @@ class ColorSchemeMatcher(object):
             GLOBAL_OPTIONS: {},
             "rules": []
         }
+
+        for k, v in obj.items():
+            if k == "settings":
+                continue
+            self.scheme_obj[k] = v
+
         for item in obj["settings"]:
             if item.get('scope', None) is None and item.get('name', None) is None:
-                self.scheme_obj[GLOBAL_OPTIONS] = item["settings"]
+                for k, v in item["settings"].items():
+                    self.scheme_obj[GLOBAL_OPTIONS][RE_CAMEL_CASE.sub(to_snake, k)] = v
             if 'settings' in item and item.get('scope') is not None:
                 self.scheme_obj['rules'].append(
                     {
@@ -356,6 +371,7 @@ class ColorSchemeMatcher(object):
                         "scope": item.get('scope'),
                         "foreground": item['settings'].get('foreground'),
                         "background": item['settings'].get('background'),
+                        "selection_foreground": item["settings"].get("selection_foreground"),
                         FONT_STYLE: item['settings'].get('fontStyle', '')
                     }
                 )
@@ -410,18 +426,18 @@ class ColorSchemeMatcher(object):
         fground, fground_sim = self.process_color(color_settings.get("foreground", '#000000'))
         sbground = self.process_color(color_settings.get("selection", fground))[0]
         sbground_sim = self.process_color(color_settings.get("selection", fground_sim))[1]
-        sfground, sfground_sim = self.process_color(color_settings.get("selectionForeground", None))
+        sfground, sfground_sim = self.process_color(color_settings.get("selection_foreground", None))
         gbground = self.process_color(color_settings.get("gutter", bground))[0]
         gbground_sim = self.process_color(color_settings.get("gutter", bground_sim))[1]
-        gfground = self.process_color(color_settings.get("gutterForeground", fground))[0]
-        gfground_sim = self.process_color(color_settings.get("gutterForeground", fground_sim))[1]
+        gfground = self.process_color(color_settings.get("gutter_foreground", fground))[0]
+        gfground_sim = self.process_color(color_settings.get("gutter_foreground", fground_sim))[1]
 
         self.special_colors["foreground"] = {'color': fground, 'color_simulated': fground_sim}
         self.special_colors["background"] = {'color': bground, 'color_simulated': bground_sim}
-        self.special_colors["selectionForeground"] = {'color': sfground, 'color_simulated': sfground_sim}
+        self.special_colors["selection_foreground"] = {'color': sfground, 'color_simulated': sfground_sim}
         self.special_colors["selection"] = {'color': sbground, 'color_simulated': sbground_sim}
         self.special_colors["gutter"] = {'color': gbground, 'color_simulated': gbground_sim}
-        self.special_colors["gutterForeground"] = {'color': gfground, 'color_simulated': gfground_sim}
+        self.special_colors["gutter_foreground"] = {'color': gfground, 'color_simulated': gfground_sim}
 
         self.colors = {}
         # Create scope colors mapping from color scheme file
@@ -496,6 +512,7 @@ class ColorSchemeMatcher(object):
         Get the visible look of the color by simulated transparency if requrested.
         """
 
+        name = RE_CAMEL_CASE.sub(to_snake, name)
         return self.special_colors.get(name, {}).get('color_simulated' if simulate_transparency else 'color')
 
     def get_scheme_obj(self):
