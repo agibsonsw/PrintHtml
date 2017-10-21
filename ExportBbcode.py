@@ -183,6 +183,7 @@ class ExportBbcode(object):
 
         if (
             self.ignore_selections or
+            curr_sel is None or
             (
                 not multi and
                 (curr_sel.empty() or curr_sel.size() <= self.char_limit)
@@ -314,7 +315,8 @@ class ExportBbcode(object):
                     bbcode.write("\n" + (BBCODE_CODE % {"color": self.fground, "content": "..."}) + "\n\n")
 
         else:
-            self.setup_print_block(self.view.sel()[0])
+            sels = self.view.sel()
+            self.setup_print_block(sels[0] if len(sels) else None)
             self.convert_view_to_bbcode(bbcode)
 
         bbcode.write(POST_END)

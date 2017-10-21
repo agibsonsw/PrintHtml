@@ -5,9 +5,13 @@ Licensed under MIT
 Copyright (c) 2013 - 2015 Isaac Muse <isaacmuse@gmail.com>
 """
 from __future__ import absolute_import
+import sublime
 from .rgba import RGBA
 from . import x11colors
 import re
+
+FONT_STYLE = "font_style" if int(sublime.version()) >= 3151 else "fontStyle"
+GLOBAL_OPTIONS = "globals" if int(sublime.version()) >= 3152 else "defaults"
 
 FILTER_MATCH = re.compile(
     r'''(?x)
@@ -99,40 +103,38 @@ class ColorSchemeTweaker(object):
                     self.filters.append([m.group(3), 0.0, m.group(4) if m.group(4) else "all"])
 
         if len(self.filters):
-            general_settings_read = False
-            for settings in tmtheme["settings"]:
-                if not general_settings_read:
-                    for k, v in settings["settings"].items():
-                        if not k.endswith('Css'):
-                            if k in ("background", "gutter", "lineHighlight", "selection"):
-                                _, value = self._filter_colors(None, self.process_color(v), global_settings=True)
-                            else:
-                                value, _ = self._filter_colors(self.process_color(v), global_settings=True)
-                            if value is None:
-                                value = v
-                        else:
-                            value = v
-                        settings["settings"][k] = value
-                    general_settings_read = True
-                    continue
-                self.bground = RGBA(
-                    self.process_color(
-                        tmtheme["settings"][0]["settings"].get("background", '#FFFFFF')
-                    )
-                ).get_rgb()
-                self.fground = RGBA(
-                    self.process_color(
-                        tmtheme["settings"][0]["settings"].get("foreground", '#000000')
-                    )
-                ).get_rgba()
+            for k, v in tmtheme[GLOBAL_OPTIONS].items():
+                if not k.endswith('Css'):
+                    if k in ("background", "gutter", "lineHighlight", "selection"):
+                        _, value = self._filter_colors(None, self.process_color(v), global_settings=True)
+                    else:
+                        value, _ = self._filter_colors(self.process_color(v), global_settings=True)
+                    if value is None:
+                        value = v
+                else:
+                    value = v
+                tmtheme[GLOBAL_OPTIONS][k] = value
+
+            self.bground = RGBA(
+                self.process_color(
+                    tmtheme[GLOBAL_OPTIONS].get("background", '#FFFFFF')
+                )
+            ).get_rgb()
+            self.fground = RGBA(
+                self.process_color(
+                    tmtheme[GLOBAL_OPTIONS].get("foreground", '#000000')
+                )
+            ).get_rgba()
+
+            for rule in tmtheme['rules']:
                 foreground, background = self._filter_colors(
-                    self.process_color(settings["settings"].get("foreground", None)),
-                    self.process_color(settings["settings"].get("background", None))
+                    self.process_color(rule.get("foreground", None)),
+                    self.process_color(rule.get("background", None))
                 )
                 if foreground is not None:
-                    settings["settings"]["foreground"] = foreground
+                    rule["foreground"] = foreground
                 if background is not None:
-                    settings["settings"]["background"] = background
+                    rule["background"] = background
 
         return tmtheme
 
