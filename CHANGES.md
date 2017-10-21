@@ -1,3 +1,10 @@
+# ExportHtml 2.7.0
+
+Oct 20, 2017
+
+- **NEW**: Add support for `.sublime-color-scheme` files.
+- **NEW**: Drop option to include scheme in output.
+
 # ExportHtml 2.6.0
 
 Oct 6, 2017
