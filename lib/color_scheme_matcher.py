@@ -379,10 +379,10 @@ class ColorSchemeMatcher(object):
 
                 self.overrides.append(override)
 
-    def filter(self, plist):
+    def filter(self, scheme):
         """Dummy filter call that does nothing."""
 
-        return plist
+        return scheme
 
     def parse_scheme(self):
         """Parse the color scheme."""
@@ -499,7 +499,7 @@ class ColorSchemeMatcher(object):
         return self.special_colors.get(name, {}).get('color_simulated' if simulate_transparency else 'color')
 
     def get_scheme_obj(self):
-        """Get the plist file used during the process."""
+        """Get the scheme file used during the process."""
 
         return self.scheme_obj
 
