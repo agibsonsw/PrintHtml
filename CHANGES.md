@@ -1,3 +1,10 @@
+# ExportHtml 2.8.0
+
+Oct 21, 2017
+
+- **NEW**: Add support for per scope selection foreground.
+- **FIX**: Some general color scheme parsing and tweaking issues.
+
 # ExportHtml 2.7.0
 
 Oct 20, 2017
