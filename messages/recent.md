@@ -1,4 +1,4 @@
-# ExportHtml 2.7.0
+# ExportHtml 2.8.0
 
 New release!
 
