@@ -1,10 +1,11 @@
 var page_line_info = {
-        wrap:      false,
-        ranges:    null,
-        wrap_size: null,
-        tables:    null,
-        header:    null,
-        gutter:    false
+        wrap:       false,
+        ranges:     null,
+        wrap_size:  null,
+        tables:     null,
+        header:     null,
+        gutter:     false,
+        table_mode: true
     };
 
 function wrap_code() {
@@ -12,7 +13,9 @@ function wrap_code() {
         width = 0,
         mode = null;
     if (page_line_info.header) {
-        document.getElementById("file_info").style.width = page_line_info.wrap_size + "px";
+        el = document.getElementById("file_info")
+        el.style.width = page_line_info.wrap_size + "px";
+        el.className = "wrap";
     }
     for (i = 1; i <= page_line_info.tables; i++) {
         idx = i - 1;
@@ -35,22 +38,38 @@ function wrap_code() {
 function toggle_gutter() {
     var i, j, rows, r, tbls, cells,
         mode = null;
-    tbls  = document.getElementsByTagName('table');
-    for (i = 1; i <= page_line_info.tables; i++) {
-        rows = tbls[i].getElementsByTagName('tr');
-        r = rows.length;
-        for (j = 0; j < r; j++) {
-            cells = rows[j].getElementsByTagName('td');
+    if (page_line_info.table_mode) {
+        tbls  = document.getElementsByTagName('table');
+        for (i = 1; i <= page_line_info.tables; i++) {
+            rows = tbls[i].getElementsByTagName('tr');
+            r = rows.length;
+            for (j = 0; j < r; j++) {
+                cells = rows[j].getElementsByTagName('td');
+                if (isNull(mode)) {
+                    if (page_line_info.gutter) {
+                        mode = 'none';
+                        page_line_info.gutter = false;
+                    } else {
+                        mode = 'table-cell';
+                        page_line_info.gutter = true;
+                    }
+                }
+                cells[0].style.display = mode;
+            }
+        }
+    } else {
+        items = document.querySelectorAll('span.code_gutter');
+        for (i = 0; i < items.length; ++i) {
             if (isNull(mode)) {
                 if (page_line_info.gutter) {
                     mode = 'none';
                     page_line_info.gutter = false;
                 } else {
-                    mode = 'table-cell';
+                    mode = 'inline-block';
                     page_line_info.gutter = true;
                 }
             }
-            cells[0].style.display = mode;
+            items[i].style.display = mode;
         }
     }
     if (page_line_info.wrap && !isNull(mode)) {

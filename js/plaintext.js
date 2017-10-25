@@ -6,10 +6,14 @@ function toggle_plain_text() {
         text = "",
         plain_pre = document.querySelectorAll("pre.simple_code_page"),
         orig_pre, pre, i, j, spans, span_len, span;
+    if (line_len == 0) {
+        lines = document.querySelectorAll("span.code_line");
+        line_len = lines.length;
+    }
     if (plain_pre.length > 0) {
         document.body.removeChild(plain_pre[0]);
         document.body.appendChild(plain_text_clone);
-        document.body.className = "code_page";
+        document.body.className = "code_page code_text";
     } else {
         var re = new RegExp(String.fromCharCode(160), "g");
         for (i = 0; i < line_len; i++) {
