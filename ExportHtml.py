@@ -555,6 +555,8 @@ class ExportHtml(object):
     def write_header(self, html):
         """Write the HTML header."""
 
+        display_mode = 'table-cell' if self.table else 'inline-block'
+
         header_vars = {
             "title": self.html_encode(path.basename(self.file_name)),
             "css": getcss(
@@ -564,7 +566,7 @@ class ExportHtml(object):
                     "page_bg": self.bground,
                     "gutter_bg": self.gbground,
                     "body_fg": self.fground,
-                    "display_mode": 'table-cell' if self.numbers else 'none',
+                    "display_mode": display_mode if self.numbers else 'none',
                     "dot_color": self.fground,
                     "toolbar_orientation": self.toolbar_orientation
                 }

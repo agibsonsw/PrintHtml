@@ -14,7 +14,7 @@ span.bold { font-weight: bold; }
 span.italic { font-style: italic; }
 span.normal { font-style: normal; }
 span.underline { text-decoration:underline; }
-span.code_gutter { display: inline-block; vertical-align: top; }
+span.code_gutter { display: {{ var.display_mode }}; vertical-align: top; }
 span.file_info { display:  inline-block; }
 
 /* Wrapping */
