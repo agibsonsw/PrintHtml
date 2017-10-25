@@ -13,7 +13,7 @@ function wrap_code() {
         width = 0,
         mode = null;
     if (page_line_info.header) {
-        el = document.getElementById("file_info")
+        el = document.getElementById("file_info");
         el.style.width = page_line_info.wrap_size + "px";
         el.className = "wrap";
     }
