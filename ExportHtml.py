@@ -212,8 +212,6 @@ ANNOTATION_FOOTER = (
     '</td></tr>'
 )
 
-
-
 TOGGLE_LINE_OPTIONS = '''
 <script type="text/javascript">
 %(jscode)s
