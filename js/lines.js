@@ -31,7 +31,7 @@ function wrap_code() {
       }
       el = document.getElementById("C_" + idx + "_" + j);
       el.style.width = (page_line_info.wrap_size - width) + "px";
-      el.className = "wrap";
+      el.className = page_line_info.table_mode ? "wrap" : "wrap code_line";
     }
   }
 }

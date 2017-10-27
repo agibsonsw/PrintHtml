@@ -161,7 +161,7 @@ TABLE_LINE = (
 
 CODE_LINE = (
     '<span id="L_%(table)d_%(line_id)d" class="code_text code_gutter" style="color: %(color)s;">' +
-    '%(line)s</span><span class="code_line"><span id="C_%(table)d_%(code_id)d">%(code)s</span></span>\n'
+    '%(line)s</span><span id="C_%(table)d_%(code_id)d" class="code_line">%(code)s</span>\n'
 )
 
 CODE = '<span class="%(class)s" style="background-color: %(highlight)s; color: %(color)s;">%(content)s</span>'
