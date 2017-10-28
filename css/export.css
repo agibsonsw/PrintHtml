@@ -4,19 +4,20 @@ body { color: {{ var.body_fg }}; }
 pre { border: 0; margin: 0; padding: 0; }
 td { padding: 0; }
 table { border: 0; margin: 0; padding: 0; border-collapse: collapse; empty-cells: show; }
+span { display: inline-block; border: 0; margin: 0; }
+td.code_line div { width: 100%; }
+span.code_gutter { vertical-align: top; }
 .code_text { font: {{ var.font_size }}pt {{ var.font_face }}, "Courier", Monospace; }
 .code_page { background-color: {{ var.page_bg }}; }
 .simple_code_page { background-color: white; color: black }
 .code_gutter { display: {{ var.display_mode }}; background-color: {{ var.gutter_bg }}; padding-right: 10px; }
-td.code_line div { width: 100%; }
-span { display: inline-block; border: 0; margin: 0; }
-span.bold { font-weight: bold; }
-span.italic { font-style: italic; }
-span.normal { font-style: normal; }
-span.underline { text-decoration:underline; }
+.bold { font-weight: bold; }
+.italic { font-style: italic; }
+.normal { font-style: normal; }
+.underline { text-decoration:underline; }
 
 /* Wrapping */
-div.wrap {
+.wrap {
     white-space: -moz-pre-wrap; /* Mozilla */
     white-space: -hp-pre-wrap;  /* HP printers */
     white-space: -o-pre-wrap;   /* Opera 7 */
@@ -25,7 +26,7 @@ div.wrap {
     white-space: pre-line;      /* CSS 3 (and 2.1 as well, actually) */
     word-wrap: break-word;      /* IE */
 }
-div.wrap span { display: inline; }
+.wrap span { display: inline; }
 
 /* Toolbar */
 div#toolbarhide {

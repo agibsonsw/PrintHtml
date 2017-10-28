@@ -129,19 +129,26 @@ ANNOTATE_OPEN = (
     '<span onclick="toggle_annotations();" class="tooltip_hotspot" onmouseover="tooltip.show(%(comment)s);" '
     'onmouseout="tooltip.hide();">%(code)s'
 )
-
 ANNOTATE_CLOSE = '</span>'
 
 BODY_START = '<body class="code_page code_text"><pre class="code_page">'
-
-FILE_INFO = (
-    '<tr><td colspan="2" style="background: %(bgcolor)s"><div id="file_info">'
-    '<span style="color: %(color)s">%(date_time)s %(file)s\n\n</span></div></td></tr>'
-)
+BODY_END = '</pre>%(toolbar)s\n%(js)s\n</body>\n</html>\n'
 
 TABLE_START = '<table cellspacing="0" cellpadding="0" class="code_page">'
+TABLE_END = '</table>'
 
-LINE = (
+CODE_START = '<code class="code_page">'
+CODE_END = '</code>'
+
+TABLE_FILE_INFO = (
+    '<tr><td colspan="2" style="background: %(bgcolor)s"><div id="file_info">'
+    '<span style="color: %(color)s">%(date_time)s %(file)s</span>\n\n</div></td></tr>'
+)
+CODE_FILE_INFO = (
+    '<span id="file_info" style="color: %(color)s; background: %(bgcolor)s">%(date_time)s %(file)s</span>\n\n'
+)
+
+TABLE_LINE = (
     '<tr>' +
     '<td valign="top" id="L_%(table)d_%(line_id)d" class="code_text code_gutter" style="background: %(bgcolor)s">' +
     '<span style="color: %(color)s;">%(line)s</span>' +
@@ -152,19 +159,21 @@ LINE = (
     '</tr>'
 )
 
+CODE_LINE = (
+    '<span id="L_%(table)d_%(line_id)d" class="code_text code_gutter" style="color: %(color)s;">' +
+    '%(line)s</span><span id="C_%(table)d_%(code_id)d" class="code_line">%(code)s</span>\n'
+)
+
 CODE = '<span class="%(class)s" style="background-color: %(highlight)s; color: %(color)s;">%(content)s</span>'
 ANNOTATION_CODE = (
     '<span style="background-color: %(highlight)s;"><a href="javascript:void();" class="annotation">'
     '<span class="%(class)s annotation" style="color: %(color)s;">%(content)s</span></a></span>'
 )
 
-TABLE_END = '</table>'
-
 ROW_START = '<tr><td>'
-
 ROW_END = '</td></tr>'
 
-DIVIDER = '<span style="color: %(color)s">\n...\n\n</span>'
+DIVIDER = '\n<span style="color: %(color)s">...</span>\n\n'
 
 ANNOTATION_TBL_START = (
     '<div id="comment_list" style="display:none"><div id="comment_wrapper">' +
@@ -203,18 +212,17 @@ ANNOTATION_FOOTER = (
     '</td></tr>'
 )
 
-BODY_END = '</pre>%(toolbar)s\n%(js)s\n</body>\n</html>\n'
-
 TOGGLE_LINE_OPTIONS = '''
 <script type="text/javascript">
 %(jscode)s
 
-page_line_info.wrap      = false;
-page_line_info.ranges    = [%(ranges)s];
-page_line_info.wrap_size = %(wrap_size)d;
-page_line_info.tables    = %(tables)s;
-page_line_info.header    = %(header)s;
-page_line_info.gutter    = %(gutter)s;
+page_line_info.wrap       = false;
+page_line_info.ranges     = [%(ranges)s];
+page_line_info.wrap_size  = %(wrap_size)d;
+page_line_info.tables     = %(tables)s;
+page_line_info.header     = %(header)s;
+page_line_info.gutter     = %(gutter)s;
+page_line_info.table_mode = %(table_mode)s;
 </script>
 '''
 
@@ -359,7 +367,8 @@ class ExportHtml(object):
             "view_open": bool(kwargs.get("view_open", False)),
             "shift_brightness": bool(kwargs.get("shift_brightness", False)),
             "filter": kwargs.get("filter", ""),
-            "disable_nbsp": kwargs.get('disable_nbsp', False)
+            "disable_nbsp": kwargs.get('disable_nbsp', False),
+            "table_mode": kwargs.get("table_mode", True)
         }
 
     def setup(self, **kwargs):
@@ -379,6 +388,7 @@ class ExportHtml(object):
         self.fground = ''
         self.gbground = ''
         self.gfground = ''
+        self.table_mode = kwargs["table_mode"]
         self.numbers = kwargs["numbers"]
         self.date_time_format = kwargs["date_time_format"]
         self.time = time.localtime()
@@ -514,21 +524,34 @@ class ExportHtml(object):
         """Print the line."""
 
         line_text = str(num).rjust(self.gutter_pad) + ' '
-        html_line = LINE % {
-            "line_id": num,
-            "color": self.gfground,
-            "bgcolor": self.gbground,
-            "line": (line_text.replace(" ", '&nbsp;') if not self.disable_nbsp else line_text),
-            "code_id": num,
-            "code": line,
-            "table": self.tables,
-            "pad_color": self.ebground or self.bground
-        }
+        if self.table_mode:
+            html_line = TABLE_LINE % {
+                "line_id": num,
+                "color": self.gfground,
+                "bgcolor": self.gbground,
+                "line": (line_text.replace(" ", '&nbsp;') if not self.disable_nbsp else line_text),
+                "code_id": num,
+                "code": line,
+                "table": self.tables,
+                "pad_color": self.ebground or self.bground
+            }
+        else:
+            html_line = CODE_LINE % {
+                "line_id": num,
+                "color": self.gfground,
+                "bgcolor": self.gbground,
+                "line": (line_text.replace(" ", '&nbsp;') if not self.disable_nbsp else line_text),
+                "code_id": num,
+                "code": line,
+                "table": self.tables
+            }
 
         return html_line
 
     def write_header(self, html):
         """Write the HTML header."""
+
+        display_mode = 'table-cell' if self.table_mode else 'inline-block'
 
         header_vars = {
             "title": self.html_encode(path.basename(self.file_name)),
@@ -539,7 +562,7 @@ class ExportHtml(object):
                     "page_bg": self.bground,
                     "gutter_bg": self.gbground,
                     "body_fg": self.fground,
-                    "display_mode": 'table-cell' if self.numbers else 'none',
+                    "display_mode": display_mode if self.numbers else 'none',
                     "dot_color": self.fground,
                     "toolbar_orientation": self.toolbar_orientation
                 }
@@ -806,21 +829,39 @@ class ExportHtml(object):
         processed_rows = ""
         html.write(BODY_START)
 
-        html.write(TABLE_START)
+        if self.table_mode:
+            html.write(TABLE_START)
+        else:
+            html.write(CODE_START)
         if not self.no_header:
             # Write file name
             date_time = time.strftime(self.date_time_format, self.time)
-            html.write(
-                FILE_INFO % {
-                    "bgcolor": self.bground,
-                    "color": self.fground,
-                    "date_time": date_time,
-                    "file": self.html_encode(self.file_name if self.show_full_path else path.basename(self.file_name))
-                }
-            )
+            if self.table_mode:
+                html.write(
+                    TABLE_FILE_INFO % {
+                        "bgcolor": self.bground,
+                        "color": self.fground,
+                        "date_time": date_time,
+                        "file": self.html_encode(
+                            self.file_name if self.show_full_path else path.basename(self.file_name)
+                        )
+                    }
+                )
+            else:
+                html.write(
+                    CODE_FILE_INFO % {
+                        "bgcolor": self.bground,
+                        "color": self.fground,
+                        "date_time": date_time,
+                        "file": self.html_encode(
+                            self.file_name if self.show_full_path else path.basename(self.file_name)
+                        )
+                    }
+                )
 
-        html.write(ROW_START)
-        html.write(TABLE_START)
+        if self.table_mode:
+            html.write(ROW_START)
+            html.write(TABLE_START)
         # Convert view to HTML
         if self.multi_select:
             count = 0
@@ -834,13 +875,15 @@ class ExportHtml(object):
                 processed_rows += str(self.curr_row) + "],"
 
                 if count < total:
-                    html.write(TABLE_END)
-                    html.write(ROW_END)
-                    html.write(ROW_START)
+                    if self.table_mode:
+                        html.write(TABLE_END)
+                        html.write(ROW_END)
+                        html.write(ROW_START)
                     html.write(DIVIDER % {"color": self.fground})
-                    html.write(ROW_END)
-                    html.write(ROW_START)
-                    html.write(TABLE_START)
+                    if self.table_mode:
+                        html.write(ROW_END)
+                        html.write(ROW_START)
+                        html.write(TABLE_START)
         else:
             sels = self.view.sel()
             self.setup_print_block(sels[0] if len(sels) else None)
@@ -849,9 +892,12 @@ class ExportHtml(object):
             processed_rows += str(self.curr_row) + "],"
             self.tables += 1
 
-        html.write(TABLE_END)
-        html.write(ROW_END)
-        html.write(TABLE_END)
+        if self.table_mode:
+            html.write(TABLE_END)
+            html.write(ROW_END)
+            html.write(TABLE_END)
+        else:
+            html.write(CODE_END)
 
         js_options = []
         if len(self.annot_tbl):
@@ -868,7 +914,8 @@ class ExportHtml(object):
                 "ranges": processed_rows.rstrip(','),
                 "tables": self.tables,
                 "header": ("false" if self.no_header else "true"),
-                "gutter": ('true' if self.numbers else 'false')
+                "gutter": ('true' if self.numbers else 'false'),
+                "table_mode": ('true' if self.table_mode else 'false')
             }
         )
         if self.auto_wrap:
