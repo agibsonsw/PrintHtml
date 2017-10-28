@@ -1,8 +1,9 @@
 # ExportHtml 2.9.0
 
-Oct x, 2017
+Oct 27, 2017
 
 - **NEW**: Add support for rendering output without tables (Default CSS did change, so if overriding it, you may need to update).
+- **FIX**: Support for irregular `.sublime-color-scheme` values.
 
 # ExportHtml 2.8.0
 
