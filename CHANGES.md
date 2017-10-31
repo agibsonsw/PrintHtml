@@ -1,5 +1,7 @@
 # ExportHtml 2.9.1
 
+Oct 30, 2017
+
 - **FIX**: Parse color scheme with unexpected extension correctly.
 
 # ExportHtml 2.9.0
