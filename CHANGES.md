@@ -1,3 +1,10 @@
+# ExportHtml 2.10.0
+
+Nov 4, 2017
+
+- **NEW**: Add support `.sublime-color-scheme` hashed syntax highlighting.
+- **FIX**: `.sublime-color-scheme` merge logic.
+
 # ExportHtml 2.9.1
 
 Oct 30, 2017
