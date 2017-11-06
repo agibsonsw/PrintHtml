@@ -381,7 +381,7 @@ class ColorSchemeMatcher(object):
                     rule["scope"] = scope
                 fg = item['settings'].get('foreground')
                 if fg is not None:
-                    rule['foreground'] =  item['settings'].get('foreground')
+                    rule['foreground'] = item['settings'].get('foreground')
                 bg = item['settings'].get('background')
                 if bg is not None:
                     rule['background'] = bg
