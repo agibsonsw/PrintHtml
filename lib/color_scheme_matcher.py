@@ -390,7 +390,7 @@ class ColorSchemeMatcher(object):
                     rule["selection_foreground"] = selfg
                 font_style = item["settings"].get('fontStyle')
                 if font_style is not None:
-                    rule['font_style'] = font_style
+                    rule[FONT_STYLE] = font_style
                 self.scheme_obj['rules'].append(rule)
 
     def merge_overrides(self):
