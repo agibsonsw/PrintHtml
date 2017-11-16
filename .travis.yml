@@ -9,9 +9,9 @@ git:
 matrix:
   include:
   - python: 3.3
+    node_js: 6
     env: TESTENV=unittest
   - python: 3.6
-    node_js: 6
     env: TESTENV=documents
 
 install:
