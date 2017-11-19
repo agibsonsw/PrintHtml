@@ -18,8 +18,8 @@ install:
   - pip install flake8
   - pip install flake8-docstrings
   - pip install pep8-naming
-  # - pip install flake8-mutable
-  # - pip install flake8-builtins
+  - pip install flake8-mutable
+  - pip install flake8-builtins
   - pip install pytest
   - pip install mkdocs-material
   - pip install pymdown-extensions
