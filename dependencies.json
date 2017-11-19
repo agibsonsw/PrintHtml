@@ -7,9 +7,10 @@
             "pygments",
             "python-markdown",
             "mdpopups",
-            "pymdownx",
             "python-jinja2",
-            "markupsafe"
+            "markupsafe",
+            "pymdownx",
+            "pyyaml"
         ]
     }
 }
