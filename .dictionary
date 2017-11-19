@@ -24,12 +24,16 @@ facelessuser
 gforcada
 grayscale
 installable
+jinja
 macOS
+markupsafe
 mkdocs
 multi
+packagecontrol
 plugin
 plugins
 pycqa
+pygments
 pymdown
 pytest
 requesters
