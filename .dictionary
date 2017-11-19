@@ -32,6 +32,7 @@ multi
 packagecontrol
 plugin
 plugins
+popups
 pycqa
 pygments
 pymdown
