@@ -69,7 +69,7 @@ Released Aug 12, 2017
 
 Released Jun 4, 2017
 
-- **FIX**: Hopefully more reliable browser opening [#47](https://github.com/facelessuser/ExportHtml/issues/47).
+- **FIX**: Hopefully more reliable browser opening (#47).
 
 # ExportHtml 2.4.0
 
@@ -88,7 +88,7 @@ Released Nov 29, 2016
 
 Released Nov 28, 2016
 
-- **NEW**: Handle X11 named colors in color schemes. [#44](https://github.com/facelessuser/ExportHtml/issues/44)
+- **NEW**: Handle X11 named colors in color schemes (#44).
 - **NEW**: By default, don't include color scheme plist in output (to reduce size of output).
 - **NEW**: Quickstart guide available in menu.
 - **NEW**: Links to repo issues and documentation available in menu.
@@ -103,7 +103,7 @@ Released Nov 5, 2016
 
 Released Nov 3, 2016
 
-- **Fix**: Fix incorrect changelog title. [#43](https://github.com/facelessuser/ExportHtml/pull/43)
+- **Fix**: Fix incorrect changelog title (#43).
 
 # ExportHtml 2.2.0
 
