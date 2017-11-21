@@ -1,6 +1,6 @@
 # ExportHtml 2.11.0
 
-Nov 19, 2017
+Nov 20, 2017
 
 - **NEW**: Add support for `.hidden-color-scheme`.
 - **FIX**: Update dependencies.
