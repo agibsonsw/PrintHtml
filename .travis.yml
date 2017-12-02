@@ -24,6 +24,8 @@ install:
   - pip install mkdocs-material
   - pip install pymdown-extensions
   - pip install pygments
+  - pip install html5lib
+  - pip install beautifulsoup4
   - npm install -g jshint
 
 addons:

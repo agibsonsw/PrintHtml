@@ -13,15 +13,24 @@ function toggle_plain_text() {
     document.body.className = "code_page code_text";
   } else {
     var re = new RegExp(String.fromCharCode(160), "g");
+    var is_empty = new RegExp("(^|\\s)empty_text(\\s|$)");
     for (i = 0; i < line_len; i++) {
-      spans = lines[i].querySelectorAll("span.real_text");
+      spans = lines[i].querySelectorAll("span.real_text, span.empty_text");
       span_len = spans.length;
       for (j = 0; j < span_len; j++) {
         span = spans[j];
-        if ("textContent" in span) {
-          text += span.textContent.replace(re, ' ');
+        if (span.className.search(is_empty) != -1) {
+          if ("textContent" in span) {
+            text += span.textContent.replace(re, '');
+          } else {
+            text += span.innerText.replace(re, '');
+          }
         } else {
-          text += span.innerText.replace(re, ' ');
+          if ("textContent" in span) {
+            text += span.textContent.replace(re, ' ');
+          } else {
+            text += span.innerText.replace(re, ' ');
+          }
         }
       }
       text += "\n";

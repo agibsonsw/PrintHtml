@@ -7,8 +7,12 @@ table { border: 0; margin: 0; padding: 0; border-collapse: collapse; empty-cells
 span { display: inline-block; border: 0; margin: 0; }
 td.code_line div { width: 100%; }
 span.code_gutter { vertical-align: top; }
-.code_text { font: {{ var.font_size }}pt {{ var.font_face }}, "Courier", Monospace; }
-.code_page { background-color: {{ var.page_bg }}; }
+.code_page {
+    background-color: {{ var.page_bg }};
+    font-family: {{ var.font_face }}, "Courier", Monospace;
+    font-size: {{ var.font_size }}pt;
+    tab-size: {{var.tab_size}};
+}
 .simple_code_page { background-color: white; color: black }
 .code_gutter { display: {{ var.display_mode }}; background-color: {{ var.gutter_bg }}; padding-right: 10px; }
 .bold { font-weight: bold; }
@@ -23,7 +27,6 @@ span.code_gutter { vertical-align: top; }
     white-space: -o-pre-wrap;   /* Opera 7 */
     white-space: -pre-wrap;     /* Opera 4-6 */
     white-space: pre-wrap;      /* CSS 2.1 */
-    white-space: pre-line;      /* CSS 3 (and 2.1 as well, actually) */
     word-wrap: break-word;      /* IE */
 }
 .wrap span { display: inline; }
@@ -149,6 +152,5 @@ div.annotation_comment {
     white-space: -o-pre-wrap;   /* Opera 7 */
     white-space: -pre-wrap;     /* Opera 4-6 */
     white-space: pre-wrap;      /* CSS 2.1 */
-    white-space: pre-line;      /* CSS 3 (and 2.1 as well, actually) */
     word-wrap: break-word;      /* IE */
 }

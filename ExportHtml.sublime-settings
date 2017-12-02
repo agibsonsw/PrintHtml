@@ -49,7 +49,8 @@
                 "browser_print": true,
                 "multi_select": true,
                 "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Color.tmTheme",
-                "style_gutter": false
+                "style_gutter": false,
+                "diable_nbsp": true
             }
         },
 
@@ -61,7 +62,8 @@
                 "browser_print": true,
                 "multi_select": true,
                 "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Grayscale.tmTheme",
-                "style_gutter": false
+                "style_gutter": false,
+                "diable_nbsp": true
             }
         },
 
@@ -75,7 +77,8 @@
                 "browser_print": true,
                 "highlight_selections": true,
                 "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Color.tmTheme",
-                "style_gutter": false
+                "style_gutter": false,
+                "diable_nbsp": true
             }
         },
 
@@ -89,7 +92,8 @@
                 "browser_print": true,
                 "highlight_selections": true,
                 "color_scheme": "Packages/ExportHtml/ColorSchemes/Print-Grayscale.tmTheme",
-                "style_gutter": false
+                "style_gutter": false,
+                "diable_nbsp": true
             }
         },
         // Browser view color (selections and multi-selections allowed)

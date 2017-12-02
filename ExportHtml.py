@@ -375,7 +375,7 @@ class ExportHtml(object):
         """Get get general document preferences from sublime preferences."""
 
         eh_settings = sublime.load_settings(PACKAGE_SETTINGS)
-        settings = sublime.load_settings('Preferences.sublime-settings')
+        settings = self.view.settings()
         alternate_font_size = eh_settings.get("alternate_font_size", False)
         alternate_font_face = eh_settings.get("alternate_font_face", False)
         self.font_size = settings.get('font_size', 10) if alternate_font_size is False else alternate_font_size
@@ -392,8 +392,8 @@ class ExportHtml(object):
         self.numbers = kwargs["numbers"]
         self.date_time_format = kwargs["date_time_format"]
         self.time = time.localtime()
-        self.show_full_path = kwargs["show_full_path"]
         self.disable_nbsp = kwargs["disable_nbsp"]
+        self.show_full_path = kwargs["show_full_path"]
         self.sels = []
         self.ignore_selections = kwargs["ignore_selections"]
         if self.ignore_selections:
@@ -553,12 +553,14 @@ class ExportHtml(object):
 
         display_mode = 'table-cell' if self.table_mode else 'inline-block'
 
+        self.char_count = 0
         header_vars = {
             "title": self.html_encode(path.basename(self.file_name)),
             "css": getcss(
                 {
                     "font_size": str(self.font_size),
                     "font_face": '"' + self.font_face + '"',
+                    "tab_size": str(self.tab_size),
                     "page_bg": self.bground,
                     "gutter_bg": self.gbground,
                     "body_fg": self.fground,
@@ -582,6 +584,7 @@ class ExportHtml(object):
         for line in self.view.split_by_newlines(sublime.Region(self.pt, self.size)):
             self.size = line.end()
             self.line_start = line.begin()
+            self.char_count = 0
             if self.curr_row > 1:
                 self.line_start -= 1
             empty = not bool(line.size())
@@ -591,25 +594,33 @@ class ExportHtml(object):
 
     def html_encode(self, text, start_pt=None):
         """Format text to HTML."""
-        encode_table = {
-            '&': '&amp;',
-            '>': '&gt;',
-            '<': '&lt;',
-            '\t': ' ' * self.tab_size,
-            '\n': ''
-        }
+
+        new_text = []
+        for c in text:
+            if c == '\t' and not self.disable_nbsp:
+                tab_size = self.tab_size - self.char_count % self.tab_size
+                new_text.append(' ' * tab_size)
+                self.char_count += tab_size
+            elif c == '&':
+                new_text.append('&amp;')
+                self.char_count += 1
+            elif c == '>':
+                new_text.append('&gt;')
+                self.char_count += 1
+            elif c == '<':
+                new_text.append('&lt;')
+                self.char_count += 1
+            elif c != '\n':
+                new_text.append(c)
+                self.char_count += 1
 
         if self.disable_nbsp:
-            return ''.join(
-                encode_table.get(c, c) for c in text
-            ).encode('ascii', 'xmlcharrefreplace').decode("utf-8")
+            return ''.join(new_text).encode('ascii', 'xmlcharrefreplace').decode("utf-8")
         else:
             return re.sub(
                 r'(?<=^) | (?= )' if start_pt is not None and start_pt == self.line_start else r' (?= )',
                 lambda m: '&nbsp;' * len(m.group(0)),
-                ''.join(
-                    encode_table.get(c, c) for c in text
-                ).encode('ascii', 'xmlcharrefreplace').decode("utf-8")
+                ''.join(new_text).encode('ascii', 'xmlcharrefreplace').decode("utf-8")
             )
 
     def get_annotations(self):
@@ -684,8 +695,9 @@ class ExportHtml(object):
         if not style:
             style == 'normal'
 
-        if empty:
-            text = '&nbsp;' if not self.disable_nbsp else ' '
+        if empty and not self.disable_nbsp:
+            text = '&nbsp;'
+            style += " empty_text"
         else:
             style += " real_text"
 
@@ -836,6 +848,7 @@ class ExportHtml(object):
         if not self.no_header:
             # Write file name
             date_time = time.strftime(self.date_time_format, self.time)
+            self.char_count = 0
             if self.table_mode:
                 html.write(
                     TABLE_FILE_INFO % {

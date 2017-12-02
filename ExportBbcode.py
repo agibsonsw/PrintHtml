@@ -139,7 +139,7 @@ class ExportBbcode(object):
         """Setup for export."""
 
         # Get get general document preferences from sublime preferences
-        settings = sublime.load_settings('Preferences.sublime-settings')
+        settings = self.view.settings()
         eh_settings = sublime.load_settings(PACKAGE_SETTINGS)
         self.tab_size = settings.get('tab_size', 4)
         self.char_limit = int(eh_settings.get("valid_selection_size", 4))
@@ -249,7 +249,7 @@ class ExportBbcode(object):
     def format_text(self, line, text, color, style):
         """Format the text for output."""
 
-        text = text.replace('\t', ' ' * self.tab_size).replace('\n', '')
+        text = text.replace('\n', '')
         if self.empty_space is not None:
             text = self.empty_space + text
             self.empty_space = None
