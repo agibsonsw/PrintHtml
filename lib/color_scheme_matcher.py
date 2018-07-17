@@ -461,7 +461,7 @@ class ColorSchemeMatcher(object):
 
                 self.overrides.append(self.color_scheme)
 
-    def filter(self, scheme):
+    def filter(self, scheme):  # noqa A001
         """Dummy filter call that does nothing."""
 
         return scheme
