@@ -109,7 +109,7 @@ class RGBA(object):
         return self.get_rgb()
 
     def get_luminance(self):
-        """Get percieved luminance."""
+        """Get perceived luminance."""
 
         return clamp(round_int(0.299 * self.r + 0.587 * self.g + 0.114 * self.b), 0, 255)
 
