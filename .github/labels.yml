@@ -6,80 +6,89 @@ brace_expansion: true
 extended_glob: true
 
 rules:
-  - labels: [infrastructure]
+  - labels: ['C: infrastructure']
     patterns: ['*|-@(*.md|*.py|*.sublime-@(keymap|menu|settings|commands))', '.github/**']
 
-  - labels: [source]
+  - labels: ['C: source']
     patterns: ['**/*.py|-tests']
 
-  - labels: [docs]
+  - labels: ['C: docs']
     patterns: ['**/*.md|docs/**']
 
-  - labels: [tests]
+  - labels: ['C: tests']
     patterns: ['tests/**']
 
-  - labels: [export-html]
+  - labels: ['C: export-html']
     patterns: ['ExportHtml.py']
 
-  - labels: [html-assets]
+  - labels: ['C: html-assets']
     patterns: ['@(js|css)/**']
 
-  - labels: [color-schemes]
+  - labels: ['C: color-schemes']
     patterns: ['ColorSchemes/**']
 
-  - labels: [icons]
+  - labels: ['C: icons']
     patterns: ['icons/**']
 
-  - labels: [export-bbcode]
+  - labels: ['C: export-bbcode']
     patterns: ['ExportBbcode.py']
 
-  - labels: [scheme-handling]
+  - labels: ['C: scheme-handling']
     patterns: ['lib/color_scheme*.py|lib/rgba.py|lib/x11colors.py']
 
-  - labels: [notify]
+  - labels: ['C: notify']
     patterns: ['lib/notify.py']
 
-  - labels: [browser]
+  - labels: ['C: browser']
     patterns: ['lib/browsers.py']
 
-  - labels: [settings]
+  - labels: ['C: settings']
     patterns: ['*.sublime-@(keymap|menu|settings|commands)']
 
 # Label management
 
 labels:
-- name: export-html
+- name: 'C: export-html'
+  renamed: export-html
   color: subcategory
   description: Related to HTML exporting.
 
-- name: export-bbcode
+- name: 'C: export-bbcode'
+  renamed: export-bbcode
   color: subcategory
   description: Related to BBCode exporting.
 
-- name: scheme-handling
+- name: 'C: scheme-handling'
+  renamed: scheme-handling
   color: subcategory
   description: Related to scheme handling.
 
-- name: notify
+- name: 'C: notify'
+  renamed: notify
   color: subcategory
   description: Related to notifications.
 
-- name: browser
+- name: 'C: browser'
+  renamed: browser
   color: subcategory
   description: Related to browser handling.
 
-- name: html-assets
+- name: 'C: html-assets'
+  renamed: html-assets
   color: subcategory
   description: Related to HTML assets.
 
-- name: color-schemes
+- name: 'C: color-schemes'
+  renamed: color-schemes
   color: subcategory
   description: Related to provided color schemes.
 
-- name: icons
+- name: 'C: icons'
+  renamed: icons
   color: subcategory
   description: Related to icons.
 
-- name: settings
+- name: 'C: settings'
+  renamed: settings
   color: subcategory
   description: Related to Sublime settings.
