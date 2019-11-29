@@ -1,0 +1,74 @@
+{
+    "name": "Print Grayscale",
+    "author": "Unknown",
+    "variables":
+    {
+        "black": "#000000",
+        "grey": "#a5a5a5",
+        "grey2": "#888888",
+        "grey3": "#666666",
+        "grey4": "#323232",
+        "grey5": "#2e2e2e",
+        "white": "#ffffff",
+        "white2": "#e5e5e5"
+    },
+    "globals":
+    {
+        "foreground": "var(black)",
+        "background": "var(white)",
+        "caret": "var(black)",
+        "invisibles": "var(grey4)",
+        "line_highlight": "color(var(grey5) alpha(0.13))",
+        "selection": "var(grey3)",
+        "selection_foreground": "var(white)",
+        "inactive_selection": "var(grey2)",
+        "gutter": "var(white2)",
+        "gutter_foreground": "var(black)",
+        "active_guide": "var(grey2)",
+        "find_highlight_foreground": "var(black)",
+        "find_highlight": "var(grey3)",
+        "brackets_options": "underline",
+        "brackets_foreground": "var(black)",
+        "bracket_contents_options": "underline",
+        "bracket_contents_foreground": "var(black)",
+        "tags_options": "stippled_underline"
+    },
+    "rules":
+    [
+        {
+            "name": "Comment",
+            "scope": "comment",
+            "foreground": "var(grey)"
+        },
+        {
+            "name": "Storage type",
+            "scope": "storage.type",
+            "foreground": "var(black)",
+            "font_style": "italic"
+        },
+        {
+            "name": "Class name",
+            "scope": "entity.name.class",
+            "foreground": "var(black)",
+            "font_style": "underline"
+        },
+        {
+            "name": "Inherited class",
+            "scope": "entity.other.inherited-class",
+            "foreground": "var(black)",
+            "font_style": "italic underline"
+        },
+        {
+            "name": "Function argument",
+            "scope": "variable.parameter",
+            "foreground": "var(black)",
+            "font_style": "italic"
+        },
+        {
+            "name": "Library class/type",
+            "scope": "support.type, support.class",
+            "foreground": "var(black)",
+            "font_style": "italic"
+        }
+    ]
+}

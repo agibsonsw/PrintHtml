@@ -1,3 +1,7 @@
+# ExportHtml 2.14.0
+
+- **NEW**: Default themes converted to `sublime-color-scheme` format.
+
 # ExportHtml 2.13.0
 
 - **NEW**: Add support for `hwb()` and `alpha()`/`a()`.
