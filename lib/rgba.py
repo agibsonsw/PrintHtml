@@ -205,7 +205,7 @@ class RGBA(object):
             blend_h, s, v = rgb_to_hsv(r * RGB_CHANNEL_SCALE, g * RGB_CHANNEL_SCALE, b * RGB_CHANNEL_SCALE)
             blend_w = (1.0 - s) * v
             blend_b = 1.0 - v
-            h = hue_blend_channel(orig_h, h, factor)
+            h = hue_blend_channel(orig_h, blend_h, factor)
             w = percent_blend_channel(orig_w, blend_w, factor)
             b = percent_blend_channel(orig_b, blend_b, factor)
             self.fromhwb(h, w, b)

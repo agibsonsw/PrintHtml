@@ -1,5 +1,9 @@
 # ExportHtml
 
+## 2.14.2
+
+- **FIX**: Fix `HWB` exception.
+
 ## 2.14.1
 
 - **FIX**: Fix some regressions in regard to blending colors.
