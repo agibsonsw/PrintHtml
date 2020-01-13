@@ -1,5 +1,9 @@
 # ExportHtml
 
+## 2.14.3
+
+- **FIX**: Mimic Sublime in regards to hue blending.
+
 ## 2.14.2
 
 - **FIX**: Fix `HWB` exception.

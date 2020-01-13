@@ -49,13 +49,12 @@ def hue_blend_channel(c1, c2, f):
             c1 += 360.0
         else:
             c2 += 360.0
-        f = 1.0 - f
+    # This shouldn't be necessary and is probably a bug in Sublime.
+    f = 1.0 - f
 
     value = abs(c1 * f + c2 * (1 - f))
     while value > 360.0:
         value -= 360.0
-
-    print('HUE: ', str(value))
 
     return value * HUE_SCALE
 
