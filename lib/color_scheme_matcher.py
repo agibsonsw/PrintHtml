@@ -595,7 +595,10 @@ class ColorSchemeMatcher(object):
                     item['background'] = translate_color(COLOR_RE.match(bgcolor.strip()), self.variables, {})
                     fgadj = item.get('foreground_adjust', None)
                     if isinstance(fgadj, str) and fgadj:
-                        item['foreground_adjust'] = fgadj
+                        content = COLOR_RGB_SPACE_RE.sub(
+                            (lambda match, v=self.variables, vs={}: translate_color(match, v, vs)), fgadj
+                        )
+                        item['foreground_adjust'] = content
                 # Selection foreground color
                 scolor = item.get('selection_foreground', None)
                 if isinstance(scolor, str):
@@ -873,37 +876,21 @@ class ColorSchemeMatcher(object):
                 color_gradient_selector = None
 
             if fgadj is not None:
-                if not color_gradient:
+                for c in (color_gradient if color_gradient is not None else [color]):
+                    color_list = []
                     try:
-                        content = COLOR_RGB_SPACE_RE.sub(
-                            (lambda match, v=self.variables, vs={}: translate_color(match, v, vs)),
-                            'color({} {})'.format(color, fgadj)
-                        )
+                        content = 'color({} {})'.format(c, fgadj)
                         n = -1
                         while n:
                             content, n = COLOR_MOD_RE.subn(blend_foreground, content)
-                        if color != content:
-                            color, color_sim = self.process_color(content)
+                        if c != content:
+                            mod, mod_sim = self.process_color(content)
+                            if mod is not None:
+                                color_list.append((mod, mod_sim))
+                        color_gradient = color_list
+                        color, color_sim = color_gradient[0]
                     except Exception:
                         pass
-
-                else:
-                    for c in color_gradient:
-                        temp_gradient = []
-                        try:
-                            content = COLOR_RGB_SPACE_RE.sub(
-                                (lambda match, v=self.variables, vs={}: translate_color(match, v, vs)),
-                                'color({} {})'.format(color, fgadj)
-                            )
-                            content = 'color({} {})'.format(c, fgadj)
-                            n = -1
-                            while n:
-                                content, n = COLOR_MOD_RE.subn(blend_foreground, content)
-                            if c != content:
-                                temp_gradient.append(content)
-                                color, color_sim, color_gradient = self.process_color_gradient(temp_gradient)
-                        except Exception:
-                            pass
 
             self.matched[scope_key] = {
                 "color": color,
