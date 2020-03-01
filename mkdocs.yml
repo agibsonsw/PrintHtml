@@ -11,7 +11,6 @@ copyright: |
 docs_dir: docs/src/markdown
 theme:
   name: material
-  custom_dir: docs/theme
   palette:
     primary: blue
     accent: blue
@@ -31,7 +30,7 @@ nav:
 markdown_extensions:
   - markdown.extensions.toc:
       slugify: !!python/name:pymdownx.slugs.uslugify
-      permalink: "\ue157"
+      permalink: ""
   - markdown.extensions.admonition:
   - markdown.extensions.smarty:
       smart_quotes: false
@@ -74,12 +73,11 @@ markdown_extensions:
   - pymdownx.keys:
       separator: "\uff0b"
   - pymdownx.details:
+  - pymdownx.tabbed:
 
 extra:
   social:
-    - type: github
+    - icon: brands/github
       link: https://github.com/facelessuser
-extra_css:
-  - extra-30d8e6755c.css
-extra_javascript:
-  - extra-0b9b22dd13.js
+    - icon: brands/discord
+      link: https://discord.gg/RKHTt2q
