@@ -11,12 +11,12 @@ This is a fork of [Andrew Gibson](https://github.com/agibsonsw)'s [PrintHtml](ht
 
 # Features
 
-- Export to HTML using any tmTheme for syntax highlighting.
+- Export to HTML using any `tmTheme` or `sublime-color-scheme` for syntax highlighting.
 - Can handle any language supported by ST2.
 - Supports bold and italic theme font styles as well.
 - Configurable output.
 - Format suitable for copying and pasting in emails.
-- 2 included tmTheme files for color and grayscale printing (but any can be used).
+- 2 included `sublime-color-scheme` files for color and grayscale printing (but any can be used).
 - Export only selections (multi-select supported).
 - Export and show highlights (multi-select supported).
 - Toggle gutter on/off in browser view.
@@ -31,7 +31,7 @@ https://facelessuser.github.com/ExportHtml
 # Credits
 
 - [Andrew Gibson](https://github.com/agibsonsw): Original idea and base code for converting Sublime view to HTML and allowing me to build off it to make ExportHtml.
-- Print-Color and Print-Grayscale tmThemes were derived from Monokai Bright.
+- Print-Color and Print-Grayscale `sublime-color-scheme` files were derived from Monokai Bright.
 
 # License
 
