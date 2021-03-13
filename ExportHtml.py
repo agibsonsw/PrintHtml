@@ -502,7 +502,7 @@ class ExportHtml(object):
         """Guess color."""
 
         if self.legacy:
-            return self.csm.guess_color(self.view, scope, selected, no_bold, no_italic, explicit_background)
+            return self.csm.guess_color(scope, selected, no_bold, no_italic, explicit_background)
         else:
             # Remove leading '.' to account for old style CSS
             scope_style = self.view.style_for_scope(scope.lstrip('.'))
