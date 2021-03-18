@@ -77,7 +77,8 @@ class SchemeColors(
         [
             'fg', 'fg_simulated', 'bg', "bg_simulated", "style", "color_gradient",
             "fg_selector", "bg_selector", "style_selectors", "color_gradient_selector"
-        ]
+        ],
+        verbose=False
     )
 ):
     """Scheme colors."""
@@ -265,14 +266,14 @@ class ColorSchemeMatcher(object):
                                 c.strip(), variables=self.variables
                             ).convert("srgb").to_string(**HEX)
                     except Exception:
-                        item['foreground'] = "none"
+                        item['foreground'] = False
                 elif isinstance(color, str):
                     try:
                         item['foreground'] = Color(
                             color.strip(), variables=self.variables
                         ).convert("srgb").to_string(**HEX)
                     except Exception:
-                        item['foreground'] = "none"
+                        item['foreground'] = False
                 # Background color
                 bgcolor = item.get('background', None)
                 if isinstance(bgcolor, str):
@@ -362,7 +363,7 @@ class ColorSchemeMatcher(object):
         if isinstance(color, list):
             fg, fg_sim, color_gradient = self.process_color_gradient(color)
         elif color is not None:
-            if color == "none":
+            if color is False:
                 fg, fg_sim = color, None
             else:
                 fg, fg_sim = self.process_color(color)
@@ -373,7 +374,7 @@ class ColorSchemeMatcher(object):
         else:
             bg, bg_sim = None, None
         if scolor is not None:
-            if scolor == "none":
+            if scolor is False:
                 sfg, sfg_sim = scolor, None
             else:
                 sfg, sfg_sim = self.process_color(
@@ -534,15 +535,17 @@ class ColorSchemeMatcher(object):
                 ):
                     best_match_fg = match
                     color = self.colors[key]["color"]
-                    if color == "none":
+                    if color is False:
                         color = self.special_colors['foreground']['color']
                         color_sim = self.special_colors['foreground']['color_simulated']
                     else:
                         color_sim = self.colors[key]["color_simulated"]
+                    color_gradient = None
+                    color_gradient_selector = None
                     color_selector = SchemeSelectors(self.colors[key]["name"], self.colors[key]["scope"])
                 elif (
                     self.colors[key]["color_gradient"] is not None and
-                    match > best_match_fg_gradient
+                    match > best_match_fg_gradient and match > best_match_fg
                 ):
                     best_match_fg_gradient = match
                     color_gradient = self.colors[key]["color_gradient"]
@@ -550,7 +553,7 @@ class ColorSchemeMatcher(object):
                 if self.colors[key]["selection_color"] is not None and match > best_match_sfg:
                     best_match_sfg = match
                     scolor = self.colors[key]["selection_color"]
-                    if color == "none":
+                    if color is False:
                         scolor = self.special_colors['selection_foreground']['color']
                         scolor_sim = self.special_colors['selection_foreground']['color_simulated']
                     else:
