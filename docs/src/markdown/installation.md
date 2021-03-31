@@ -39,7 +39,6 @@ will have to keep all the packages updated yourself.
     - @packagecontrol/pygments -> `pygments`
     - @facelessuser/sublime-markdown-popups -> `mdpopups`
     - @facelessuser/sublime-markdown -> `python-markdown`
-    - @facelessuser/sublime-coloraide -> `coloraide`
 
 2. Download and unpack or git clone the latest ExportHtml release and unpack as `ExportHtml`:
 
@@ -204,7 +203,6 @@ will have to keep all the packages updated yourself.
     add_dependency('python-markdown')
     add_dependency('python-jinja2')
     add_dependency('mdpopups')
-    add_dependency('coloraide')
     ```
 
 4. Restart and enjoy.

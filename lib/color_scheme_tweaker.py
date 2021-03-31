@@ -7,7 +7,7 @@ Copyright (c) 2013 - 2015 Isaac Muse <isaacmuse@gmail.com>
 from __future__ import absolute_import
 import sublime
 from .st_colormod import Color
-from coloraide import util
+from mdpopups.coloraide import util
 import re
 
 NEW_SCHEMES = int(sublime.version()) >= 3150
@@ -327,8 +327,8 @@ class ColorTweaker(object):
                 if value is None:
                     value = bg
                 return None, value
-            if bg is None:
-                _, value = self._filter_colors(None, self.process_color(fg))
+            elif bg is None:
+                value, _ = self._filter_colors(self.process_color(fg), None, global_settings=True)
                 if value is None:
                     value = fg
                 return value, None
@@ -350,6 +350,7 @@ class ColorTweaker(object):
 
         if not color.startswith('#'):
             return None
+
         return color
 
     def get_filters(self):

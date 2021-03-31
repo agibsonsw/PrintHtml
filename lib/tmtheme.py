@@ -1,7 +1,7 @@
 """Custom color that looks for colors of format `#RRGGBBAA` as `#AARRGGBB`."""
-from coloraide.css.colors import Color, SRGB
-from coloraide.colors import _parse as parse
-from coloraide import util
+from mdpopups.coloraide.css.colors import Color, SRGB
+from mdpopups.coloraide.colors import _parse as parse
+from mdpopups.coloraide import util
 import copy
 import re
 
@@ -704,7 +704,7 @@ class SRGBX11(SRGB):
         value = ''
         a = util.no_nan(self.alpha)
         alpha = alpha is not False and (alpha is True or a < 1.0)
-        hex_upper = options.get("hex_upper", False)
+        hex_upper = options.get("upper", False)
         compress = options.get("compress", False)
         coords = util.no_nan(self.fit_coords())
 
@@ -749,8 +749,6 @@ class SRGBX11(SRGB):
 
         if channel in (-1, 0, 1, 2):
             return parse.norm_hex_channel(value)
-        else:
-            raise ValueError("Unexpected channel index of '{}'".format(channel))
 
     @classmethod
     def split_channels(cls, color):
@@ -763,18 +761,18 @@ class SRGBX11(SRGB):
                 (
                     cls.translate_channel(0, "#" + color[1:3]),
                     cls.translate_channel(1, "#" + color[3:5]),
-                    cls.translate_channel(2, "#" + color[5:7]),
-                    cls.translate_channel(-1, "#" + m.group(2)) if m.group(2) else 1.0
-                )
+                    cls.translate_channel(2, "#" + color[5:7])
+                ),
+                cls.translate_channel(-1, "#" + m.group(2)) if m.group(2) else 1.0
             )
         else:
             return cls.null_adjust(
                 (
                     cls.translate_channel(0, "#" + color[1] * 2),
                     cls.translate_channel(1, "#" + color[2] * 2),
-                    cls.translate_channel(2, "#" + color[3] * 2),
-                    cls.translate_channel(-1, "#" + m.group(4) * 2) if m.group(4) else 1.0
-                )
+                    cls.translate_channel(2, "#" + color[3] * 2)
+                ),
+                cls.translate_channel(-1, "#" + m.group(4) * 2) if m.group(4) else 1.0
             )
 
     @classmethod

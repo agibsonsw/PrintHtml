@@ -1,5 +1,11 @@
 # ExportHtml
 
+## 2.17.1
+
+- **FIX**: Fix issues with Sublime 4095 `auto` light/dark color scheme option (legacy converter).
+- **FIX**: Reduce dependencies by relying on the `coloraide` in `mdpopups`.
+- **FIX**: Fix some color filter cases.
+
 ## 2.17.0
 
 - **NEW**: Drop BBCode support.

@@ -36,6 +36,8 @@ from .lib.notify import notify
 import jinja2
 from collections import namedtuple
 
+AUTO = int(sublime.version()) >= 4095
+
 JS_DIR = ""
 
 PACKAGE_SETTINGS = "ExportHtml.sublime-settings"
@@ -459,6 +461,10 @@ class ExportHtml(object):
             alt_scheme = eh_settings.get("alternate_scheme", False)
         scheme_file = self.view.settings().get('color_scheme') if alt_scheme is False else alt_scheme
 
+        if scheme_file == 'auto' and AUTO:
+            info = sublime.ui_info()
+            scheme_file = info['color_scheme']['resolved_value']
+
         self.highlights = []
         if self.highlight_selections:
             for sel in self.view.sel():
@@ -483,19 +489,21 @@ class ExportHtml(object):
                 self.gfground = self.fground
                 self.gbground = self.bground
         else:
-            self.fground = self.tweak(self.guess_style('source, text').fg_simulated, None)[0]
-            self.bground = self.tweak(None, self.guess_style('source, text').bg_simulated)[1]
-            self.gfground = self.tweak(self.view.style().get('gutter_foreground', self.bground), None)[0]
-            self.gbground = self.tweak(None, self.view.style().get('gutter', self.fground))[1]
+            self.fground = self.tweak(self.view.style().get('foreground'), None)[0]
+            self.bground = self.tweak(None, self.view.style().get('background'))[1]
+            self.gfground = self.tweak(self.view.style().get('gutter_foreground', self.fground), None)[0]
+            self.gbground = self.tweak(None, self.view.style().get('gutter', self.bground))[1]
 
     def tweak(self, color1, color2):
         """Tweak color."""
 
         key = (color1, color2)
         if key in self.tweak_cache:
+            print('not tweak')
             return self.tweak_cache[key]
         value = self.tweaker.tweak(*key)
         self.tweak_cache[key] = value
+        print('tweaked!', value)
         return value
 
     def guess_style(self, scope, selected=False, no_bold=False, no_italic=False, explicit_background=False):
